@@ -73,10 +73,6 @@ public class DummySnapshot extends AbstractSnapshot implements Snapshot {
 
     @Override
     public int getSizeOfReinforcement(Player player) {
-
-        if (player == Player.FIRST) {
-            return 5;
-        }
-        return 2;
+        return (board.getAllowedUnits() - board.countUnits(player));
     }
 }
