@@ -63,4 +63,22 @@ public interface Board {
      */
     void removeUnit(int rowIndex, int columnIndex);
 
+
+    /**
+     *
+     *
+     *
+     * @return allowed unit number for each player.
+     */
+    int getAllowedUnits();
+
+    /**
+     *
+     *
+     *
+     * @return number of units of player.
+     */
+
+    int countUnits(Snapshot.Player player);
+
 }
