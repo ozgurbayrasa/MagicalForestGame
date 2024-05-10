@@ -11,6 +11,8 @@ import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 
 import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor.*;
 
+import java.io.IOException;
+
 /**
  * This class is a dummy implementation, for demonstration purposes.
  * It should not appear in the final project.
@@ -18,7 +20,13 @@ import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor.*;
 public class DummySnapshot extends AbstractSnapshot implements Snapshot {
 
 
-    public DummySnapshot(String firstHeroName, String secondHeroName) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+
+	public DummySnapshot(String firstHeroName, String secondHeroName) {
         super(
                 new HeroImpl(firstHeroName, 20),
                 new HeroImpl(secondHeroName, 15),
@@ -75,4 +83,19 @@ public class DummySnapshot extends AbstractSnapshot implements Snapshot {
     public int getSizeOfReinforcement(Player player) {
         return (board.getAllowedUnits() - board.countUnits(player));
     }
+
+
+	@Override
+	public void writeSnapshot(Snapshot snapshot) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public Snapshot readSnapshot() throws IOException, ClassNotFoundException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

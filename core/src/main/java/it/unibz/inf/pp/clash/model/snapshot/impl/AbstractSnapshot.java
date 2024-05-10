@@ -10,7 +10,11 @@ import static it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
 
 public abstract class AbstractSnapshot implements Snapshot {
 
-    protected final Board board;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	protected final Board board;
     private final Hero firstHero;
     private final Hero secondHero;
 

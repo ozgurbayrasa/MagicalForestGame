@@ -4,6 +4,7 @@ import it.unibz.inf.pp.clash.model.exceptions.OccupiedTileException;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 
 import java.util.HashSet;
@@ -112,5 +113,11 @@ public class BoardImpl implements Board {
             throw new CoordinatesOutOfBoardException(rowIndex, columnIndex, getMaxRowIndex(), getMaxColumnIndex());
         }
     }
+
+	@Override
+	public void populateBoard(Player p1, Player p2) {
+		// TODO Auto-generated method stub
+		
+	}
 }
 

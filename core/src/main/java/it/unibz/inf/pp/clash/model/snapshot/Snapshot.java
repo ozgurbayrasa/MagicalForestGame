@@ -1,9 +1,11 @@
 package it.unibz.inf.pp.clash.model.snapshot;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Optional;
-
 import static it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
-public interface Snapshot {
+
+public interface Snapshot extends Serializable{
 
     enum Player {FIRST, SECOND}
 
@@ -39,4 +41,19 @@ public interface Snapshot {
      * @return the number of units that will enter the board if reinforcement is called for the input {@code player}
      */
     int getSizeOfReinforcement(Player player);
+    
+    /**
+     * Serializes the snapshot when exiting a game
+     * @param snapshot
+     * @throws IOException
+     */
+    void writeSnapshot(Snapshot snapshot) throws IOException;
+    
+    /**
+     * Deserializes the snapshot when starting a game
+     * @return Snapshot
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    Snapshot readSnapshot() throws IOException, ClassNotFoundException;
 }

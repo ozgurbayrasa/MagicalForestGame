@@ -2,6 +2,7 @@ package it.unibz.inf.pp.clash.model.snapshot;
 
 import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.exceptions.OccupiedTileException;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 
 import java.util.Optional;
@@ -78,7 +79,12 @@ public interface Board {
      *
      * @return number of units of player.
      */
+    int countUnits(Player player);
 
-    int countUnits(Snapshot.Player player);
-
+    /**
+     * Populates the board randomly depending on the allowed units that the players have.
+     * @param numberOfUnits
+     */
+	void populateBoard(Player first, Player second);
+    
 }
