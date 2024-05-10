@@ -6,9 +6,13 @@ import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
 
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 
 public class BoardImpl implements Board {
@@ -76,7 +80,7 @@ public class BoardImpl implements Board {
     // board. Otherwise, we take the upper part of the board. And
     // we look every square in that sub-board.
     @Override
-    public int countUnits(Snapshot.Player player) {
+    public int countUnits(Player player) {
         Set<Unit> units = new HashSet<>();
 
         switch (player){
@@ -89,7 +93,6 @@ public class BoardImpl implements Board {
                         }
                     }
                 }
-
             }
 
             case SECOND -> {
@@ -116,8 +119,17 @@ public class BoardImpl implements Board {
 
 	@Override
 	public void populateBoard(Player p1, Player p2) {
-		// TODO Auto-generated method stub
-		
+		Unit[] units = {new Butterfly(null), new Fairy(null), new Unicorn(null)};
+		Random random = new Random();
+		for(int i = 0; i < grid.length; i++) {
+			for(int j = 0; j < grid[i].length; j++) {
+				if (random.nextBoolean()) {
+                    int unitIndex = random.nextInt(units.length);
+                    Unit unit = units[unitIndex];
+                    addUnit(i, j, unit);
+				}
+			}
+		}
 	}
 }
 

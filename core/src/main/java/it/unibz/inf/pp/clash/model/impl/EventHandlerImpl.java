@@ -18,8 +18,9 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void newGame(String firstHero, String secondHero) {
-		Board board = BoardImpl.createEmptyBoard(5, 7);
-//		board.populateBoard(Player.FIRST, Player.SECOND);
+		Board board = BoardImpl.createEmptyBoard(10, 7);
+		board.populateBoard(Player.FIRST, Player.SECOND);
+		// TODO
 	}
 
 	@Override
