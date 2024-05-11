@@ -5,6 +5,9 @@ import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.AbstractSnapshot;
 import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
+import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
+import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
+import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.DummySnapshot;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 
@@ -18,8 +21,15 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void newGame(String firstHero, String secondHero) {
-		Board board = BoardImpl.createEmptyBoard(10, 7);
-		board.populateBoard(Player.FIRST, Player.SECOND);
+		displayManager.drawSnapshot(
+				new SnapshotImpl(
+						new HeroImpl(firstHero, 20), 
+						new HeroImpl(secondHero, 20), 
+						BoardImpl.createEmptyBoard(11, 7), 
+						Player.FIRST, 
+						0, 
+						null), ""
+        );
 		// TODO
 	}
 

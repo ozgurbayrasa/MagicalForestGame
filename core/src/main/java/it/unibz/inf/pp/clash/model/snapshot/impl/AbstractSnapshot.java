@@ -3,10 +3,25 @@ package it.unibz.inf.pp.clash.model.snapshot.impl;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Hero;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
+import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
+import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Optional;
+import java.util.Random;
 
 import static it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
+import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor.ONE;
+import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor.THREE;
+import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor.TWO;
 
 public abstract class AbstractSnapshot implements Snapshot {
 
@@ -58,5 +73,61 @@ public abstract class AbstractSnapshot implements Snapshot {
     public int getNumberOfRemainingActions() {
         return actionsRemaining;
     }
+    
+    @Override
+    public void populateTiles() {
+    	Unit[] units = {new Butterfly(UnitColor.ONE), new Butterfly(UnitColor.TWO), new Butterfly(UnitColor.THREE), 
+    					new Fairy(UnitColor.ONE), new Fairy(UnitColor.TWO), new Fairy(UnitColor.THREE), 
+    					new Unicorn(UnitColor.ONE), new Unicorn(UnitColor.TWO), new Unicorn(UnitColor.THREE)};
+		Random random = new Random();
+		int numberOfUnits = 0;
+		for(int i = (board.getMaxRowIndex() / 2) + 1; i <= board.getMaxRowIndex(); i++) {
+			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				if(numberOfUnits < board.getAllowedUnits()) {
+					if(random.nextBoolean()) {
+						int unitIndex = random.nextInt(units.length);
+	                    Unit unit = units[unitIndex];
+	                    board.addUnit(i, j, unit);
+	                    numberOfUnits++;
+					}
+				}
+			}
+		}
+		 board.moveUnitsIn(Player.FIRST);
+		
+		numberOfUnits = 0;
+		for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
+			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				if(numberOfUnits < board.getAllowedUnits()) {
+					if(random.nextBoolean()) {
+						int unitIndex = random.nextInt(units.length);
+	                    Unit unit = units[unitIndex];
+	                    board.addUnit(i, j, unit);
+	                    numberOfUnits++;
+					}
+				}
+			}
+		}
+		 board.moveUnitsIn(Player.SECOND);
+    }			
 
+    @Override
+    public void writeSnapshot(Snapshot snapshot) throws IOException {
+		try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(""))) {
+		    out.writeObject(snapshot);
+		} catch (IOException e) {
+		    throw new RuntimeException(e);
+		}
+	}
+    
+    @Override
+	public Snapshot readSnapshot() throws IOException, ClassNotFoundException {
+		Snapshot deserializedSnapshot;
+		try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(""))) {
+			deserializedSnapshot = (Snapshot) in.readObject();
+			} catch (IOException | ClassNotFoundException e ) {
+			  throw new RuntimeException(e);
+			}
+		return deserializedSnapshot;
+	}
 }

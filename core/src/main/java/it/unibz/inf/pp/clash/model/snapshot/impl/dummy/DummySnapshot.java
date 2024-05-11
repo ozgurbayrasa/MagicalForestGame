@@ -40,7 +40,7 @@ public class DummySnapshot extends AbstractSnapshot implements Snapshot {
     }
 
 
-    private void populateTiles() {
+    public void populateTiles() {
 
         Butterfly bigButterfly = new Butterfly(ONE);
         bigButterfly.setAttackCountdown(1);

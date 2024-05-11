@@ -64,7 +64,23 @@ public interface Board {
      */
     void removeUnit(int rowIndex, int columnIndex);
 
+    /**
+     * Moves the unit from the input to the output coordinates.
+     * 
+     * @param inputRowIndex
+     * @param inputColumnIndex
+     * @param outputRowIndex
+     * @param outputColumnIndex
+     */
+    void moveUnit(int inputRowIndex, int inputColumnIndex, int outputRowIndex, int outputColumnIndex);
 
+    /**
+     * Moves in the units as close to the border as possible.
+     * 
+     * @param player
+     */
+    void moveUnitsIn(Player player);
+    
     /**
      *
      *
@@ -80,11 +96,5 @@ public interface Board {
      * @return number of units of player.
      */
     int countUnits(Player player);
-
-    /**
-     * Populates the board randomly depending on the allowed units that the players have.
-     * @param numberOfUnits
-     */
-	void populateBoard(Player first, Player second);
     
 }

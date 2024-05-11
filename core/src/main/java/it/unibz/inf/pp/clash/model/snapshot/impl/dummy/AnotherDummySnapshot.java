@@ -39,7 +39,7 @@ public class AnotherDummySnapshot extends AbstractSnapshot implements Snapshot {
         populateTiles();
     }
 
-    private void populateTiles() {
+    public void populateTiles() {
 
         Unicorn bigUnicorn = new Unicorn(THREE);
         bigUnicorn.setAttackCountdown(2);

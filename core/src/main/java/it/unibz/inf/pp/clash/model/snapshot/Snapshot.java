@@ -56,4 +56,8 @@ public interface Snapshot extends Serializable{
      * @throws ClassNotFoundException
      */
     Snapshot readSnapshot() throws IOException, ClassNotFoundException;
+    
+    void populateTiles();
+    
+    
 }

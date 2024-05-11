@@ -104,7 +104,6 @@ public class BoardImpl implements Board {
                         }
                     }
                 }
-
             }
         }
 
@@ -115,18 +114,37 @@ public class BoardImpl implements Board {
         if (!areValidCoordinates(rowIndex, columnIndex)) {
             throw new CoordinatesOutOfBoardException(rowIndex, columnIndex, getMaxRowIndex(), getMaxColumnIndex());
         }
-    }
+	}
 
 	@Override
-	public void populateBoard(Player p1, Player p2) {
-		Unit[] units = {new Butterfly(null), new Fairy(null), new Unicorn(null)};
-		Random random = new Random();
-		for(int i = 0; i < grid.length; i++) {
-			for(int j = 0; j < grid[i].length; j++) {
-				if (random.nextBoolean()) {
-                    int unitIndex = random.nextInt(units.length);
-                    Unit unit = units[unitIndex];
-                    addUnit(i, j, unit);
+	public void moveUnit(int inputRowIndex, int inputColumnIndex, int outputRowIndex, int outputColumnIndex) {
+		addUnit(outputRowIndex, outputColumnIndex, getUnit(inputRowIndex, inputColumnIndex).orElse(null));
+		removeUnit(inputRowIndex, inputColumnIndex);
+	}
+
+	@Override
+	public void moveUnitsIn(Player player) {
+		switch(player) {
+			case FIRST -> {
+				for(int n = 0; n < ((getMaxRowIndex() + 1) / 2); n ++) {
+					for(int i = ((getMaxRowIndex() / 2) + 2); i <= getMaxRowIndex(); i++) {
+			            for(int j = 0; j < getMaxColumnIndex() + 1; j++) {
+			            	if(getUnit(i - 1, j).isEmpty() && areValidCoordinates(i - 1, j)) {
+								moveUnit(i, j, i - 1, j);
+							}
+			            }
+			        }
+				}
+			}
+			case SECOND -> {
+				for(int n = 0; n < ((getMaxRowIndex() + 1) / 2); n ++) {
+					for(int i = 0; i < ((getMaxRowIndex() / 2)); i++) {
+			            for(int j = 0; j < getMaxColumnIndex() + 1; j++) {
+			            	if(getUnit(i + 1, j).isEmpty() && areValidCoordinates(i + 1, j)) {
+								moveUnit(i, j, i + 1, j);
+							}
+			            }
+			        }
 				}
 			}
 		}
