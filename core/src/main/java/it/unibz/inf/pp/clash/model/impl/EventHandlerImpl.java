@@ -16,6 +16,7 @@ import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.DummySnapshot;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.view.DisplayManager;
+import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
 public class EventHandlerImpl implements EventHandler {
 
@@ -78,10 +79,19 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	@Override
-	public void requestInformation(int rowIndex, int columnIndex) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void requestInformation(int rowIndex, int columnIndex) {
+		// TODO info about unit
+        try {
+            displayManager.updateMessage(
+                    String.format(
+                            "Tile (%s,%s), ",
+                            rowIndex,
+                            columnIndex
+                    ));
+        } catch (NoGameOnScreenException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	@Override
 	public void selectTile(int rowIndex, int columnIndex) {
