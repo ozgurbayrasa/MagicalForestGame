@@ -4,7 +4,12 @@ import it.unibz.inf.pp.clash.model.snapshot.Hero;
 
 public class HeroImpl implements Hero {
 
-    private int health;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private int health;
 
     private final String name;
 

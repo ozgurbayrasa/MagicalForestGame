@@ -94,4 +94,10 @@ public class DummyEventHandler implements EventHandler {
     public void exitGame() {
         displayManager.drawHomeScreen();
     }
+
+	@Override
+	public void continueGame() {
+		// TODO Auto-generated method stub
+		
+	}
 }

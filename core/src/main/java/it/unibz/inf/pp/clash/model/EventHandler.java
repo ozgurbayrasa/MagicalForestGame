@@ -62,4 +62,9 @@ public interface EventHandler {
      */
     void deleteUnit(int rowIndex, int columnIndex);
 
+    /**
+     * Continues the game when the user clicks the appropriate button, given that there is a serialized snapshot at the path specified.
+     */
+	void continueGame();
+
 }

@@ -3,6 +3,8 @@ package it.unibz.inf.pp.clash.model.snapshot;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Optional;
+
+
 import static it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
 
 public interface Snapshot extends Serializable{
@@ -47,15 +49,15 @@ public interface Snapshot extends Serializable{
      * @param snapshot
      * @throws IOException
      */
-    void writeSnapshot(String path) throws IOException;
+    void serializeSnapshot(String path) throws IOException;
     
-    /**
-     * Deserializes the snapshot when starting a game
-     * @return Snapshot
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    Snapshot readSnapshot(String path) throws IOException, ClassNotFoundException;
+//    /**
+//     * Deserializes the snapshot when starting a game
+//     * @return Snapshot
+//     * @throws IOException
+//     * @throws ClassNotFoundException
+//     */
+//    Snapshot readSnapshot(String path) throws IOException, ClassNotFoundException;
     
     void populateTiles();
     

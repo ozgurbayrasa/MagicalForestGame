@@ -2,6 +2,8 @@ package it.unibz.inf.pp.clash.model.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
@@ -18,6 +20,7 @@ import it.unibz.inf.pp.clash.view.DisplayManager;
 public class EventHandlerImpl implements EventHandler {
 
     private final DisplayManager displayManager;
+    private final String path = "../core/src/test/java/serialized/snapshot.ser";
     
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -27,23 +30,35 @@ public class EventHandlerImpl implements EventHandler {
     
 	@Override
 	public void newGame(String firstHero, String secondHero) {
-		// TODO if there is serialized
 		s = new SnapshotImpl(
-				new HeroImpl(firstHero, 20), 
-				new HeroImpl(secondHero, 20), 
-				BoardImpl.createEmptyBoard(11, 7), 
-				Player.FIRST, 
-				0, 
-				null);
+			new HeroImpl(firstHero, 20), 
+			new HeroImpl(secondHero, 20), 
+			BoardImpl.createEmptyBoard(11, 7), 
+			Player.FIRST, 
+			0, 
+			null);
 		displayManager.drawSnapshot(s, "A new game has been started!");
+	}
+	
+	@Override
+	public void continueGame() {
+		if(new File(path).exists()) {
+			try {
+				s = SnapshotImpl.deserializeSnapshot(path);
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			displayManager.drawSnapshot(s, "The game has been continued!");
+		}
 	}
 
 	@Override
 	public void exitGame() {
 		Snapshot toSerialize = s;
 		try {
-			// TODO path not found
-			toSerialize.writeSnapshot("src/test/javaserialized");
+			toSerialize.serializeSnapshot(path);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -79,5 +94,4 @@ public class EventHandlerImpl implements EventHandler {
 		// TODO Auto-generated method stub
 		
 	}
-
 }

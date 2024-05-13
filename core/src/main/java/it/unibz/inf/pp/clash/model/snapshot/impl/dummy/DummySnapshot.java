@@ -86,16 +86,8 @@ public class DummySnapshot extends AbstractSnapshot implements Snapshot {
 
 
 	@Override
-	public void writeSnapshot(String path) throws IOException {
+	public void serializeSnapshot(String path) throws IOException {
 		// TODO Auto-generated method stub
 		
 	}
-
-
-	@Override
-	public Snapshot readSnapshot(String path) throws IOException, ClassNotFoundException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

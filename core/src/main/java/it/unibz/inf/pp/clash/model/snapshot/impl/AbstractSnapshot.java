@@ -112,7 +112,7 @@ public abstract class AbstractSnapshot implements Snapshot {
     }			
 
     @Override
-    public void writeSnapshot(String path) throws IOException {
+    public void serializeSnapshot(String path) throws IOException {
 		try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(path))) {
 		    out.writeObject(this);
 		} catch (IOException e) {
@@ -120,8 +120,7 @@ public abstract class AbstractSnapshot implements Snapshot {
 		}
 	}
     
-    @Override
-	public Snapshot readSnapshot(String path) throws IOException, ClassNotFoundException {
+	public static Snapshot deserializeSnapshot(String path) throws IOException, ClassNotFoundException {
 		Snapshot deserializedSnapshot;
 		try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
 			deserializedSnapshot = (Snapshot) in.readObject();

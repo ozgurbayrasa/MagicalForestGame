@@ -17,7 +17,11 @@ import java.util.Set;
 
 public class BoardImpl implements Board {
 
-    final Unit[][] grid;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	final Unit[][] grid;
 
     public static Board createEmptyBoard(int maxRowIndex, int maxColumnIndex) {
         Unit[][] grid = new Unit[maxRowIndex + 1][maxColumnIndex + 1];

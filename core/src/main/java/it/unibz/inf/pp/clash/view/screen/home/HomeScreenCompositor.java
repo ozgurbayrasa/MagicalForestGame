@@ -3,6 +3,7 @@ package it.unibz.inf.pp.clash.view.screen.home;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import it.unibz.inf.pp.clash.controller.listeners.CloseApplicationListener;
+import it.unibz.inf.pp.clash.controller.listeners.ContinueGameListener;
 import it.unibz.inf.pp.clash.controller.listeners.NewGameListener;
 import it.unibz.inf.pp.clash.controller.listeners.ResolutionChangeListener;
 import it.unibz.inf.pp.clash.model.EventHandler;
@@ -34,6 +35,8 @@ public class HomeScreenCompositor extends Compositor {
         addHeroSelection("Second hero ", mainTable, secondHeroSelectBox, skin);
         addLargeVerticalSpace(mainTable);
         addNewGameButton(mainTable, firstHeroSelectBox, secondHeroSelectBox, skin);
+        addLargeVerticalSpace(mainTable);
+        addContinueGameButton(mainTable, skin);
         addLargeVerticalSpace(mainTable);
         addExitButton(mainTable, game, skin);
 
@@ -89,6 +92,13 @@ public class HomeScreenCompositor extends Compositor {
         newGameButton.addListener(new NewGameListener(firstHeroSelectBox, secondHeroSelectBox, eventHandler));
         mainTable.add(newGameButton).colspan(2).fillX().uniformX();
         mainTable.row();
+    }
+    
+    private void addContinueGameButton(Table mainTable, Skin skin) {
+    	TextButton continueButton = new TextButton("Continue game", skin);
+    	continueButton.addListener(new ContinueGameListener(eventHandler));
+    	mainTable.add(continueButton).colspan(2).fillX().uniformX();
+    	mainTable.row();
     }
 
 }

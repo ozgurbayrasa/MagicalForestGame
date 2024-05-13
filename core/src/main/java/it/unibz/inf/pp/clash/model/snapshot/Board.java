@@ -5,6 +5,7 @@ import it.unibz.inf.pp.clash.model.exceptions.OccupiedTileException;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 
+import java.io.Serializable;
 import java.util.Optional;
 
 /**
@@ -20,7 +21,7 @@ import java.util.Optional;
  * A tile may have a unit standing on it.
  * A same unit may stand on multiple (adjacent) tiles.
  */
-public interface Board {
+public interface Board extends Serializable{
 
     /**
      * A pair of coordinates for a tile.
