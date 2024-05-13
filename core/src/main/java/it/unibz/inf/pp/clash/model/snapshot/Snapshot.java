@@ -47,7 +47,7 @@ public interface Snapshot extends Serializable{
      * @param snapshot
      * @throws IOException
      */
-    void writeSnapshot(Snapshot snapshot) throws IOException;
+    void writeSnapshot(String path) throws IOException;
     
     /**
      * Deserializes the snapshot when starting a game
@@ -55,7 +55,7 @@ public interface Snapshot extends Serializable{
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    Snapshot readSnapshot() throws IOException, ClassNotFoundException;
+    Snapshot readSnapshot(String path) throws IOException, ClassNotFoundException;
     
     void populateTiles();
     

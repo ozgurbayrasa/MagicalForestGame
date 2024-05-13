@@ -1,7 +1,11 @@
 package it.unibz.inf.pp.clash.model.impl;
 
+import java.io.File;
+import java.io.IOException;
+
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.AbstractSnapshot;
 import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
@@ -19,23 +23,30 @@ public class EventHandlerImpl implements EventHandler {
         this.displayManager = displayManager;
     }
 
+    Snapshot s;
+    
 	@Override
 	public void newGame(String firstHero, String secondHero) {
-		displayManager.drawSnapshot(
-				new SnapshotImpl(
-						new HeroImpl(firstHero, 20), 
-						new HeroImpl(secondHero, 20), 
-						BoardImpl.createEmptyBoard(11, 7), 
-						Player.FIRST, 
-						0, 
-						null), ""
-        );
-		// TODO
+		// TODO if there is serialized
+		s = new SnapshotImpl(
+				new HeroImpl(firstHero, 20), 
+				new HeroImpl(secondHero, 20), 
+				BoardImpl.createEmptyBoard(11, 7), 
+				Player.FIRST, 
+				0, 
+				null);
+		displayManager.drawSnapshot(s, "A new game has been started!");
 	}
 
 	@Override
 	public void exitGame() {
-		// TODO save snapshot
+		Snapshot toSerialize = s;
+		try {
+			// TODO path not found
+			toSerialize.writeSnapshot("src/test/javaserialized");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
         displayManager.drawHomeScreen();		
 	}
 

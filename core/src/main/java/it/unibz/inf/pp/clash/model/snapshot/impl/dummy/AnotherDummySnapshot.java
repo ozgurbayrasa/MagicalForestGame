@@ -80,13 +80,13 @@ public class AnotherDummySnapshot extends AbstractSnapshot implements Snapshot {
     }
 
 	@Override
-	public void writeSnapshot(Snapshot snapshot) throws IOException {
+	public void writeSnapshot(String path) throws IOException {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public Snapshot readSnapshot() throws IOException, ClassNotFoundException {
+	public Snapshot readSnapshot(String path) throws IOException, ClassNotFoundException {
 		// TODO Auto-generated method stub
 		return null;
 	}
