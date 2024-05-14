@@ -1,7 +1,10 @@
 package it.unibz.inf.pp.clash.model.snapshot.impl.dummy;
 
+import it.unibz.inf.pp.clash.model.snapshot.Board;
+import it.unibz.inf.pp.clash.model.snapshot.Hero;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
-import it.unibz.inf.pp.clash.model.snapshot.impl.AbstractSnapshot;
+import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
@@ -12,12 +15,13 @@ import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor.*;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * This class is a dummy implementation, for demonstration purposes.
  * It should not appear in the final project.
  */
-public class DummySnapshot extends AbstractSnapshot implements Snapshot {
+public class DummySnapshot implements Snapshot {
 
 
     /**
@@ -25,23 +29,52 @@ public class DummySnapshot extends AbstractSnapshot implements Snapshot {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	protected final Board board;
+    private final Hero firstHero;
+    private final Hero secondHero;
+    private Player activeplayer;
+    private int actionsRemaining;
+    protected TileCoordinates ongoingMove;
 
 	public DummySnapshot(String firstHeroName, String secondHeroName) {
-        super(
-                new HeroImpl(firstHeroName, 20),
-                new HeroImpl(secondHeroName, 15),
-                BoardImpl.createEmptyBoard(11, 7),
-                Player.FIRST,
-                3,
-                null
-        );
+		firstHero = new HeroImpl(firstHeroName, 20);
+		secondHero = new HeroImpl(secondHeroName, 15);
+		board = BoardImpl.createEmptyBoard(11, 7);
+		activeplayer = Player.FIRST;
+		actionsRemaining = 3;
+		ongoingMove = null;
 //        this.ongoingMove = new TileCoordinates(6, 1);
         populateTiles();
     }
 
+	public Board getBoard() {
+        return board;
+    }
 
+    @Override
+    public Hero getHero(Player player) {
+        return switch (player) {
+            case FIRST -> firstHero;
+            case SECOND -> secondHero;
+        };
+    }
+
+    @Override
+    public Player getActivePlayer() {
+        return activeplayer;
+    }
+
+    @Override
+    public Optional<TileCoordinates> getOngoingMove() {
+        return Optional.ofNullable(ongoingMove);
+    }
+
+    @Override
+    public int getNumberOfRemainingActions() {
+        return actionsRemaining;
+    }	
+    
     public void populateTiles() {
-
         Butterfly bigButterfly = new Butterfly(ONE);
         bigButterfly.setAttackCountdown(1);
         bigButterfly.setHealth(10);
@@ -87,7 +120,6 @@ public class DummySnapshot extends AbstractSnapshot implements Snapshot {
 
 	@Override
 	public void serializeSnapshot(String path) throws IOException {
-		// TODO Auto-generated method stub
 		
 	}
 }

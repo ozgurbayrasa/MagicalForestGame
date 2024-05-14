@@ -1,9 +1,14 @@
 package it.unibz.inf.pp.clash.model.snapshot.impl.dummy;
 
+import it.unibz.inf.pp.clash.model.snapshot.Board;
+import it.unibz.inf.pp.clash.model.snapshot.Hero;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
+import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
-import it.unibz.inf.pp.clash.model.snapshot.impl.AbstractSnapshot;
+import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
@@ -12,13 +17,19 @@ import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 
 import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor.*;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Optional;
+import java.util.Random;
 
 /**
  * This class is a dummy implementation, for demonstration purposes.
  * It should not appear in the final project.
  */
-public class AnotherDummySnapshot extends AbstractSnapshot implements Snapshot {
+public class AnotherDummySnapshot implements Snapshot {
 
 
     /**
@@ -26,28 +37,58 @@ public class AnotherDummySnapshot extends AbstractSnapshot implements Snapshot {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	protected final Board board;
+    private final Hero firstHero;
+    private final Hero secondHero;
+    private Player activeplayer;
+    private int actionsRemaining;
+    protected TileCoordinates ongoingMove;
+    
 	public AnotherDummySnapshot(String firstHeroName, String secondHeroName) {
-        super(
-                new HeroImpl(firstHeroName, 20),
-                new HeroImpl(secondHeroName, 10),
-                BoardImpl.createEmptyBoard(11, 7),
-                Player.FIRST,
-                2,
-                null
-        );
+        firstHero = new HeroImpl(firstHeroName, 20);
+        secondHero = new HeroImpl(secondHeroName, 10);
+        board = BoardImpl.createEmptyBoard(11, 7);
+        activeplayer = Player.FIRST;
+        actionsRemaining = 2;
+        ongoingMove = null;
 //        this.ongoingMove = new TileCoordinates(6, 1);
         populateTiles();
     }
 
-    public void populateTiles() {
+    public Board getBoard() {
+        return board;
+    }
 
+    @Override
+    public Hero getHero(Player player) {
+        return switch (player) {
+            case FIRST -> firstHero;
+            case SECOND -> secondHero;
+        };
+    }
+
+    @Override
+    public Player getActivePlayer() {
+        return activeplayer;
+    }
+
+    @Override
+    public Optional<TileCoordinates> getOngoingMove() {
+        return Optional.ofNullable(ongoingMove);
+    }
+
+    @Override
+    public int getNumberOfRemainingActions() {
+        return actionsRemaining;
+    }	
+		
+    public void populateTiles() {
         Unicorn bigUnicorn = new Unicorn(THREE);
         bigUnicorn.setAttackCountdown(2);
         bigUnicorn.setHealth(10);
         Fairy bigFairy = new Fairy(TWO);
         bigFairy.setAttackCountdown(3);
         bigFairy.setHealth(15);
-
         //Player 2
         board.addUnit(4, 0, new Fairy(THREE));
         board.addUnit(5, 0, new Wall());
@@ -81,7 +122,6 @@ public class AnotherDummySnapshot extends AbstractSnapshot implements Snapshot {
 
 	@Override
 	public void serializeSnapshot(String path) throws IOException {
-		// TODO Auto-generated method stub
 		
 	}
 }
