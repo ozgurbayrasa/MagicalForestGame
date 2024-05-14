@@ -6,6 +6,7 @@ import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
@@ -85,15 +86,14 @@ public class BoardImpl implements Board {
     // we look every square in that sub-board.
     @Override
     public int countUnits(Player player) {
-        Set<Unit> units = new HashSet<>();
-
+    	int unitCount = 0;
         switch (player){
             case FIRST -> {
                 for (int rowInd = ((getMaxRowIndex() / 2) + 1); rowInd <= getMaxRowIndex(); rowInd++) {
                     Unit[] row = grid[rowInd];
                     for (Unit unit : row) {
                         if (unit != null) {
-                            units.add(unit);
+                        	unitCount++;
                         }
                     }
                 }
@@ -104,14 +104,14 @@ public class BoardImpl implements Board {
                     Unit[] row = grid[rowInd];
                     for (Unit unit : row) {
                         if (unit != null) {
-                            units.add(unit);
+                        	unitCount++;
                         }
                     }
                 }
             }
         }
 
-        return units.size();
+        return unitCount;
     }
 
     private void checkBoundaries(int rowIndex, int columnIndex) throws CoordinatesOutOfBoardException {
@@ -153,5 +153,6 @@ public class BoardImpl implements Board {
 			}
 		}
 	}
+	
 }
 

@@ -90,7 +90,7 @@ public class SnapshotImpl implements Snapshot {
 					}
 				}
 			}
-			 board.moveUnitsIn(Player.FIRST);
+			board.moveUnitsIn(Player.FIRST);
 			
 			numberOfUnits = 0;
 			for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
@@ -105,7 +105,7 @@ public class SnapshotImpl implements Snapshot {
 					}
 				}
 			}
-			 board.moveUnitsIn(Player.SECOND);
+			board.moveUnitsIn(Player.SECOND);
 	    }			
 
 	    @Override
@@ -126,10 +126,10 @@ public class SnapshotImpl implements Snapshot {
 				}
 			return deserializedSnapshot;
 		}
-
-	@Override
-	public int getSizeOfReinforcement(Player player) {
-        return (board.getAllowedUnits() - board.countUnits(player));
-	}
+		
+		@Override
+		public int getSizeOfReinforcement(Player player) {
+	        return (board.getAllowedUnits() - board.countUnits(player));
+		}
 
 }

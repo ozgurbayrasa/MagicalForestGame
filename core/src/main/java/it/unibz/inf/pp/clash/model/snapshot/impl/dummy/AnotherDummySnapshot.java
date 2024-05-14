@@ -115,13 +115,13 @@ public class AnotherDummySnapshot implements Snapshot {
         board.addUnit(7, 7, new Butterfly(ONE));
     }
 
-    @Override
-    public int getSizeOfReinforcement(Player player) {
-        return (board.getAllowedUnits() - board.countUnits(player));
-    }
-
 	@Override
 	public void serializeSnapshot(String path) throws IOException {
 		
+	}
+
+	@Override
+	public int getSizeOfReinforcement(Player player) {
+		return 0;
 	}
 }

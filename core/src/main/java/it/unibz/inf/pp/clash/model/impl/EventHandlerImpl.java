@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Random;
 
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
@@ -14,6 +15,10 @@ import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.DummySnapshot;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
@@ -73,8 +78,62 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void callReinforcement() {
-		// TODO Auto-generated method stub
-		
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		int reinforcementSize = s.getSizeOfReinforcement(activePlayer);
+		Unit[] units = {new Butterfly(UnitColor.ONE), new Butterfly(UnitColor.TWO), new Butterfly(UnitColor.THREE), 
+				new Fairy(UnitColor.ONE), new Fairy(UnitColor.TWO), new Fairy(UnitColor.THREE), 
+				new Unicorn(UnitColor.ONE), new Unicorn(UnitColor.TWO), new Unicorn(UnitColor.THREE)};
+				Random random = new Random();
+		if(reinforcementSize <= 0) {
+			try {
+				displayManager.updateMessage("No available reinforcements!");
+				return;
+			} catch (NoGameOnScreenException e) {
+				e.printStackTrace();
+			}
+		}
+		switch(activePlayer) {
+			case FIRST -> {
+				loop:
+				while(reinforcementSize > 0) {
+					for(int i = ((board.getMaxRowIndex() / 2) + 2); i <= board.getMaxRowIndex(); i++) {
+			            for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
+			            		if(random.nextBoolean()) {
+									int unitIndex = random.nextInt(units.length);
+				                    Unit unit = units[unitIndex];
+				                    board.addUnit(i, j, unit);
+				                    reinforcementSize--;
+				                    continue loop;
+			            		}
+							}
+			            }
+			        }
+				}
+				board.moveUnitsIn(activePlayer);
+			}
+			case SECOND -> {
+				loop:
+				while(reinforcementSize > 0) {
+					for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
+						for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
+			            		if(random.nextBoolean()) {
+									int unitIndex = random.nextInt(units.length);
+				                    Unit unit = units[unitIndex];
+				                    board.addUnit(i, j, unit);
+				                    reinforcementSize--;
+				                    continue loop;
+			            		}
+							}
+			            }
+			        }
+				}
+				board.moveUnitsIn(activePlayer);
+			}
+		}
+		displayManager.drawSnapshot(s, "Player " + activePlayer + " called reinforcements!");
 	}
 
 	@Override
