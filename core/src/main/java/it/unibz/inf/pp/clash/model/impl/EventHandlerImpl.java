@@ -4,6 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 import it.unibz.inf.pp.clash.model.EventHandler;
@@ -26,12 +31,13 @@ public class EventHandlerImpl implements EventHandler {
 
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
+    private Snapshot s;
+    private List<Optional<Unit>> reinforcementsFIRST = new ArrayList<>(),
+    						 	 reinforcementsSECOND = new ArrayList<>();
     
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
     }
-
-    Snapshot s;
     
 	@Override
 	public void newGame(String firstHero, String secondHero) {
@@ -78,13 +84,13 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void callReinforcement() {
-		Board board = s.getBoard();
+	    Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		int reinforcementSize = s.getSizeOfReinforcement(activePlayer);
-		Unit[] units = {new Butterfly(UnitColor.ONE), new Butterfly(UnitColor.TWO), new Butterfly(UnitColor.THREE), 
-				new Fairy(UnitColor.ONE), new Fairy(UnitColor.TWO), new Fairy(UnitColor.THREE), 
-				new Unicorn(UnitColor.ONE), new Unicorn(UnitColor.TWO), new Unicorn(UnitColor.THREE)};
-				Random random = new Random();
+//		Unit[] units = {new Butterfly(UnitColor.ONE), new Butterfly(UnitColor.TWO), new Butterfly(UnitColor.THREE), 
+//				new Fairy(UnitColor.ONE), new Fairy(UnitColor.TWO), new Fairy(UnitColor.THREE), 
+//				new Unicorn(UnitColor.ONE), new Unicorn(UnitColor.TWO), new Unicorn(UnitColor.THREE)};
+		Random random = new Random();
 		if(reinforcementSize <= 0) {
 			try {
 				displayManager.updateMessage("No available reinforcements!");
@@ -101,9 +107,10 @@ public class EventHandlerImpl implements EventHandler {
 			            for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
 			            		if(random.nextBoolean()) {
-									int unitIndex = random.nextInt(units.length);
-				                    Unit unit = units[unitIndex];
+									int unitIndex = random.nextInt(reinforcementsFIRST.size());
+				                    Unit unit = reinforcementsFIRST.get(unitIndex).orElse(null);
 				                    board.addUnit(i, j, unit);
+				                    reinforcementsFIRST.remove(unitIndex);
 				                    reinforcementSize--;
 				                    continue loop;
 			            		}
@@ -120,9 +127,10 @@ public class EventHandlerImpl implements EventHandler {
 						for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
 			            		if(random.nextBoolean()) {
-									int unitIndex = random.nextInt(units.length);
-				                    Unit unit = units[unitIndex];
+									int unitIndex = random.nextInt(reinforcementsSECOND.size());
+				                    Unit unit = reinforcementsSECOND.get(unitIndex).orElse(null);
 				                    board.addUnit(i, j, unit);
+				                    reinforcementsSECOND.remove(unitIndex);
 				                    reinforcementSize--;
 				                    continue loop;
 			            		}
@@ -159,7 +167,48 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void deleteUnit(int rowIndex, int columnIndex) {
-		// TODO Auto-generated method stub
-		
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		if(!board.getUnit(rowIndex, columnIndex).isEmpty() && board.areValidCoordinates(rowIndex, columnIndex)) {
+			switch(activePlayer) {
+				case FIRST -> {
+					if(rowIndex > board.getMaxRowIndex() / 2) {
+						reinforcementsFIRST.add(board.getUnit(rowIndex, columnIndex));
+						board.removeUnit(rowIndex, columnIndex);
+			        	s.getSizeOfReinforcement(activePlayer);
+					} else {
+						try {
+							displayManager.updateMessage("Cannot remove unit!");
+							return;
+						} catch (NoGameOnScreenException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				case SECOND -> {
+					if(rowIndex < (board.getMaxRowIndex() + 1) / 2) {
+						reinforcementsSECOND.add(board.getUnit(rowIndex, columnIndex));
+						board.removeUnit(rowIndex, columnIndex);
+			        	s.getSizeOfReinforcement(activePlayer);
+					} else {
+						try {
+							displayManager.updateMessage("Cannot remove unit!");
+							return;
+						} catch (NoGameOnScreenException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			board.moveUnitsIn(activePlayer);
+		} else {
+			try {
+				displayManager.updateMessage("Cannot remove unit!");
+				return;
+			} catch (NoGameOnScreenException e) {
+				e.printStackTrace();
+			}
+		}
+		displayManager.drawSnapshot(s, "Player " + activePlayer + " deleted unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
 	}
 }
