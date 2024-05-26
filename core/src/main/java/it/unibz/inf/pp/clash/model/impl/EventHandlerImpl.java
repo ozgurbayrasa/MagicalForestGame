@@ -87,9 +87,6 @@ public class EventHandlerImpl implements EventHandler {
 	    Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		int reinforcementSize = s.getSizeOfReinforcement(activePlayer);
-//		Unit[] units = {new Butterfly(UnitColor.ONE), new Butterfly(UnitColor.TWO), new Butterfly(UnitColor.THREE), 
-//				new Fairy(UnitColor.ONE), new Fairy(UnitColor.TWO), new Fairy(UnitColor.THREE), 
-//				new Unicorn(UnitColor.ONE), new Unicorn(UnitColor.TWO), new Unicorn(UnitColor.THREE)};
 		Random random = new Random();
 		if(reinforcementSize <= 0) {
 			try {
