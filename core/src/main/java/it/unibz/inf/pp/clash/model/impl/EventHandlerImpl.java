@@ -78,10 +78,9 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void skipTurn() {
-		// TODO Auto-generated method stub
-		
-	}
 
+	}
+		
 	@Override
 	public void callReinforcement() {
 	    Board board = s.getBoard();
