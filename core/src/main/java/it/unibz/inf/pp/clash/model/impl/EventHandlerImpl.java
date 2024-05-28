@@ -80,7 +80,7 @@ public class EventHandlerImpl implements EventHandler {
 	public void skipTurn() {
 
 	}
-		
+	
 	@Override
 	public void callReinforcement() {
 	    Board board = s.getBoard();
