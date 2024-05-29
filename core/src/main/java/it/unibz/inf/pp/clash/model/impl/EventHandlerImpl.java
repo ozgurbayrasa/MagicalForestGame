@@ -78,8 +78,31 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void skipTurn() {
-
-	}
+			// Get the current active player
+			Player activePlayer = s.getActivePlayer();
+		
+			// Determine the next player using an if-else statement
+			Player nextPlayer;
+			if (activePlayer == Player.FIRST) {
+				nextPlayer = Player.SECOND;
+			} else {
+				nextPlayer = Player.FIRST;
+			}
+		
+			// Use reflection to update the active player field
+			try {
+				java.lang.reflect.Field field = SnapshotImpl.class.getDeclaredField("activeplayer");
+				field.setAccessible(true);
+				field.set(s, nextPlayer);
+			} catch (NoSuchFieldException | IllegalAccessException e) {
+				e.printStackTrace();
+				return;
+			}
+		
+			// Update the display with the new snapshot
+			displayManager.drawSnapshot(s, "Player " + nextPlayer + "skipped his turn!");
+		}
+		
 	
 	@Override
 	public void callReinforcement() {
