@@ -32,8 +32,8 @@ public class EventHandlerImpl implements EventHandler {
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
-    private List<Optional<Unit>> reinforcementsFIRST = new ArrayList<>(),
-    						 	 reinforcementsSECOND = new ArrayList<>();
+    private final List<Optional<Unit>> reinforcementsFIRST = new ArrayList<>();
+    private final List<Optional<Unit>> reinforcementsSECOND = new ArrayList<>();
     
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -56,12 +56,10 @@ public class EventHandlerImpl implements EventHandler {
 		if(new File(path).exists()) {
 			try {
 				s = SnapshotImpl.deserializeSnapshot(path);
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
+			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
-			displayManager.drawSnapshot(s, "The game has been continued!");
+            displayManager.drawSnapshot(s, "The game has been continued!");
 		}
 	}
 
@@ -78,8 +76,9 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void skipTurn() {
-
+		// TODO Auto-generated method stub
 	}
+
 	@Override
 	public void callReinforcement() {
 	    Board board = s.getBoard();
@@ -164,7 +163,7 @@ public class EventHandlerImpl implements EventHandler {
 	public void deleteUnit(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
-		if(!board.getUnit(rowIndex, columnIndex).isEmpty() && board.areValidCoordinates(rowIndex, columnIndex)) {
+		if(board.getUnit(rowIndex, columnIndex).isPresent() && board.areValidCoordinates(rowIndex, columnIndex)) {
 			switch(activePlayer) {
 				case FIRST -> {
 					if(rowIndex > board.getMaxRowIndex() / 2) {
