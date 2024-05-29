@@ -100,7 +100,7 @@ public class EventHandlerImpl implements EventHandler {
 			}
 		
 			// Update the display with the new snapshot
-			displayManager.drawSnapshot(s, "Player " + nextPlayer + "skipped his turn!");
+			displayManager.drawSnapshot(s, "Player " + activePlayer + " skipped his turn!");
 		}
 		
 	
