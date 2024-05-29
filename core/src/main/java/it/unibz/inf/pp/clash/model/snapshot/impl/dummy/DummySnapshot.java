@@ -65,6 +65,11 @@ public class DummySnapshot implements Snapshot {
     }
 
     @Override
+    public void setActivePlayer(Player nextPlayer) {
+        this.activeplayer = nextPlayer;
+    }
+
+    @Override
     public Optional<TileCoordinates> getOngoingMove() {
         return Optional.ofNullable(ongoingMove);
     }

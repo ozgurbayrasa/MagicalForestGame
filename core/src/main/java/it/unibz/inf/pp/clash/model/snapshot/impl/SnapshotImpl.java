@@ -61,6 +61,11 @@ public class SnapshotImpl implements Snapshot {
 	        return activeplayer;
 	    }
 
+		@Override
+		public void setActivePlayer(Player nextPlayer) {
+			this.activeplayer = nextPlayer;
+		}
+
 	    @Override
 	    public Optional<TileCoordinates> getOngoingMove() {
 	        return Optional.ofNullable(ongoingMove);

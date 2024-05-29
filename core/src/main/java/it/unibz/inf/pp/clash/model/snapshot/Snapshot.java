@@ -28,6 +28,11 @@ public interface Snapshot extends Serializable{
     Player getActivePlayer();
 
     /**
+     * Switches the active player.
+     */
+    void setActivePlayer(Player nextPlayer);
+
+    /**
      * @return the number of remaining actions for the active player
      */
     int getNumberOfRemainingActions();
