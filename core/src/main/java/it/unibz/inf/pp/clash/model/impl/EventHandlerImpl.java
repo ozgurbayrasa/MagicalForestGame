@@ -206,7 +206,7 @@ public class EventHandlerImpl implements EventHandler {
 			return rowIndex >= startRow && rowIndex <= board.getMaxRowIndex();
 		} else if (activePlayer == Player.SECOND) {
 			int endRow = halfBoard;
-			return rowIndex >= 0 && rowIndex <= endRow;
+			return rowIndex >= 0 && rowIndex < endRow;
 		}
 		return false;
 	}
