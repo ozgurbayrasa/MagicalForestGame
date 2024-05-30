@@ -75,6 +75,11 @@ public class DummySnapshot implements Snapshot {
     }
 
     @Override
+    public void setOngoingMove(TileCoordinates ongoingMove) {
+        this.ongoingMove = ongoingMove;
+    }
+
+    @Override
     public int getNumberOfRemainingActions() {
         return actionsRemaining;
     }	

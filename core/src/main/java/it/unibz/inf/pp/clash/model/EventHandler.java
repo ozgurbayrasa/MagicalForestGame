@@ -1,5 +1,7 @@
 package it.unibz.inf.pp.clash.model;
 
+import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
+
 public interface EventHandler {
 
     /**
@@ -47,7 +49,7 @@ public interface EventHandler {
      * - if there is no ongoing move and the tile is empty,
      * - etc.
      */
-    void selectTile(int rowIndex, int columnIndex);
+    void selectTile(int rowIndex, int columnIndex) throws NoGameOnScreenException;
 
     /**
      * This method is called if the user tries to delete the unit standing on the tile with coordinates

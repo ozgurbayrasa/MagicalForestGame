@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Random;
 
 import it.unibz.inf.pp.clash.model.EventHandler;
+import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
@@ -34,6 +35,7 @@ public class EventHandlerImpl implements EventHandler {
     private Snapshot s;
     private final List<Optional<Unit>> reinforcementsFIRST = new ArrayList<>(),
 									   reinforcementsSECOND = new ArrayList<>();
+
     
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -162,9 +164,74 @@ public class EventHandlerImpl implements EventHandler {
     }
 
 	@Override
-	public void selectTile(int rowIndex, int columnIndex) {
-		// TODO Auto-generated method stub
-		
+	public void selectTile(int rowIndex, int columnIndex) throws CoordinatesOutOfBoardException {
+		Board board = s.getBoard();
+		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
+
+		// Check if the selected tile is within the board limits.
+		if (!board.areValidCoordinates(rowIndex, columnIndex)) {
+			return;
+		}
+
+		// Check if the tile is on the active player's board
+		Player activePlayer = s.getActivePlayer();
+		if (!isTileOnActivePlayerBoard(activePlayer, board, rowIndex)) {
+			displayErrorMessage("Error: Selected tile is not on the active player's board.");
+			return;
+		}
+
+		// Check if the selected tile is empty when there isn't any ongoing move
+		if (board.getUnit(rowIndex, columnIndex).isEmpty() && ongoingMove.isEmpty()) {
+			displayErrorMessage("Error: Selected tile can't be empty when there isn't any ongoing move.");
+			return;
+		}
+
+		if(board.getUnit(rowIndex, columnIndex).isPresent() && ongoingMove.isPresent()){
+			displayErrorMessage("Error: Selected tile must be empty when there is ongoing move.");
+			return;
+		}
+
+		// Select tile and set according to ongoing move.
+		if (ongoingMove.isEmpty()) {
+			startNewMove(rowIndex, columnIndex);
+		} else if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
+			completeMove(ongoingMove.get(), rowIndex, columnIndex, board);
+		}
+	}
+
+	private boolean isTileOnActivePlayerBoard(Player activePlayer, Board board, int rowIndex) {
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
+		if (activePlayer == Player.FIRST) {
+			int startRow = halfBoard;
+			return rowIndex >= startRow && rowIndex <= board.getMaxRowIndex();
+		} else if (activePlayer == Player.SECOND) {
+			int endRow = halfBoard;
+			return rowIndex >= 0 && rowIndex <= endRow;
+		}
+		return false;
+	}
+
+	private void displayErrorMessage(String message) {
+		try {
+			displayManager.updateMessage(message);
+		} catch (NoGameOnScreenException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void startNewMove(int rowIndex, int columnIndex) {
+		s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
+		try {
+			displayManager.updateMessage("Ongoing move: (" + rowIndex + "," + columnIndex + ")");
+		} catch (NoGameOnScreenException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void completeMove(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board) {
+		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
+		s.setOngoingMove(null);
+		displayManager.drawSnapshot(s, "Successful move: (" + rowIndex + "," + columnIndex + ")");
 	}
 
 	@Override

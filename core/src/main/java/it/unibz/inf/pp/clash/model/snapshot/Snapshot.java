@@ -40,9 +40,14 @@ public interface Snapshot extends Serializable{
     /**
      * @return if the active player has selected the initial tile of his/her next move, then returns the coordinates of
      * this tile.
-     * Otherwise returns Optional.empty().
+     * Otherwise, returns Optional.empty().
      */
     Optional<TileCoordinates> getOngoingMove();
+
+    /**
+     * Sets the ongoing move.
+     */
+    void setOngoingMove(TileCoordinates ongoingMove);
 
     /**
      * @return the number of units that will enter the board if reinforcement is called for the input {@code player}

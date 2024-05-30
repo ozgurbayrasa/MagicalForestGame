@@ -71,7 +71,12 @@ public class SnapshotImpl implements Snapshot {
 	        return Optional.ofNullable(ongoingMove);
 	    }
 
-	    @Override
+		@Override
+		public void setOngoingMove(TileCoordinates ongoingMove) {
+			this.ongoingMove = ongoingMove;
+		}
+
+		@Override
 	    public int getNumberOfRemainingActions() {
 	        return actionsRemaining;
 	    }
