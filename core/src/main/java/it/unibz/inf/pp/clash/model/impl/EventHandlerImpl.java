@@ -163,6 +163,7 @@ public class EventHandlerImpl implements EventHandler {
         }
     }
 
+	// This method simply allows user to select a unit from their board and put it somewhere in their board.
 	@Override
 	public void selectTile(int rowIndex, int columnIndex) throws CoordinatesOutOfBoardException {
 		Board board = s.getBoard();
@@ -199,6 +200,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
+	// Helper method simply returns if tile on active player's board.
 	private boolean isTileOnActivePlayerBoard(Player activePlayer, Board board, int rowIndex) {
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		if (activePlayer == Player.FIRST) {
@@ -211,6 +213,7 @@ public class EventHandlerImpl implements EventHandler {
 		return false;
 	}
 
+	// Helper method for displaying error messages.
 	private void displayErrorMessage(String message) {
 		try {
 			displayManager.updateMessage(message);
@@ -219,6 +222,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
+	// Helper method for starting a new move (since there isn't any ongoing move).
 	private void startNewMove(int rowIndex, int columnIndex) {
 		s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
 		try {
@@ -228,6 +232,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
+	// Helper method for completing a move which has an ongoing move.
 	private void completeMove(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board, Player activePlayer) {
 		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
 		board.moveUnitsIn(activePlayer);
