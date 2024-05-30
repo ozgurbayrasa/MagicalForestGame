@@ -195,7 +195,7 @@ public class EventHandlerImpl implements EventHandler {
 		if (ongoingMove.isEmpty()) {
 			startNewMove(rowIndex, columnIndex);
 		} else if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
-			completeMove(ongoingMove.get(), rowIndex, columnIndex, board);
+			completeMove(ongoingMove.get(), rowIndex, columnIndex, board, activePlayer);
 		}
 	}
 
@@ -228,10 +228,11 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
-	private void completeMove(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board) {
+	private void completeMove(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board, Player activePlayer) {
 		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
+		board.moveUnitsIn(activePlayer);
 		s.setOngoingMove(null);
-		displayManager.drawSnapshot(s, "Successful move: (" + rowIndex + "," + columnIndex + ")");
+		displayManager.drawSnapshot(s, "Successful move");
 	}
 
 	@Override
