@@ -130,8 +130,11 @@ public class BoardImpl implements Board {
 	public void moveUnitsIn(Player player) {
 		switch(player) {
 			case FIRST -> {
+                // Repeat until all units are moved in.
 				for(int n = 0; n < ((getMaxRowIndex() + 1) / 2); n ++) {
+                    // Repeat for every column.
 					for(int i = ((getMaxRowIndex() / 2) + 2); i <= getMaxRowIndex(); i++) {
+                        // Repeat for every row.
 			            for(int j = 0; j < getMaxColumnIndex() + 1; j++) {
 			            	if(getUnit(i - 1, j).isEmpty() && areValidCoordinates(i - 1, j)) {
 								moveUnit(i, j, i - 1, j);
@@ -141,8 +144,11 @@ public class BoardImpl implements Board {
 				}
 			}
 			case SECOND -> {
+                // Repeat until all units are moved in.
 				for(int n = 0; n < ((getMaxRowIndex() + 1) / 2); n ++) {
+                    // Repeat for every column.
 					for(int i = 0; i < ((getMaxRowIndex() / 2)); i++) {
+                        // Repeat for every row.
 			            for(int j = 0; j < getMaxColumnIndex() + 1; j++) {
 			            	if(getUnit(i + 1, j).isEmpty() && areValidCoordinates(i + 1, j)) {
 								moveUnit(i, j, i + 1, j);

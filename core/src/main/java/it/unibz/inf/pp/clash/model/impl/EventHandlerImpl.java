@@ -2,12 +2,6 @@ package it.unibz.inf.pp.clash.model.impl;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -19,12 +13,7 @@ import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
-import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.DummySnapshot;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
-import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
@@ -33,9 +22,6 @@ public class EventHandlerImpl implements EventHandler {
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
-    private final List<Optional<Unit>> reinforcementsFIRST = new ArrayList<>(),
-									   reinforcementsSECOND = new ArrayList<>();
-
     
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -67,6 +53,7 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void exitGame() {
+		// Serialize the last snapshot
 		Snapshot toSerialize = s;
 		try {
 			toSerialize.serializeSnapshot(path);
@@ -93,64 +80,63 @@ public class EventHandlerImpl implements EventHandler {
 	public void callReinforcement() {
 	    Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
-		int reinforcementSize = s.getSizeOfReinforcement(activePlayer);
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		Random random = new Random();
-		if(reinforcementSize <= 0) {
-			try {
-				displayManager.updateMessage("No available reinforcements!");
-				return;
-			} catch (NoGameOnScreenException e) {
-				e.printStackTrace();
-			}
+		// Check if the active player has deleted units.
+		if(s.getSizeOfReinforcement(activePlayer) <= 0) {
+			displayErrorMessage("No available reinforcements!");
 		}
 		switch(activePlayer) {
 			case FIRST -> {
+				// Repeat until reinforcements are depleted.
 				loop:
-				while(reinforcementSize > 0) {
-					for(int i = ((board.getMaxRowIndex() / 2) + 2); i <= board.getMaxRowIndex(); i++) {
+				while(s.getSizeOfReinforcement(activePlayer) > 0) {
+					for(int i = halfBoard; i <= board.getMaxRowIndex(); i++) {
 			            for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
 			            		if(random.nextBoolean()) {
-									int unitIndex = random.nextInt(reinforcementsFIRST.size());
-				                    Unit unit = reinforcementsFIRST.get(unitIndex).orElse(null);
+									// Select random (possibly null) reinforcement unit.
+									int unitIndex = random.nextInt(s.getSizeOfReinforcement(activePlayer));
+				                    Unit unit = s.getReinforcementList(activePlayer).get(unitIndex).orElse(null);
+									// Add unit to board and remove from list.
 				                    board.addUnit(i, j, unit);
-				                    reinforcementsFIRST.remove(unitIndex);
-				                    reinforcementSize--;
+									s.getReinforcementList(activePlayer).remove(unitIndex);
 				                    continue loop;
 			            		}
 							}
 			            }
 			        }
 				}
-				board.moveUnitsIn(activePlayer);
 			}
 			case SECOND -> {
+				// Repeat until reinforcements are depleted.
 				loop:
-				while(reinforcementSize > 0) {
+				while(s.getSizeOfReinforcement(activePlayer) > 0) {
 					for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
 						for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
 			            		if(random.nextBoolean()) {
-									int unitIndex = random.nextInt(reinforcementsSECOND.size());
-				                    Unit unit = reinforcementsSECOND.get(unitIndex).orElse(null);
-				                    board.addUnit(i, j, unit);
-				                    reinforcementsSECOND.remove(unitIndex);
-				                    reinforcementSize--;
+									// Select random (possibly null) reinforcement unit.
+									int unitIndex = random.nextInt(s.getSizeOfReinforcement(activePlayer));
+									Unit unit = s.getReinforcementList(activePlayer).get(unitIndex).orElse(null);
+									// Add unit to board and remove from list.
+									board.addUnit(i, j, unit);
+									s.getReinforcementList(activePlayer).remove(unitIndex);
 				                    continue loop;
 			            		}
 							}
 			            }
 			        }
 				}
-				board.moveUnitsIn(activePlayer);
 			}
 		}
+		board.moveUnitsIn(activePlayer);
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " called reinforcements!");
 	}
 
 	@Override
     public void requestInformation(int rowIndex, int columnIndex) {
-		// TODO info about unit
+		// TODO info about unit?
         try {
             displayManager.updateMessage(
                     String.format(
@@ -176,7 +162,7 @@ public class EventHandlerImpl implements EventHandler {
 
 		// Check if the tile is on the active player's board
 		Player activePlayer = s.getActivePlayer();
-		if (!isTileOnActivePlayerBoard(activePlayer, board, rowIndex)) {
+		if (tileIsOnActivePlayerBoard(activePlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
 			return;
 		}
@@ -201,16 +187,14 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	// Helper method simply returns if tile on active player's board.
-	private boolean isTileOnActivePlayerBoard(Player activePlayer, Board board, int rowIndex) {
+	private boolean tileIsOnActivePlayerBoard(Player activePlayer, Board board, int rowIndex) {
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		if (activePlayer == Player.FIRST) {
-			int startRow = halfBoard;
-			return rowIndex >= startRow && rowIndex <= board.getMaxRowIndex();
+            return rowIndex < halfBoard || rowIndex > board.getMaxRowIndex();
 		} else if (activePlayer == Player.SECOND) {
-			int endRow = halfBoard;
-			return rowIndex >= 0 && rowIndex < endRow;
+            return rowIndex < 0 || rowIndex >= halfBoard;
 		}
-		return false;
+		return true;
 	}
 
 	// Helper method for displaying error messages.
@@ -237,53 +221,32 @@ public class EventHandlerImpl implements EventHandler {
 		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
 		board.moveUnitsIn(activePlayer);
 		s.setOngoingMove(null);
-		displayManager.drawSnapshot(s, "Successful move");
+		displayManager.drawSnapshot(s, "Successful move!");
 	}
 
 	@Override
 	public void deleteUnit(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
-		if(board.getUnit(rowIndex, columnIndex).isPresent() && board.areValidCoordinates(rowIndex, columnIndex)) {
-			switch(activePlayer) {
-				case FIRST -> {
-					if(rowIndex > board.getMaxRowIndex() / 2) {
-						reinforcementsFIRST.add(board.getUnit(rowIndex, columnIndex));
-						board.removeUnit(rowIndex, columnIndex);
-			        	s.getSizeOfReinforcement(activePlayer);
-					} else {
-						try {
-							displayManager.updateMessage("Cannot remove unit!");
-							return;
-						} catch (NoGameOnScreenException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-				case SECOND -> {
-					if(rowIndex < (board.getMaxRowIndex() + 1) / 2) {
-						reinforcementsSECOND.add(board.getUnit(rowIndex, columnIndex));
-						board.removeUnit(rowIndex, columnIndex);
-			        	s.getSizeOfReinforcement(activePlayer);
-					} else {
-						try {
-							displayManager.updateMessage("Cannot remove unit!");
-							return;
-						} catch (NoGameOnScreenException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-			}
-			board.moveUnitsIn(activePlayer);
-		} else {
-			try {
-				displayManager.updateMessage("Cannot remove unit!");
-				return;
-			} catch (NoGameOnScreenException e) {
-				e.printStackTrace();
-			}
+		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
+		// Check if the selected tile is within the board limits.
+		if(!board.areValidCoordinates(rowIndex, columnIndex)) {
+			return;
 		}
-		displayManager.drawSnapshot(s, "Player " + activePlayer + " deleted unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
+		// Check if the tile is on the active player's board.
+		if(tileIsOnActivePlayerBoard(activePlayer, board, rowIndex)) {
+			displayErrorMessage("Error: Selected tile is not on the active player's board.");
+			return;
+		}
+		// Check if there is an ongoing move.
+		if(ongoingMove.isPresent()) {
+			displayErrorMessage("Error: Cannot delete unit during an ongoing move.");
+		} else {
+			// Add the unit to the reinforcement list and remove it from the board.
+			s.getReinforcementList(activePlayer).add(board.getUnit(rowIndex, columnIndex));
+			board.removeUnit(rowIndex, columnIndex);
+			board.moveUnitsIn(activePlayer);
+			displayManager.drawSnapshot(s, "Player " + activePlayer + " deleted unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
+		}
 	}
 }

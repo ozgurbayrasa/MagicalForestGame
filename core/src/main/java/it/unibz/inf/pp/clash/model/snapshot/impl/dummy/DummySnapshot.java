@@ -7,6 +7,7 @@ import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
+import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
@@ -15,6 +16,7 @@ import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -131,4 +133,9 @@ public class DummySnapshot implements Snapshot {
 	public int getSizeOfReinforcement(Player player) {
 		return 0;
 	}
+
+    @Override
+    public List<Optional<Unit>> getReinforcementList(Player player) {
+        return List.of();
+    }
 }

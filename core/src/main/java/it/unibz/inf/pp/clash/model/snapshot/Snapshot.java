@@ -1,7 +1,10 @@
 package it.unibz.inf.pp.clash.model.snapshot;
 
+import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -53,10 +56,17 @@ public interface Snapshot extends Serializable{
      * @return the number of units that will enter the board if reinforcement is called for the input {@code player}
      */
     int getSizeOfReinforcement(Player player);
-    
+
+    /**
+     *
+     * @param player
+     * @return list of reinforcements for the specified player
+     */
+    List<Optional<Unit>> getReinforcementList(Player player);
+
     /**
      * Serializes the snapshot when exiting a game
-     * @param snapshot
+     * @param path to Snapshot
      * @throws IOException
      */
     void serializeSnapshot(String path) throws IOException;

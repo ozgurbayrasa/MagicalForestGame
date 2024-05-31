@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -32,6 +34,9 @@ public class SnapshotImpl implements Snapshot {
 	    private Player activeplayer;
 	    private int actionsRemaining;
 	    protected TileCoordinates ongoingMove;
+
+		private final List<Optional<Unit>> reinforcementsFIRST = new ArrayList<>(),
+										   reinforcementsSECOND = new ArrayList<>();
 
 	    public SnapshotImpl(Hero firstHero, Hero secondHero, Board board, Player activeplayer, int actionsRemaining,
 				TileCoordinates ongoingMove) {
@@ -139,7 +144,19 @@ public class SnapshotImpl implements Snapshot {
 		
 		@Override
 		public int getSizeOfReinforcement(Player player) {
-	        return (board.getAllowedUnits() - board.countUnits(player));
+			return getReinforcementList(activeplayer).size();
 		}
 
+		@Override
+		public List<Optional<Unit>> getReinforcementList(Player player) {
+			switch(activeplayer) {
+				case FIRST -> {
+					return reinforcementsFIRST;
+				}
+				case SECOND -> {
+					return reinforcementsSECOND;
+				}
+			}
+			return null;
+		}
 }

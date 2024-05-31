@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -134,4 +135,9 @@ public class AnotherDummySnapshot implements Snapshot {
 	public int getSizeOfReinforcement(Player player) {
 		return 0;
 	}
+
+    @Override
+    public List<Optional<Unit>> getReinforcementList(Player player) {
+        return List.of();
+    }
 }
