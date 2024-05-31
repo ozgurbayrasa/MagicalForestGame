@@ -35,8 +35,8 @@ public class SnapshotImpl implements Snapshot {
 	    private int actionsRemaining;
 	    protected TileCoordinates ongoingMove;
 
-		private final List<Optional<Unit>> reinforcementsFIRST = new ArrayList<>(),
-										   reinforcementsSECOND = new ArrayList<>();
+		private final List<Unit> reinforcementsFIRST = new ArrayList<>(),
+								 reinforcementsSECOND = new ArrayList<>();
 
 	    public SnapshotImpl(Hero firstHero, Hero secondHero, Board board, Player activeplayer, int actionsRemaining,
 				TileCoordinates ongoingMove) {
@@ -148,7 +148,7 @@ public class SnapshotImpl implements Snapshot {
 		}
 
 		@Override
-		public List<Optional<Unit>> getReinforcementList(Player player) {
+		public List<Unit> getReinforcementList(Player player) {
 			switch(activeplayer) {
 				case FIRST -> {
 					return reinforcementsFIRST;
@@ -158,5 +158,21 @@ public class SnapshotImpl implements Snapshot {
 				}
 			}
 			return null;
+		}
+
+		@Override
+		public void addReinforcementToList(Player player, Unit unit) {
+			switch (player) {
+				case FIRST -> reinforcementsFIRST.add(unit);
+				case SECOND -> reinforcementsSECOND.add(unit);
+			}
+		}
+
+		@Override
+		public void removeReinforcementFromList(Player player, int unitIndex) {
+			switch (player) {
+				case FIRST -> reinforcementsFIRST.remove(unitIndex);
+				case SECOND -> reinforcementsSECOND.remove(unitIndex);
+			}
 		}
 }

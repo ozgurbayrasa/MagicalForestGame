@@ -62,7 +62,21 @@ public interface Snapshot extends Serializable{
      * @param player
      * @return list of reinforcements for the specified player
      */
-    List<Optional<Unit>> getReinforcementList(Player player);
+    List<Unit> getReinforcementList(Player player);
+
+    /**
+     *
+     * @param player
+     * @param unit deleted from the board
+     */
+    void addReinforcementToList(Player player, Unit unit);
+
+    /**
+     *
+     * @param player
+     * @param unitIndex of unit added to the board
+     */
+    public void removeReinforcementFromList(Player player, int unitIndex);
 
     /**
      * Serializes the snapshot when exiting a game

@@ -22,23 +22,23 @@ public class EventHandlerImpl implements EventHandler {
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
-    
+
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
     }
-    
+
 	@Override
 	public void newGame(String firstHero, String secondHero) {
 		s = new SnapshotImpl(
-			new HeroImpl(firstHero, 20), 
-			new HeroImpl(secondHero, 20), 
-			BoardImpl.createEmptyBoard(11, 7), 
-			Player.FIRST, 
-			0, 
+			new HeroImpl(firstHero, 20),
+			new HeroImpl(secondHero, 20),
+			BoardImpl.createEmptyBoard(11, 7),
+			Player.FIRST,
+			0,
 			null);
 		displayManager.drawSnapshot(s, "A new game has been started!");
 	}
-	
+
 	@Override
 	public void continueGame() {
 		if(new File(path).exists()) {
@@ -60,7 +60,7 @@ public class EventHandlerImpl implements EventHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        displayManager.drawHomeScreen();		
+        displayManager.drawHomeScreen();
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public class EventHandlerImpl implements EventHandler {
 		s.setActivePlayer(nextPlayer);
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " skipped his turn!");
 	}
-	
+
 	@Override
 	public void callReinforcement() {
 	    Board board = s.getBoard();
@@ -84,7 +84,7 @@ public class EventHandlerImpl implements EventHandler {
 		Random random = new Random();
 		// Check if the active player has deleted units.
 		if(s.getSizeOfReinforcement(activePlayer) <= 0) {
-			displayErrorMessage("No available reinforcements!");
+			displayErrorMessage("No reinforcements available!");
 		}
 		switch(activePlayer) {
 			case FIRST -> {
@@ -97,10 +97,10 @@ public class EventHandlerImpl implements EventHandler {
 			            		if(random.nextBoolean()) {
 									// Select random (possibly null) reinforcement unit.
 									int unitIndex = random.nextInt(s.getSizeOfReinforcement(activePlayer));
-				                    Unit unit = s.getReinforcementList(activePlayer).get(unitIndex).orElse(null);
+				                    Unit unit = s.getReinforcementList(activePlayer).get(unitIndex);
 									// Add unit to board and remove from list.
 				                    board.addUnit(i, j, unit);
-									s.getReinforcementList(activePlayer).remove(unitIndex);
+									s.removeReinforcementFromList(activePlayer, unitIndex);
 				                    continue loop;
 			            		}
 							}
@@ -118,10 +118,10 @@ public class EventHandlerImpl implements EventHandler {
 			            		if(random.nextBoolean()) {
 									// Select random (possibly null) reinforcement unit.
 									int unitIndex = random.nextInt(s.getSizeOfReinforcement(activePlayer));
-									Unit unit = s.getReinforcementList(activePlayer).get(unitIndex).orElse(null);
+									Unit unit = s.getReinforcementList(activePlayer).get(unitIndex);
 									// Add unit to board and remove from list.
 									board.addUnit(i, j, unit);
-									s.getReinforcementList(activePlayer).remove(unitIndex);
+									s.removeReinforcementFromList(activePlayer, unitIndex);
 				                    continue loop;
 			            		}
 							}
@@ -173,7 +173,7 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		}
 
-		if(board.getUnit(rowIndex, columnIndex).isPresent() && ongoingMove.isPresent()){
+		if (board.getUnit(rowIndex, columnIndex).isPresent() && ongoingMove.isPresent()){
 			displayErrorMessage("Error: Selected tile must be empty when there is ongoing move.");
 			return;
 		}
@@ -238,12 +238,17 @@ public class EventHandlerImpl implements EventHandler {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
 			return;
 		}
+		// Check if the tile is empty.
+		if(board.getUnit(rowIndex, columnIndex).isEmpty()) {
+			displayErrorMessage("Error: Selected tile is empty.");
+			return;
+		}
 		// Check if there is an ongoing move.
 		if(ongoingMove.isPresent()) {
 			displayErrorMessage("Error: Cannot delete unit during an ongoing move.");
 		} else {
 			// Add the unit to the reinforcement list and remove it from the board.
-			s.getReinforcementList(activePlayer).add(board.getUnit(rowIndex, columnIndex));
+			s.addReinforcementToList(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
 			board.removeUnit(rowIndex, columnIndex);
 			board.moveUnitsIn(activePlayer);
 			displayManager.drawSnapshot(s, "Player " + activePlayer + " deleted unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
