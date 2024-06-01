@@ -85,37 +85,49 @@ public class SnapshotImpl implements Snapshot {
 	    public int getNumberOfRemainingActions() {
 	        return actionsRemaining;
 	    }
+
+		@Override
+		public void setNumberOfRemainingActions(int defaultActionsRemaining) {
+			actionsRemaining = defaultActionsRemaining;
+		}
 	    
 	    @Override
 	    public void populateTiles() {
+			// Array of all possible units.
 	    	Unit[] units = {new Butterfly(UnitColor.ONE), new Butterfly(UnitColor.TWO), new Butterfly(UnitColor.THREE), 
 	    					new Fairy(UnitColor.ONE), new Fairy(UnitColor.TWO), new Fairy(UnitColor.THREE), 
 	    					new Unicorn(UnitColor.ONE), new Unicorn(UnitColor.TWO), new Unicorn(UnitColor.THREE)};
 			Random random = new Random();
-			int numberOfUnits = 0;
+			int numberOfPlacedUnits = 0;
+			// Repeat for every row.
 			for(int i = (board.getMaxRowIndex() / 2) + 1; i <= board.getMaxRowIndex(); i++) {
+				// Repeat for every column.
 				for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-					if(numberOfUnits < board.getAllowedUnits()) {
+					if(numberOfPlacedUnits < board.getAllowedUnits()) {
 						if(random.nextBoolean()) {
+							// Select random (possibly null) unit and add it to the board.
 							int unitIndex = random.nextInt(units.length);
 		                    Unit unit = units[unitIndex];
 		                    board.addUnit(i, j, unit);
-		                    numberOfUnits++;
+							numberOfPlacedUnits++;
 						}
 					}
 				}
 			}
 			board.moveUnitsIn(Player.FIRST);
-			
-			numberOfUnits = 0;
+
+			numberOfPlacedUnits = 0;
+			// Repeat for every row.
 			for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
+				// Repeat for every column.
 				for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-					if(numberOfUnits < board.getAllowedUnits()) {
+					if(numberOfPlacedUnits < board.getAllowedUnits()) {
 						if(random.nextBoolean()) {
+							// Select random (possibly null) unit and add it to the board.
 							int unitIndex = random.nextInt(units.length);
 		                    Unit unit = units[unitIndex];
 		                    board.addUnit(i, j, unit);
-		                    numberOfUnits++;
+							numberOfPlacedUnits++;
 						}
 					}
 				}
@@ -136,20 +148,20 @@ public class SnapshotImpl implements Snapshot {
 			Snapshot deserializedSnapshot;
 			try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
 				deserializedSnapshot = (Snapshot) in.readObject();
-				} catch (IOException | ClassNotFoundException e ) {
+			} catch (IOException | ClassNotFoundException e ) {
 				  throw new RuntimeException(e);
-				}
+			}
 			return deserializedSnapshot;
 		}
 		
 		@Override
 		public int getSizeOfReinforcement(Player player) {
-			return getReinforcementList(activeplayer).size();
+			return getReinforcementList(player).size();
 		}
 
 		@Override
 		public List<Unit> getReinforcementList(Player player) {
-			switch(activeplayer) {
+			switch(player) {
 				case FIRST -> {
 					return reinforcementsFIRST;
 				}

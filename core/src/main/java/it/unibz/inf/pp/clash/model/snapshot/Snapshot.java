@@ -41,6 +41,12 @@ public interface Snapshot extends Serializable{
     int getNumberOfRemainingActions();
 
     /**
+     * Sets the number of actions remaining.
+     * @param actionsRemaining
+     */
+    void setNumberOfRemainingActions(int actionsRemaining);
+
+    /**
      * @return if the active player has selected the initial tile of his/her next move, then returns the coordinates of
      * this tile.
      * Otherwise, returns Optional.empty().

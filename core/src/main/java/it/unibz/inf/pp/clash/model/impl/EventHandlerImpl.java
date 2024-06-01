@@ -22,6 +22,8 @@ public class EventHandlerImpl implements EventHandler {
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
+	// example value
+	private final int defaultActionsRemaining = 5;
 
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -34,7 +36,7 @@ public class EventHandlerImpl implements EventHandler {
 			new HeroImpl(secondHero, 20),
 			BoardImpl.createEmptyBoard(11, 7),
 			Player.FIRST,
-			0,
+			defaultActionsRemaining,
 			null);
 		displayManager.drawSnapshot(s, "A new game has been started!");
 	}
@@ -63,6 +65,7 @@ public class EventHandlerImpl implements EventHandler {
         displayManager.drawHomeScreen();
 	}
 
+	// Skip the current turn.
 	@Override
 	public void skipTurn() {
 		Player activePlayer = s.getActivePlayer();
@@ -73,7 +76,16 @@ public class EventHandlerImpl implements EventHandler {
 			nextPlayer = Player.FIRST;
 		}
 		s.setActivePlayer(nextPlayer);
+		// Reset number of remaining actions.
+		s.setNumberOfRemainingActions(defaultActionsRemaining);
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " skipped his turn!");
+	}
+
+	// End the current turn when the actions are depleted.
+	public void endTurnIfNoActionsRemaining() {
+		if(s.getNumberOfRemainingActions() == 0) {
+			skipTurn();
+		}
 	}
 
 	@Override
@@ -84,7 +96,11 @@ public class EventHandlerImpl implements EventHandler {
 		Random random = new Random();
 		// Check if the active player has deleted units.
 		if(s.getSizeOfReinforcement(activePlayer) <= 0) {
-			displayErrorMessage("No reinforcements available!");
+			try {
+				displayManager.updateMessage("No reinforcements available!");
+			} catch (NoGameOnScreenException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		switch(activePlayer) {
 			case FIRST -> {
@@ -95,7 +111,7 @@ public class EventHandlerImpl implements EventHandler {
 			            for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
 			            		if(random.nextBoolean()) {
-									// Select random (possibly null) reinforcement unit.
+									// Select random (possibly null) reinforcement unit and add it to the board.
 									int unitIndex = random.nextInt(s.getSizeOfReinforcement(activePlayer));
 				                    Unit unit = s.getReinforcementList(activePlayer).get(unitIndex);
 									// Add unit to board and remove from list.
@@ -116,7 +132,7 @@ public class EventHandlerImpl implements EventHandler {
 						for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
 			            		if(random.nextBoolean()) {
-									// Select random (possibly null) reinforcement unit.
+									// Select random (possibly null) reinforcement unit and add it to the board.
 									int unitIndex = random.nextInt(s.getSizeOfReinforcement(activePlayer));
 									Unit unit = s.getReinforcementList(activePlayer).get(unitIndex);
 									// Add unit to board and remove from list.
@@ -131,6 +147,11 @@ public class EventHandlerImpl implements EventHandler {
 			}
 		}
 		board.moveUnitsIn(activePlayer);
+		// Check if a big unit is created, and if so, do not decrement the number of remaining actions.
+//		if(TODO a big unit is not created) {
+			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+//		}
+		endTurnIfNoActionsRemaining();
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " called reinforcements!");
 	}
 
@@ -221,7 +242,18 @@ public class EventHandlerImpl implements EventHandler {
 		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
 		board.moveUnitsIn(activePlayer);
 		s.setOngoingMove(null);
-		displayManager.drawSnapshot(s, "Successful move!");
+		// Check if the unit doesn't change position and if so, do not decrement the number of remaining actions.
+		if(board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty() && ongoingMove.columnIndex() == columnIndex) {
+			try {
+				displayManager.updateMessage("No move made!");
+			} catch (NoGameOnScreenException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+			endTurnIfNoActionsRemaining();
+			displayManager.drawSnapshot(s, "Successful move!");
+		}
 	}
 
 	@Override
@@ -251,6 +283,11 @@ public class EventHandlerImpl implements EventHandler {
 			s.addReinforcementToList(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
 			board.removeUnit(rowIndex, columnIndex);
 			board.moveUnitsIn(activePlayer);
+			// Check if a big unit is created, and if so, do not decrement the number of remaining actions.
+//			if(TODO a big unit is not created) {
+				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+//			}
+			endTurnIfNoActionsRemaining();
 			displayManager.drawSnapshot(s, "Player " + activePlayer + " deleted unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
 		}
 	}
