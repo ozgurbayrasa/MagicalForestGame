@@ -230,7 +230,7 @@ public class EventHandlerImpl implements EventHandler {
 	// Helper method for starting a new move (since there isn't any ongoing move).
 	private void startNewMove(int rowIndex, int columnIndex, Board board) {
 		// Check if the unit is the last in the column.
-		if(board.getUnit(rowIndex + 1, columnIndex).isEmpty() || board.getUnit(rowIndex - 1, columnIndex).isEmpty()) {
+		if(unitIsInLastRow(rowIndex, columnIndex, board)) {
 			s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
 			try {
 				displayManager.updateMessage("Ongoing move: (" + rowIndex + "," + columnIndex + ")");
@@ -242,13 +242,19 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
+	// Helper method which checks if there is a non-empty tile either above or below the selected tile.
+	// There is no need for case(FIRST/SECOND) checking since a unit cannot have empty tiles on both sides.
+	private boolean unitIsInLastRow(int rowIndex, int columnIndex, Board board) {
+		return board.getUnit(rowIndex + 1, columnIndex).isEmpty() || board.getUnit(rowIndex - 1, columnIndex).isEmpty();
+	}
+
 	// Helper method for completing a move which has an ongoing move.
 	private void completeMove(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board, Player activePlayer) {
 		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
 		board.moveUnitsIn(activePlayer);
 		s.setOngoingMove(null);
 		// Check if the unit doesn't change position and if so, do not decrement the number of remaining actions.
-		if(board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty() || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty() && ongoingMove.columnIndex() == columnIndex) {
+		if(unitStaysStationary(ongoingMove, rowIndex, columnIndex, board)) {
 			try {
 				displayManager.updateMessage("No move made!");
 			} catch (NoGameOnScreenException e) {
@@ -259,6 +265,12 @@ public class EventHandlerImpl implements EventHandler {
 			endTurnIfNoActionsRemaining();
 			displayManager.drawSnapshot(s, "Successful move!");
 		}
+	}
+
+	// Helper method which checks if the destination column stays the same and if there is an empty tile either above or below the selected tile, which means that the unit doesn't move.
+	// There is no need for case(FIRST/SECOND) checking since a unit cannot have empty tiles on both sides.
+	private boolean unitStaysStationary(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board) {
+		return board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty() || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty() && ongoingMove.columnIndex() == columnIndex;
 	}
 
 	@Override
