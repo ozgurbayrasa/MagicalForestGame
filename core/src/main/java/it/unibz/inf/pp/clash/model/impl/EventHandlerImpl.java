@@ -201,7 +201,7 @@ public class EventHandlerImpl implements EventHandler {
 
 		// Select tile and set according to ongoing move.
 		if (ongoingMove.isEmpty()) {
-			startNewMove(rowIndex, columnIndex);
+			startNewMove(rowIndex, columnIndex, board);
 		} else if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
 			completeMove(ongoingMove.get(), rowIndex, columnIndex, board, activePlayer);
 		}
@@ -228,12 +228,17 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	// Helper method for starting a new move (since there isn't any ongoing move).
-	private void startNewMove(int rowIndex, int columnIndex) {
-		s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
-		try {
-			displayManager.updateMessage("Ongoing move: (" + rowIndex + "," + columnIndex + ")");
-		} catch (NoGameOnScreenException e) {
-			throw new RuntimeException(e);
+	private void startNewMove(int rowIndex, int columnIndex, Board board) {
+		// Check if the unit is the last in the column.
+		if(board.getUnit(rowIndex + 1, columnIndex).isEmpty() || board.getUnit(rowIndex - 1, columnIndex).isEmpty()) {
+			s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
+			try {
+				displayManager.updateMessage("Ongoing move: (" + rowIndex + "," + columnIndex + ")");
+			} catch (NoGameOnScreenException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			displayErrorMessage("Error: Only units in the last non-empty row of each column can be selected.");
 		}
 	}
 
@@ -243,7 +248,7 @@ public class EventHandlerImpl implements EventHandler {
 		board.moveUnitsIn(activePlayer);
 		s.setOngoingMove(null);
 		// Check if the unit doesn't change position and if so, do not decrement the number of remaining actions.
-		if(board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty() && ongoingMove.columnIndex() == columnIndex) {
+		if(board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty() || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty() && ongoingMove.columnIndex() == columnIndex) {
 			try {
 				displayManager.updateMessage("No move made!");
 			} catch (NoGameOnScreenException e) {
