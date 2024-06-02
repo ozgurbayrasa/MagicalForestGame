@@ -12,14 +12,16 @@ import java.util.Random;
 
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
-import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
 import it.unibz.inf.pp.clash.model.snapshot.Hero;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
+
+import static java.util.concurrent.ThreadLocalRandom.current;
 
 public class SnapshotImpl implements Snapshot {
 
@@ -33,19 +35,20 @@ public class SnapshotImpl implements Snapshot {
 
 	    private Player activeplayer;
 	    private int actionsRemaining;
+		// example value
+		public final int defaultActionsRemaining = 3;
 	    protected TileCoordinates ongoingMove;
 
 		private final List<Unit> reinforcementsFIRST = new ArrayList<>(),
 								 reinforcementsSECOND = new ArrayList<>();
 
-	    public SnapshotImpl(Hero firstHero, Hero secondHero, Board board, Player activeplayer, int actionsRemaining,
-				TileCoordinates ongoingMove) {
-	    	this.board = board;
-	        this.firstHero = firstHero;
-	        this.secondHero = secondHero;
-	        this.activeplayer = activeplayer;
-	        this.actionsRemaining = actionsRemaining;
-	        this.ongoingMove = ongoingMove;
+	    public SnapshotImpl(String firstHeroName, String secondHeroName) {
+			firstHero = new HeroImpl(firstHeroName, 20);
+			secondHero = new HeroImpl(secondHeroName, 15);
+			board = BoardImpl.createEmptyBoard(11, 7);
+			activeplayer = Player.values()[current().nextInt(Player.values().length)];
+	        actionsRemaining = defaultActionsRemaining;
+	        ongoingMove = null;
 			populateTiles();
 		}
 
@@ -87,16 +90,17 @@ public class SnapshotImpl implements Snapshot {
 	    }
 
 		@Override
+		public int getDefaultActionsRemaining() {
+			return defaultActionsRemaining;
+		}
+
+		@Override
 		public void setNumberOfRemainingActions(int defaultActionsRemaining) {
 			actionsRemaining = defaultActionsRemaining;
 		}
 	    
 	    @Override
 	    public void populateTiles() {
-			// Array of all possible units.
-	    	Unit[] units = {new Butterfly(UnitColor.ONE), new Butterfly(UnitColor.TWO), new Butterfly(UnitColor.THREE), 
-	    					new Fairy(UnitColor.ONE), new Fairy(UnitColor.TWO), new Fairy(UnitColor.THREE), 
-	    					new Unicorn(UnitColor.ONE), new Unicorn(UnitColor.TWO), new Unicorn(UnitColor.THREE)};
 			Random random = new Random();
 			int numberOfPlacedUnits = 0;
 			// Repeat for every row.
@@ -105,9 +109,10 @@ public class SnapshotImpl implements Snapshot {
 				for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 					if(numberOfPlacedUnits < board.getAllowedUnits()) {
 						if(random.nextBoolean()) {
+							int randomUnitClass = random.nextInt(3);
+							int randomUnitColor = random.nextInt(3);
 							// Select random (possibly null) unit and add it to the board.
-							int unitIndex = random.nextInt(units.length);
-		                    Unit unit = units[unitIndex];
+		                    Unit unit = createInstance(randomUnitClass, randomUnitColor);
 		                    board.addUnit(i, j, unit);
 							numberOfPlacedUnits++;
 						}
@@ -123,17 +128,53 @@ public class SnapshotImpl implements Snapshot {
 				for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 					if(numberOfPlacedUnits < board.getAllowedUnits()) {
 						if(random.nextBoolean()) {
+							int randomUnitClass = random.nextInt(3);
+							int randomUnitColor = random.nextInt(3);
 							// Select random (possibly null) unit and add it to the board.
-							int unitIndex = random.nextInt(units.length);
-		                    Unit unit = units[unitIndex];
-		                    board.addUnit(i, j, unit);
+							Unit unit = createInstance(randomUnitClass, randomUnitColor);
+							board.addUnit(i, j, unit);
 							numberOfPlacedUnits++;
 						}
 					}
 				}
 			}
 			board.moveUnitsIn(Player.SECOND);
-	    }			
+	    }
+
+		// Helper method to create new random instances.
+		private AbstractMobileUnit createInstance(int unitClass, int unitColor) {
+			switch (unitClass) {
+				case 0:
+					switch (unitColor) {
+						case 0:
+							return new Butterfly(UnitColor.ONE);
+						case 1:
+							return new Butterfly(UnitColor.TWO);
+						case 2:
+							return new Butterfly(UnitColor.THREE);
+					}
+				case 1:
+					switch (unitColor) {
+						case 0:
+							return new Fairy(UnitColor.ONE);
+						case 1:
+							return new Fairy(UnitColor.TWO);
+						case 2:
+							return new Fairy(UnitColor.THREE);
+					}
+				case 2:
+					switch (unitColor) {
+						case 0:
+							return new Unicorn(UnitColor.ONE);
+						case 1:
+							return new Unicorn(UnitColor.TWO);
+						case 2:
+							return new Unicorn(UnitColor.THREE);
+					}
+				default:
+					return null;
+			}
+		}
 
 	    @Override
 	    public void serializeSnapshot(String path) throws IOException {

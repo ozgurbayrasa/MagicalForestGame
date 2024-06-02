@@ -76,12 +76,19 @@ public interface Board extends Serializable{
     void moveUnit(int inputRowIndex, int inputColumnIndex, int outputRowIndex, int outputColumnIndex);
 
     /**
-     * Moves in the units as close to the border as possible.
+     * Moves in all units as close to the middle border as possible.
      * 
      * @param player
      */
     void moveUnitsIn(Player player);
-    
+
+    /**
+     * Moves the specified big vertical unit next to the middle border.
+     * @param centerRowIndex
+     * @param columnIndex
+     */
+    void moveBigVerticalUnitIn(int centerRowIndex, int columnIndex);
+
     /**
      *
      *

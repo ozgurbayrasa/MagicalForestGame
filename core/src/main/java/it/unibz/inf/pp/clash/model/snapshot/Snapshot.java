@@ -41,6 +41,12 @@ public interface Snapshot extends Serializable{
     int getNumberOfRemainingActions();
 
     /**
+     *
+     * @return the default number of remaining actions
+     */
+    int getDefaultActionsRemaining();
+
+    /**
      * Sets the number of actions remaining.
      * @param actionsRemaining
      */

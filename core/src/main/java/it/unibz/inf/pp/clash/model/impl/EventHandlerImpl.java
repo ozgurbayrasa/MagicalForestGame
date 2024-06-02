@@ -10,23 +10,18 @@ import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
-import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
-import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
-
-import static java.util.concurrent.ThreadLocalRandom.current;
 
 public class EventHandlerImpl implements EventHandler {
 
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
-	// example value
-	private final int defaultActionsRemaining = 5;
 
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -34,15 +29,10 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void newGame(String firstHero, String secondHero) {
-		s = new SnapshotImpl(
-			new HeroImpl(firstHero, 20),
-			new HeroImpl(secondHero, 20),
-			BoardImpl.createEmptyBoard(11, 7),
-			Player.values()[current().nextInt(Player.values().length)],
-			defaultActionsRemaining,
-			null);
+		s = new SnapshotImpl(firstHero, secondHero);
 //		Snapshot dummy1 = new DummySnapshot(firstHero, secondHero);
 //		Snapshot dummy2 = new AnotherDummySnapshot(firstHero, secondHero);
+		detectBigUnits();
 		displayManager.drawSnapshot(s, "A new game has been started!");
 	}
 
@@ -81,7 +71,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 		s.setActivePlayer(nextPlayer);
 		// Reset number of remaining actions.
-		s.setNumberOfRemainingActions(defaultActionsRemaining);
+		s.setNumberOfRemainingActions(s.getDefaultActionsRemaining());
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " skipped his turn!");
 	}
 
@@ -151,10 +141,10 @@ public class EventHandlerImpl implements EventHandler {
 			}
 		}
 		board.moveUnitsIn(activePlayer);
-		// Check if a big unit is created, and if so, do not decrement the number of remaining actions.
-//		if(TODO a big unit is not created) {
+		// Check if a big unit is detected, and if so, do not decrement the number of remaining actions.
+		if(!detectBigUnits()) {
 			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
-//		}
+		}
 		endTurnIfNoActionsRemaining();
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " called reinforcements!");
 	}
@@ -205,7 +195,7 @@ public class EventHandlerImpl implements EventHandler {
 
 		// Select tile and set according to ongoing move.
 		if (ongoingMove.isEmpty()) {
-			startNewMove(rowIndex, columnIndex, board);
+			startNewMove(rowIndex, columnIndex, board, activePlayer);
 		} else if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
 			completeMove(ongoingMove.get(), rowIndex, columnIndex, board, activePlayer);
 		}
@@ -232,9 +222,9 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	// Helper method for starting a new move (since there isn't any ongoing move).
-	private void startNewMove(int rowIndex, int columnIndex, Board board) {
+	private void startNewMove(int rowIndex, int columnIndex, Board board, Player activePlayer) {
 		// Check if the unit is the last in the column.
-		if(unitIsInLastRow(rowIndex, columnIndex, board)) {
+		if(unitIsInLastRow(rowIndex, columnIndex, board, activePlayer)) {
 			s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
 			displayManager.drawSnapshot(s, String.format(
 					"Tile (%s,%s) has just been selected.",
@@ -246,31 +236,34 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
-	// Helper method which checks if there is a non-empty tile either above or below the selected tile.
-	// There is no need for case(FIRST/SECOND) checking since a unit cannot have empty tiles on both sides.
-	private boolean unitIsInLastRow(int rowIndex, int columnIndex, Board board) {
-		return board.getUnit(rowIndex + 1, columnIndex).isEmpty() || board.getUnit(rowIndex - 1, columnIndex).isEmpty();
+	// Helper method which checks if the unit is in the max row or if there is a non-empty tile above (resp. below) the selected tile.
+	private boolean unitIsInLastRow(int rowIndex, int columnIndex, Board board, Player activeplayer) {
+		return (activeplayer == Player.FIRST && (rowIndex == board.getMaxRowIndex() || board.getUnit(rowIndex + 1, columnIndex).isEmpty())
+				|| (activeplayer == Player.SECOND && (rowIndex == 0 || board.getUnit(rowIndex - 1, columnIndex).isEmpty())));
 	}
 
 	// Helper method for completing a move which has an ongoing move.
 	private void completeMove(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board, Player activePlayer) {
 		s.setOngoingMove(null);
 		// Check if the unit doesn't change position and if so, do not decrement the number of remaining actions.
-		if(unitStaysStationary(ongoingMove, columnIndex, board)) {
+		if(unitStaysStationary(ongoingMove, columnIndex, board, activePlayer)) {
 			displayManager.drawSnapshot(s, "No move made!");
 		} else {
 			board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
 			board.moveUnitsIn(activePlayer);
-			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+			if (!detectBigUnits()) {
+				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+			}
 			endTurnIfNoActionsRemaining();
 			displayManager.drawSnapshot(s, "Successful move!");
 		}
 	}
 
-	// Helper method which checks if the destination column stays the same and if there is an empty tile either above or below the selected tile, which means that the unit doesn't move.
-	// There is no need for case(FIRST/SECOND) checking since a unit cannot have empty tiles on both sides.
-	private boolean unitStaysStationary(Board.TileCoordinates ongoingMove, int columnIndex, Board board) {
-		return (board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty() || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty()) && ongoingMove.columnIndex() == columnIndex;
+	// Helper method which checks if the destination column stays the same and if the unit is in the max row or there is an empty tile either above (resp. below) the selected tile, which means that the unit doesn't move.
+	private boolean unitStaysStationary(Board.TileCoordinates ongoingMove, int columnIndex, Board board, Player activeplayer) {
+		return ((activeplayer == Player.FIRST && (ongoingMove.rowIndex() == board.getMaxRowIndex() || board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty())
+				|| (activeplayer == Player. SECOND && (ongoingMove.rowIndex() == 0 || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty()))))
+				&& ongoingMove.columnIndex() == columnIndex;
 	}
 
 	@Override
@@ -300,12 +293,54 @@ public class EventHandlerImpl implements EventHandler {
 			s.addReinforcementToList(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
 			board.removeUnit(rowIndex, columnIndex);
 			board.moveUnitsIn(activePlayer);
-			// Check if a big unit is created, and if so, do not decrement the number of remaining actions.
-//			if(TODO a big unit is not created) {
+			// Check if a big unit is detected, and if so, do not decrement the number of remaining actions.
+			if(!detectBigUnits()) {
 				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
-//			}
+			}
 			endTurnIfNoActionsRemaining();
 			displayManager.drawSnapshot(s, "Player " + activePlayer + " deleted unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
 		}
+	}
+
+	// This method handles the detection and moving of big units (only vertical for now).
+	// It returns true if a new big unit has been detected.
+	public boolean detectBigUnits() {
+		Board board = s.getBoard();
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
+		// Repeat for every row.
+		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			// Repeat for every column.
+			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the coordinates above and below the the cell are valid.
+				if (board.areValidCoordinates(i - 1, j) && board.areValidCoordinates(i + 1, j)
+						// Check if there are units in all three cells.
+						&& board.getUnit(i - 1, j).isPresent() && board.getUnit(i, j).isPresent() && board.getUnit(i + 1, j).isPresent()
+						// Make sure that the three cells are not on the border (the center unit is offset by 1).
+						&& (i < halfBoard - 1 || i >= halfBoard + 1)) {
+					// Get the three units.
+					Unit above = board.getUnit(i - 1, j).get();
+					Unit center = board.getUnit(i, j).get();
+					Unit below = board.getUnit(i + 1, j).get();
+					// Check if the three units have the same class.
+					if(above.getClass().equals(center.getClass()) && center.getClass().equals(below.getClass())) {
+						// Check if this class is a subclass of AbstractMobileUnit)
+						if(center instanceof AbstractMobileUnit) {
+							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
+							if(((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
+								// Create a big unit and move it next to the border.
+								// If the method returns false,
+								board.moveBigVerticalUnitIn(i, j);
+								((AbstractMobileUnit) above).setAttackCountdown(3);
+								((AbstractMobileUnit) center).setAttackCountdown(3);
+								((AbstractMobileUnit) below).setAttackCountdown(3);
+								displayManager.drawSnapshot(s, "");
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
 	}
 }

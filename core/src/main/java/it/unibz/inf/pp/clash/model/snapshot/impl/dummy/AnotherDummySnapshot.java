@@ -93,6 +93,16 @@
 //        return actionsRemaining;
 //    }
 //
+//    @Override
+//    public int getDefaultActionsRemaining() {
+//        return 0;
+//    }
+//
+//    @Override
+//    public void setNumberOfRemainingActions(int actionsRemaining) {
+//
+//    }
+//
 //    public void populateTiles() {
 //        Unicorn bigUnicorn = new Unicorn(THREE);
 //        bigUnicorn.setAttackCountdown(2);
@@ -142,12 +152,12 @@
 //    }
 //
 //    @Override
-//    public void addReinforcement(Player player, Unit unit) {
+//    public void addReinforcementToList(Player player, Unit unit) {
 //
 //    }
 //
 //    @Override
-//    public void removeReinforcement(Player player, Unit unit) {
+//    public void removeReinforcementFromList(Player player, int unitIndex) {
 //
 //    }
 //}

@@ -36,12 +36,12 @@ public class OccupiedBoardCellCenterCompositor extends Compositor {
         super(eventHandler, animationCounter, debug);
     }
 
-    public Table drawCellCenter(int rowindex, int columnIndex, Unit previousUnit, Unit newUnit, boolean isSelectedTile) {
+    public Table drawCellCenter(int rowIndex, int columnIndex, Unit previousUnit, Unit newUnit, boolean isSelectedTile) {
 
         Highlights highlights = compareUnits(previousUnit, newUnit);
         Table table = new Table();
         table.setDebug(debug);
-        addUnitIcon(rowindex, columnIndex, newUnit, highlights, isSelectedTile, table);
+        addUnitIcon(rowIndex, columnIndex, newUnit, highlights, isSelectedTile, table);
         table.row();
         addStats(newUnit, highlights, table);
         return table;

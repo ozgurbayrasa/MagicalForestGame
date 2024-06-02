@@ -10,7 +10,7 @@
 // * This is a dummy implementation, for demonstration purposes.
 // * It should not appear in the final project.
 // */
-//public class DummyEventHandler /*implements EventHandler*/ {
+//public class DummyEventHandler implements EventHandler {
 //
 //    private final DisplayManager displayManager;
 //
