@@ -5,6 +5,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
 import it.unibz.inf.pp.clash.model.EventHandler;
+import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 
 public class ContinueGameListener extends ClickListener {
 	

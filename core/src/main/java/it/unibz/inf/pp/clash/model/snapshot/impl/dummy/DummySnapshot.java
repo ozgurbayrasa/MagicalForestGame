@@ -4,7 +4,6 @@
 //import it.unibz.inf.pp.clash.model.snapshot.Hero;
 //import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 //import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
-//import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
@@ -86,6 +85,11 @@
 //        return actionsRemaining;
 //    }
 //
+//    @Override
+//    public void setNumberOfRemainingActions(int actionsRemaining) {
+//
+//    }
+//
 //    public void populateTiles() {
 //        Butterfly bigButterfly = new Butterfly(ONE);
 //        bigButterfly.setAttackCountdown(1);
@@ -140,12 +144,12 @@
 //    }
 //
 //    @Override
-//    public void addReinforcement(Player player, Unit unit) {
+//    public void addReinforcementToList(Player player, Unit unit) {
 //
 //    }
 //
 //    @Override
-//    public void removeReinforcement(Player player, Unit unit) {
+//    public void removeReinforcementFromList(Player player, int unitIndex) {
 //
 //    }
 //}

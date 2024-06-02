@@ -49,7 +49,7 @@ public class SnapshotImpl implements Snapshot {
 			populateTiles();
 		}
 
-	    public Board getBoard() {
+		public Board getBoard() {
 	        return board;
 	    }
 

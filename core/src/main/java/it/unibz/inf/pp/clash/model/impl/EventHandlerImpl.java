@@ -13,9 +13,12 @@ import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
+//import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
+
+import static java.util.concurrent.ThreadLocalRandom.current;
 
 public class EventHandlerImpl implements EventHandler {
 
@@ -35,9 +38,11 @@ public class EventHandlerImpl implements EventHandler {
 			new HeroImpl(firstHero, 20),
 			new HeroImpl(secondHero, 20),
 			BoardImpl.createEmptyBoard(11, 7),
-			Player.FIRST,
+			Player.values()[current().nextInt(Player.values().length)],
 			defaultActionsRemaining,
 			null);
+//		Snapshot dummy1 = new DummySnapshot(firstHero, secondHero);
+//		Snapshot dummy2 = new AnotherDummySnapshot(firstHero, secondHero);
 		displayManager.drawSnapshot(s, "A new game has been started!");
 	}
 
@@ -56,9 +61,8 @@ public class EventHandlerImpl implements EventHandler {
 	@Override
 	public void exitGame() {
 		// Serialize the last snapshot
-		Snapshot toSerialize = s;
 		try {
-			toSerialize.serializeSnapshot(path);
+			s.serializeSnapshot(path);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -232,11 +236,11 @@ public class EventHandlerImpl implements EventHandler {
 		// Check if the unit is the last in the column.
 		if(unitIsInLastRow(rowIndex, columnIndex, board)) {
 			s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
-			try {
-				displayManager.updateMessage("Ongoing move: (" + rowIndex + "," + columnIndex + ")");
-			} catch (NoGameOnScreenException e) {
-				throw new RuntimeException(e);
-			}
+			displayManager.drawSnapshot(s, String.format(
+					"Tile (%s,%s) has just been selected.",
+					rowIndex,
+					columnIndex
+			));
 		} else {
 			displayErrorMessage("Error: Only units in the last non-empty row of each column can be selected.");
 		}
@@ -250,17 +254,13 @@ public class EventHandlerImpl implements EventHandler {
 
 	// Helper method for completing a move which has an ongoing move.
 	private void completeMove(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board, Player activePlayer) {
-		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
-		board.moveUnitsIn(activePlayer);
 		s.setOngoingMove(null);
 		// Check if the unit doesn't change position and if so, do not decrement the number of remaining actions.
-		if(unitStaysStationary(ongoingMove, rowIndex, columnIndex, board)) {
-			try {
-				displayManager.updateMessage("No move made!");
-			} catch (NoGameOnScreenException e) {
-				throw new RuntimeException(e);
-			}
+		if(unitStaysStationary(ongoingMove, columnIndex, board)) {
+			displayManager.drawSnapshot(s, "No move made!");
 		} else {
+			board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
+			board.moveUnitsIn(activePlayer);
 			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 			endTurnIfNoActionsRemaining();
 			displayManager.drawSnapshot(s, "Successful move!");
@@ -269,8 +269,8 @@ public class EventHandlerImpl implements EventHandler {
 
 	// Helper method which checks if the destination column stays the same and if there is an empty tile either above or below the selected tile, which means that the unit doesn't move.
 	// There is no need for case(FIRST/SECOND) checking since a unit cannot have empty tiles on both sides.
-	private boolean unitStaysStationary(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board) {
-		return board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty() || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty() && ongoingMove.columnIndex() == columnIndex;
+	private boolean unitStaysStationary(Board.TileCoordinates ongoingMove, int columnIndex, Board board) {
+		return (board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty() || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty()) && ongoingMove.columnIndex() == columnIndex;
 	}
 
 	@Override
