@@ -1,5 +1,7 @@
 package it.unibz.inf.pp.clash.model;
 
+import it.unibz.inf.pp.clash.model.snapshot.Board;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
 public interface EventHandler {
@@ -16,6 +18,11 @@ public interface EventHandler {
      * This method is called if there is an ongoing game and the user interrupts it.
      */
     void exitGame();
+
+    /**
+     * @return the current Snapshot
+     */
+    Snapshot getSnapshot();
 
     /**
      * This method is called if the active player decides to skip his/her turn.

@@ -59,6 +59,11 @@ public class EventHandlerImpl implements EventHandler {
         displayManager.drawHomeScreen();
 	}
 
+	@Override
+	public Snapshot getSnapshot() {
+		return s;
+	}
+
 	// Skip the current turn.
 	@Override
 	public void skipTurn() {
@@ -168,6 +173,7 @@ public class EventHandlerImpl implements EventHandler {
 	@Override
 	public void selectTile(int rowIndex, int columnIndex) throws CoordinatesOutOfBoardException {
 		Board board = s.getBoard();
+		Player activeplayer = s.getActivePlayer();
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
 
 		// Check if the selected tile is within the board limits.
@@ -179,6 +185,19 @@ public class EventHandlerImpl implements EventHandler {
 		Player activePlayer = s.getActivePlayer();
 		if (tileIsOnActivePlayerBoard(activePlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
+			return;
+		}
+
+		// Check if the unit is the last in the column.
+		if(!unitIsInLastRow(rowIndex, columnIndex, board, activePlayer)) {
+			displayErrorMessage("Error: Only units in the last non-empty row of each column can be selected.");
+			return;
+		}
+
+		// Check if the destination cell is the same or an empty cell in the same column, and if so, cancel the move.
+		if(ongoingMove.isPresent() && unitStaysStationary(ongoingMove.get(), rowIndex, columnIndex, board, activeplayer)) {
+			s.setOngoingMove(null);
+			displayManager.drawSnapshot(s, "Move canceled!");
 			return;
 		}
 
@@ -195,7 +214,7 @@ public class EventHandlerImpl implements EventHandler {
 
 		// Select tile and set according to ongoing move.
 		if (ongoingMove.isEmpty()) {
-			startNewMove(rowIndex, columnIndex, board, activePlayer);
+			startNewMove(rowIndex, columnIndex);
 		} else if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
 			completeMove(ongoingMove.get(), rowIndex, columnIndex, board, activePlayer);
 		}
@@ -222,18 +241,13 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	// Helper method for starting a new move (since there isn't any ongoing move).
-	private void startNewMove(int rowIndex, int columnIndex, Board board, Player activePlayer) {
-		// Check if the unit is the last in the column.
-		if(unitIsInLastRow(rowIndex, columnIndex, board, activePlayer)) {
-			s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
-			displayManager.drawSnapshot(s, String.format(
-					"Tile (%s,%s) has just been selected.",
-					rowIndex,
-					columnIndex
-			));
-		} else {
-			displayErrorMessage("Error: Only units in the last non-empty row of each column can be selected.");
-		}
+	private void startNewMove(int rowIndex, int columnIndex) {
+		s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
+		displayManager.drawSnapshot(s, String.format(
+				"Tile (%s,%s) has just been selected.",
+				rowIndex,
+				columnIndex
+		));
 	}
 
 	// Helper method which checks if the unit is in the max row or if there is a non-empty tile above (resp. below) the selected tile.
@@ -245,23 +259,18 @@ public class EventHandlerImpl implements EventHandler {
 	// Helper method for completing a move which has an ongoing move.
 	private void completeMove(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board, Player activePlayer) {
 		s.setOngoingMove(null);
-		// Check if the unit doesn't change position and if so, do not decrement the number of remaining actions.
-		if(unitStaysStationary(ongoingMove, columnIndex, board, activePlayer)) {
-			displayManager.drawSnapshot(s, "No move made!");
-		} else {
-			board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
-			board.moveUnitsIn(activePlayer);
-			if (!detectBigUnits()) {
-				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
-			}
-			endTurnIfNoActionsRemaining();
-			displayManager.drawSnapshot(s, "Successful move!");
+		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
+		board.moveUnitsIn(activePlayer);
+		if (!detectBigUnits()) {
+			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 		}
+		endTurnIfNoActionsRemaining();
+		displayManager.drawSnapshot(s, "Successful move!");
 	}
 
 	// Helper method which checks if the destination column stays the same and if the unit is in the max row or there is an empty tile either above (resp. below) the selected tile, which means that the unit doesn't move.
-	private boolean unitStaysStationary(Board.TileCoordinates ongoingMove, int columnIndex, Board board, Player activeplayer) {
-		return ((activeplayer == Player.FIRST && (ongoingMove.rowIndex() == board.getMaxRowIndex() || board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty())
+	private boolean unitStaysStationary(Board.TileCoordinates ongoingMove, int rowIndex, int columnIndex, Board board, Player activeplayer) {
+		return (ongoingMove.rowIndex() == rowIndex && ongoingMove.columnIndex() == columnIndex || (activeplayer == Player.FIRST && (ongoingMove.rowIndex() == board.getMaxRowIndex() || board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty())
 				|| (activeplayer == Player. SECOND && (ongoingMove.rowIndex() == 0 || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty()))))
 				&& ongoingMove.columnIndex() == columnIndex;
 	}
@@ -311,7 +320,7 @@ public class EventHandlerImpl implements EventHandler {
 		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
 			// Repeat for every column.
 			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				// Check if the coordinates above and below the the cell are valid.
+				// Check if the coordinates above and below the cell are valid.
 				if (board.areValidCoordinates(i - 1, j) && board.areValidCoordinates(i + 1, j)
 						// Check if there are units in all three cells.
 						&& board.getUnit(i - 1, j).isPresent() && board.getUnit(i, j).isPresent() && board.getUnit(i + 1, j).isPresent()
@@ -323,7 +332,7 @@ public class EventHandlerImpl implements EventHandler {
 					Unit below = board.getUnit(i + 1, j).get();
 					// Check if the three units have the same class.
 					if(above.getClass().equals(center.getClass()) && center.getClass().equals(below.getClass())) {
-						// Check if this class is a subclass of AbstractMobileUnit)
+						// Check if this class is a subclass of AbstractMobileUnit.
 						if(center instanceof AbstractMobileUnit) {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if(((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
