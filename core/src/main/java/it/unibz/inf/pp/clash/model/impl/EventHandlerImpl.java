@@ -2,8 +2,10 @@ package it.unibz.inf.pp.clash.model.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
@@ -78,6 +80,7 @@ public class EventHandlerImpl implements EventHandler {
 		// Reset number of remaining actions.
 		s.setNumberOfRemainingActions(s.getDefaultActionsRemaining());
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " skipped his turn!");
+		handleEncounters();
 	}
 
 	// End the current turn when the actions are depleted.
@@ -352,4 +355,203 @@ public class EventHandlerImpl implements EventHandler {
 		}
 		return false;
 	}
+
+	// This method handles encounters. It is called when players turn ends. End the turn has
+	// just changed to other player (At that moment active player has just gotten the turn.)
+	// And for that player handleEncounters check if there are units with attackCoundown > 0
+	// or == 0
+	public void handleEncounters() {
+		// Assigning necessary values (board, active player and opponent player.)
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+
+		// Set to track units that have been processed (for decreasing attackCountdown).
+		Set<AbstractMobileUnit> unitsWithAttackingCountdown = new HashSet<>();
+		
+		Set<AbstractMobileUnit> unitsAttackedAndRemoved = new HashSet<>();
+
+		// Get the range of rows for the active player's board section.
+		int[] range = getPlayerBoardRange(activePlayer, board);
+		for (int row = range[0]; row <= range[1]; row++) {
+			for (int col = 0; col <= board.getMaxColumnIndex(); col++) {
+				// Get active player's unit if so.
+				Optional<Unit> unitOpt = board.getUnit(row, col);
+				// Check if it is mobileUnit. Mobileunits have attackCountdown.
+				if (unitOpt.isPresent() && unitOpt.get() instanceof AbstractMobileUnit mobileUnit) {
+					// If it is mobile unit and attackCountdown > 0
+					if (mobileUnit.getAttackCountdown() > 0) {
+						// Add it to the set, then we can simply decrement its attackCountdown
+						// !! We can't do it here since in big units, when we change a value of
+						// a unit in that big unit, all the units in that are effected.
+						// If I set attackCountdown to 1, then all  will be 1.
+						// So here we don't want to make it 3 times (when we see a mobile unit
+						// with attackCountdown more than 1)
+						unitsWithAttackingCountdown.add(mobileUnit);
+
+					// If it has attackCountdown 0, so it's time for encounter.
+					} else if (mobileUnit.getAttackCountdown() == 0) {
+						// Call encounter method for that mobile unit.
+						// It will damage all units from opponentPlayer board
+						// at that column.
+						encounter(board, mobileUnit, opponentPlayer, col);
+
+						// Remove the attacking unit from the board and add it to reinforcements.
+						board.removeUnit(row, col);
+						// Add this unit to be set to -1 for attackCountdown.
+						unitsAttackedAndRemoved.add(mobileUnit);
+						s.addReinforcementToList(activePlayer, mobileUnit);
+						
+					}
+				}
+			}
+		}
+
+		// Decrement attackCountdown by 1 for all units with attackCountDown more than 1.
+		// For big unit there is just one unit from that big unit.
+		for (AbstractMobileUnit unit : unitsWithAttackingCountdown) {
+			unit.setAttackCountdown(unit.getAttackCountdown() - 1);
+		}
+
+		// Set attack countdown to -1 for all units attacked and removed.
+		// For big unit there is just one unit from that big unit.
+		for (AbstractMobileUnit unit : unitsAttackedAndRemoved) {
+			unit.setAttackCountdown(-1);
+		}
+
+		// Move units in both player's sections.
+		board.moveUnitsIn(Player.FIRST);
+		board.moveUnitsIn(Player.SECOND);
+
+		// Update the display after the encounter.
+		displayManager.drawSnapshot(s, "Encounter completed!");
+
+		// Check if the opponent player has been defeated.
+		if (s.getHero(opponentPlayer).getHealth() <= 0) {
+			// If it's the end of the game, clear the board. Display the end of game message.
+			clearBoard(board);
+			try {
+				displayManager.updateMessage("Player " + s.getHero(opponentPlayer).getName() + " has been defeated!");
+			} catch (NoGameOnScreenException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	// Encounter method simply takes attacking unit, board, opponent and
+	// attackingColumnIndex.
+	@Override
+	public void encounter(Board board, AbstractMobileUnit attackingUnit, Player opponent, int attackingColumnIndex) {
+
+		// Attack value is set to the health of the attacking unit.
+		int attackValue = attackingUnit.getHealth();
+
+		// Get the range of rows for the opponent's board section.
+		int[] opponentRange = getPlayerBoardRange(opponent, board);
+		System.out.println("Opponent Range: " + opponentRange[0] + " " + opponentRange[1]);
+
+		// Determine the direction of iteration based on the opponent player.
+		// Here if the opponent player is first, that is okay since its are is from row 6 to 11
+		// And we should look from the row which is closest to the middle and it is 6 to 11
+		// for first player.
+
+		// However for second player, it is 0 and 5. But we shouldn't begin from 0 to 5 since
+		// if the first row to be damaged will be 5. row. So for second player, we should
+		// start from 5 and iterate to 0.
+
+		// Here we get range from getPlayerBoardRange() in ascending order (like (0,5) and (6,11)).
+		// So, here according the opponent we decide which for loop to begin. Since the order
+		// must be different because of players.
+		int beginningStep = (opponent == Player.FIRST) ? opponentRange[0] : opponentRange[1];
+		int endStep = (opponent == Player.FIRST) ? opponentRange[1] : opponentRange[0];
+		int step = (beginningStep > endStep) ? -1 : 1;
+
+		Set<AbstractMobileUnit> processedUnits = new HashSet<>();
+
+		// Loop over the opponent's area for attackingColumn.
+		for (int r = beginningStep; (step == 1) ? (r < endStep) : (r > endStep); r += step) {
+			// Get unit on attackingColumn from opponent area.
+			Optional<Unit> unitOpt = board.getUnit(r, attackingColumnIndex);
+			// If there is a unit on the opponent's row. ATTACK that unit.
+			if (unitOpt.isPresent()) {
+
+				Unit opponentUnit = unitOpt.get();
+				int unitHealth = opponentUnit.getHealth();
+				// If attacking is more than opponent's unit. It must be destroyed.
+				if (attackValue >= unitHealth) {
+					// Unit is destroyed
+					board.removeUnit(r, attackingColumnIndex);
+					// Don't forget to add it to the reinforcements list.
+					// And set it's attackCountDown to -1 if it's a mobile unit.
+					
+					if(opponentUnit instanceof AbstractMobileUnit mobileUnit){
+						processedUnits.add(mobileUnit);
+					}
+					s.addReinforcementToList(opponent, opponentUnit);
+					// Decrement the attackValue by opponent's unit health.
+					attackValue -= unitHealth;
+				} else {
+					// Opponent's Unit is damaged. Not destroyed.
+					opponentUnit.setHealth(unitHealth - attackValue);
+					// Attack value is over.
+					attackValue = 0;
+					break; // Attack value depleted
+				}
+			}
+			
+		}
+		for (AbstractMobileUnit mobileUnit: processedUnits) {
+			mobileUnit.setAttackCountdown(-1);
+		}
+
+		// If after looking for unit's on opponent area, we still have attack value.
+		// It means that we reached the player, then we can hit them.
+		if (attackValue > 0) {
+			applyRemainingDamageToPlayer(opponent, attackValue);
+		}
+	}
+
+	private void applyRemainingDamageToPlayer(Player opponent, int remainingDamage) {
+		// Apply remaining damage to the opponent player's health.
+		int playerHealth = s.getHero(opponent).getHealth();
+		s.getHero(opponent).setHealth(playerHealth - remainingDamage);
+		if(s.getHero(opponent).getHealth() < 0){
+			s.getHero(opponent).setHealth(0);
+		}
+	}
+
+	// Helper method that returns the board section of the player.
+	// This method is similar to tileIsOnActivePlayerBoard method.
+	// We may make it more modular for readability later.
+	private int[] getPlayerBoardRange(Player activePlayer, Board board) {
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
+		if (activePlayer == Player.SECOND) {
+			return new int[]{0, halfBoard - 1};
+		} else {
+			return new int[]{halfBoard, board.getMaxRowIndex()};
+		}
+	}
+
+
+
+
+	// FOLLOWING METHOD CAN BE IMPLEMENTED IN BOARD
+
+	/**
+	 * This method clears the entire board by setting all units to null.
+	 * It iterates through all rows and columns of the board and removes each unit.
+	 *
+	 * @param board The board to be cleared.
+	 */
+	public void clearBoard(Board board) {
+		// Iterate through all rows
+		for (int row = 0; row <= board.getMaxRowIndex(); row++) {
+			// Iterate through all columns
+			for (int col = 0; col <= board.getMaxColumnIndex(); col++) {
+				// Remove the unit at the specified row and column
+				board.removeUnit(row, col);
+			}
+		}
+	}
+
 }

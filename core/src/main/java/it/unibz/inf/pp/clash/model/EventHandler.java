@@ -2,6 +2,8 @@ package it.unibz.inf.pp.clash.model;
 
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
 public interface EventHandler {
@@ -76,4 +78,13 @@ public interface EventHandler {
      */
 	void continueGame();
 
+    /**
+     * This method is called to handle the encounter between two units.
+     * It checks the status of the units, applies the attack value of the attacking unit to the defending unit,
+     * and updates the health of both units accordingly.
+     *
+     *
+     */
+
+    void encounter(Board board, AbstractMobileUnit attackingUnit, Player opponent, int col);
 }
