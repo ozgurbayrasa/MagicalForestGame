@@ -358,7 +358,7 @@ public class EventHandlerImpl implements EventHandler {
 
 	// This method handles encounters. It is called when players turn ends. End the turn has
 	// just changed to other player (At that moment active player has just gotten the turn.)
-	// And for that player handleEncounters check if there are units with attackCoundown > 0
+	// And for that player handleEncounters check if there are units with attackCountdown > 0
 	// or == 0
 	public void handleEncounters() {
 		// Assigning necessary values (board, active player and opponent player.)
@@ -377,10 +377,10 @@ public class EventHandlerImpl implements EventHandler {
 			for (int col = 0; col <= board.getMaxColumnIndex(); col++) {
 				// Get active player's unit if so.
 				Optional<Unit> unitOpt = board.getUnit(row, col);
-				// Check if it is mobileUnit. Mobileunits have attackCountdown.
+				// Check if it is mobileUnit. Mobile Units have attackCountdown.
 				if (unitOpt.isPresent() && unitOpt.get() instanceof AbstractMobileUnit mobileUnit) {
-					// If it is mobile unit and attackCountdown > 0
-					if (mobileUnit.getAttackCountdown() > 0) {
+					// If it is mobile unit and attackCountdown > 1
+					if (mobileUnit.getAttackCountdown() > 1) {
 						// Add it to the set, then we can simply decrement its attackCountdown
 						// !! We can't do it here since in big units, when we change a value of
 						// a unit in that big unit, all the units in that are effected.
@@ -389,8 +389,8 @@ public class EventHandlerImpl implements EventHandler {
 						// with attackCountdown more than 1)
 						unitsWithAttackingCountdown.add(mobileUnit);
 
-					// If it has attackCountdown 0, so it's time for encounter.
-					} else if (mobileUnit.getAttackCountdown() == 0) {
+					// If it has attackCountdown 1, so it's time for encounter.
+					} else if (mobileUnit.getAttackCountdown() == 1) {
 						// Call encounter method for that mobile unit.
 						// It will damage all units from opponentPlayer board
 						// at that column.
@@ -452,7 +452,7 @@ public class EventHandlerImpl implements EventHandler {
 
 		// Determine the direction of iteration based on the opponent player.
 		// Here if the opponent player is first, that is okay since its are is from row 6 to 11
-		// And we should look from the row which is closest to the middle and it is 6 to 11
+		// And we should look from the row which is closest to the middle, and it is 6 to 11
 		// for first player.
 
 		// However for second player, it is 0 and 5. But we shouldn't begin from 0 to 5 since
