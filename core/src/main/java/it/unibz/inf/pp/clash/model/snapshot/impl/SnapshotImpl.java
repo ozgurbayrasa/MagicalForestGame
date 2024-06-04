@@ -7,10 +7,7 @@ import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.model.snapshot.Hero;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 
@@ -30,8 +27,8 @@ public class SnapshotImpl implements Snapshot {
 	public final int defaultActionsRemaining = 3;
 	protected TileCoordinates ongoingMove;
 
-	private final List<Unit> reinforcementsFIRST = new ArrayList<>(),
-							 reinforcementsSECOND = new ArrayList<>();
+	private final Set<AbstractMobileUnit> reinforcementsFIRST = new HashSet<>(),
+										  reinforcementsSECOND = new HashSet<>();
 
 	public SnapshotImpl(String firstHeroName, String secondHeroName) {
 		firstHero = new HeroImpl(firstHeroName, 20);
@@ -110,6 +107,7 @@ public class SnapshotImpl implements Snapshot {
 				}
 			}
 		}
+		// Move the units in.
 		board.moveUnitsIn(Player.FIRST);
 
 		numberOfPlacedUnits = 0;
@@ -129,6 +127,7 @@ public class SnapshotImpl implements Snapshot {
 				}
 			}
 		}
+		// Move the units in.
 		board.moveUnitsIn(Player.SECOND);
 	}
 
@@ -172,7 +171,7 @@ public class SnapshotImpl implements Snapshot {
 		try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(path))) {
 			out.writeObject(this);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new IOException(e);
 		}
 	}
 
@@ -188,11 +187,11 @@ public class SnapshotImpl implements Snapshot {
 
 	@Override
 	public int getSizeOfReinforcement(Player player) {
-		return getReinforcementList(player).size();
+		return getReinforcementSet(player).size();
 	}
 
 	@Override
-	public List<Unit> getReinforcementList(Player player) {
+	public Set<AbstractMobileUnit> getReinforcementSet(Player player) {
 		return switch(player) {
 			case FIRST -> reinforcementsFIRST;
 			case SECOND -> reinforcementsSECOND;
@@ -200,18 +199,46 @@ public class SnapshotImpl implements Snapshot {
 	}
 
 	@Override
-	public void addReinforcementToList(Player player, Unit unit) {
+	public void addReinforcementToSet(Player player, Unit unit) {
 		switch (player) {
-			case FIRST -> reinforcementsFIRST.add(unit);
-			case SECOND -> reinforcementsSECOND.add(unit);
+			case FIRST -> {
+				// If the unit is big, add all the corresponding distinct references to the list and remove the entry (AbstractMobileUnit, Set<AbstractMobileUnit>) from the map.
+				if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(player).containsKey(unit)) {
+					reinforcementsFIRST.addAll(board.getBigUnitToSmallUnitsMap(player).get(unit));
+					board.removeBigUnitFromMap(player, (AbstractMobileUnit) unit);
+					reinforcementsFIRST.add((AbstractMobileUnit) unit);
+				// If the unit is a wall, add the corresponding reference to the list and remove the entry (Wall, AbstractMobileUnit) from the map.
+				} else if(unit instanceof Wall && board.getWallToUnitMap(player).containsKey(unit)) {
+					reinforcementsFIRST.add(board.getWallToUnitMap(player).get(unit));
+					board.removeWallFromMap(player, (Wall) unit);
+				// If the unit is a small unit, just add it to the list.
+				} else if(unit instanceof AbstractMobileUnit) {
+					reinforcementsFIRST.add((AbstractMobileUnit) unit);
+				}
+			}
+			case SECOND -> {
+				// If the unit is big, add all the corresponding distinct references to the list and remove the entry (AbstractMobileUnit, Set<AbstractMobileUnit>) from the map.
+				if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(player).containsKey(unit)) {
+					reinforcementsSECOND.addAll(board.getBigUnitToSmallUnitsMap(player).get(unit));
+					board.removeBigUnitFromMap(player, (AbstractMobileUnit) unit);
+					reinforcementsSECOND.add((AbstractMobileUnit) unit);
+				// If the unit is a wall, add the corresponding reference to the list and remove the entry (Wall, AbstractMobileUnit) from the map.
+				} else if(unit instanceof Wall && board.getWallToUnitMap(player).containsKey(unit)) {
+					reinforcementsSECOND.add(board.getWallToUnitMap(player).get(unit));
+					board.removeWallFromMap(player, (Wall) unit);
+				// If the unit is a small unit, just add it to the list.
+				} else if(unit instanceof AbstractMobileUnit) {
+					reinforcementsSECOND.add((AbstractMobileUnit) unit);
+				}
+			}
 		}
 	}
 
 	@Override
-	public void removeReinforcementFromList(Player player, int unitIndex) {
+	public void removeReinforcementFromSet(Player player, AbstractMobileUnit unit) {
 		switch (player) {
-			case FIRST -> reinforcementsFIRST.remove(unitIndex);
-			case SECOND -> reinforcementsSECOND.remove(unitIndex);
+			case FIRST -> reinforcementsFIRST.remove(unit);
+			case SECOND -> reinforcementsSECOND.remove(unit);
 		}
 	}
 }

@@ -5,12 +5,11 @@ import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 
 import java.io.Serial;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class BoardImpl implements Board {
 
@@ -20,8 +19,10 @@ public class BoardImpl implements Board {
 	@Serial
     private static final long serialVersionUID = 1L;
 	final Unit[][] grid;
-    private Map<Unit, Unit[]> bigUnitToSmallUnitsFIRST = new HashMap<>();
-    private Map<Unit, Unit[]> bigUnitToSmallUnitsSECOND = new HashMap<>();
+    private final Map<AbstractMobileUnit, Set<AbstractMobileUnit>> bigUnitToSmallUnitsFIRST = new HashMap<>(),
+                                                                   bigUnitToSmallUnitsSECOND = new HashMap<>();
+    private final Map<Wall, AbstractMobileUnit> wallToUnitFIRST = new HashMap<>(),
+                                                wallToUnitSECOND = new HashMap<>();
 
     public static Board createEmptyBoard(int maxRowIndex, int maxColumnIndex) {
         Unit[][] grid = new Unit[maxRowIndex + 1][maxColumnIndex + 1];
@@ -160,27 +161,23 @@ public class BoardImpl implements Board {
 	}
 
     @Override
-    public Unit createBigVerticalUnit(int centerRowIndex, int columnIndex) {
+    public AbstractMobileUnit createBigVerticalUnit(int centerRowIndex, int columnIndex) {
         // Create a "big unit" out of one of the three small units.
-        Unit bigUnit = getUnit(centerRowIndex, columnIndex).get();
-        return bigUnit;
+        return (AbstractMobileUnit) getUnit(centerRowIndex, columnIndex).orElse(null);
     }
 
     @Override
-    public Unit createWallUnit(int rowIndex, int columnIndex) {
+    public Wall createWallUnit(int rowIndex, int columnIndex) {
         // Create a wall out of one of the small unit.
-        Unit wall = new Wall();
-        // Remove the small unit from the board.
-        removeUnit(rowIndex, columnIndex);
-        return wall;
+        return new Wall();
     }
 
     // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
     @Override
-    public void moveBigVerticalUnitIn(Unit bigUnit, int centerRowIndex, int columnIndex) {
+    public void moveBigVerticalUnitIn(AbstractMobileUnit bigUnit, int centerRowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
         // Create an array out of the three small units.
-        Unit[] smallUnits = {getUnit(centerRowIndex - 1, columnIndex).get(), getUnit(centerRowIndex + 1, columnIndex).get()};
+        Set<AbstractMobileUnit> smallUnits = Set.of((AbstractMobileUnit) getUnit(centerRowIndex - 1, columnIndex).get(), (AbstractMobileUnit) getUnit(centerRowIndex + 1, columnIndex).get());
         // Remove the three small units from the board.
         removeUnit(centerRowIndex - 1, columnIndex);
         removeUnit(centerRowIndex, columnIndex);
@@ -221,17 +218,25 @@ public class BoardImpl implements Board {
 
     // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
     @Override
-    public void moveWallUnitIn(Unit wall, int rowIndex, int columnIndex) {
+    public void moveWallUnitIn(Wall wall, int rowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
+        // Get the mobile unit.
+        AbstractMobileUnit unit = (AbstractMobileUnit) getUnit(rowIndex, columnIndex).orElse(null);
+        // Remove the small unit from the board.
+        removeUnit(rowIndex, columnIndex);
         // Check which half the big unit is in.
         if(rowIndex >= halfBoard) {
+            // Put the entry into the map.
+            wallToUnitFIRST.put(wall, unit);
             // Move all other units in the columns as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.FIRST);
-            // Add the "big unit" to the board.
+            // Add the wall to the board.
             addUnit((getMaxRowIndex() / 2) + 1, columnIndex, wall);
             // Move the units back in.
             moveUnitsIn(Player.FIRST);
         } else {
+            // Put the entry into the map.
+            wallToUnitSECOND.put(wall, unit);
             // Move all other units in the columns as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.SECOND);
             // Add the "big unit" to the board.
@@ -281,7 +286,7 @@ public class BoardImpl implements Board {
     }
 
     @Override
-    public Map<Unit, Unit[]> getBigUnitToSmallUnitsMap(Player player) {
+    public Map<AbstractMobileUnit, Set<AbstractMobileUnit>> getBigUnitToSmallUnitsMap(Player player) {
         return switch(player) {
             case FIRST -> bigUnitToSmallUnitsFIRST;
             case SECOND -> bigUnitToSmallUnitsSECOND;
@@ -289,10 +294,26 @@ public class BoardImpl implements Board {
     }
 
     @Override
-    public void removeBigUnitFromMap(Player player, Unit bigUnit) {
+    public void removeBigUnitFromMap(Player player, AbstractMobileUnit bigUnit) {
         switch (player) {
             case FIRST -> bigUnitToSmallUnitsFIRST.remove(bigUnit);
             case SECOND -> bigUnitToSmallUnitsSECOND.remove(bigUnit);
+        }
+    }
+
+    @Override
+    public Map<Wall, AbstractMobileUnit> getWallToUnitMap(Player player) {
+        return switch(player) {
+            case FIRST -> wallToUnitFIRST;
+            case SECOND -> wallToUnitSECOND;
+        };
+    }
+
+    @Override
+    public void removeWallFromMap(Player player, Wall wall) {
+        switch(player) {
+            case FIRST -> wallToUnitFIRST.remove(wall);
+            case SECOND -> wallToUnitSECOND.remove(wall);
         }
     }
 }

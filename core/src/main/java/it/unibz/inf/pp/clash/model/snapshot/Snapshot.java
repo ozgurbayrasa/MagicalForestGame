@@ -1,12 +1,12 @@
 package it.unibz.inf.pp.clash.model.snapshot;
 
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 
 import static it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
@@ -73,23 +73,23 @@ public interface Snapshot extends Serializable{
     /**
      *
      * @param player
-     * @return list of reinforcements for the specified player
+     * @return set of reinforcements for the specified player
      */
-    List<Unit> getReinforcementList(Player player);
+    Set<AbstractMobileUnit> getReinforcementSet(Player player);
 
     /**
      *
      * @param player
      * @param unit deleted from the board
      */
-    void addReinforcementToList(Player player, Unit unit);
+    void addReinforcementToSet(Player player, Unit unit);
 
     /**
      *
      * @param player
-     * @param unitIndex of unit added to the board
+     * @param unit added to the board
      */
-    public void removeReinforcementFromList(Player player, int unitIndex);
+    void removeReinforcementFromSet(Player player, AbstractMobileUnit unit);
 
     /**
      * Serializes the snapshot when exiting a game
@@ -97,15 +97,10 @@ public interface Snapshot extends Serializable{
      * @throws IOException
      */
     void serializeSnapshot(String path) throws IOException;
-    
-//    /**
-//     * Deserializes the snapshot when starting a game
-//     * @return Snapshot
-//     * @throws IOException
-//     * @throws ClassNotFoundException
-//     */
-//    Snapshot readSnapshot(String path) throws IOException, ClassNotFoundException;
-    
+
+    /**
+     * Randomly populates the board with units.
+     */
     void populateTiles();
     
     

@@ -4,10 +4,13 @@ import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.exceptions.OccupiedTileException;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Board for an ongoing game.
@@ -24,9 +27,13 @@ import java.util.Optional;
  */
 public interface Board extends Serializable{
 
-    Map<Unit, Unit[]> getBigUnitToSmallUnitsMap(Player player);
+    Map<AbstractMobileUnit, Set<AbstractMobileUnit>> getBigUnitToSmallUnitsMap(Player player);
 
-    void removeBigUnitFromMap(Player player, Unit bigUnit);
+    void removeBigUnitFromMap(Player player, AbstractMobileUnit bigUnit);
+
+    Map<Wall, AbstractMobileUnit> getWallToUnitMap(Player player);
+
+    void removeWallFromMap(Player player, Wall wall);
 
     /**
      * A pair of coordinates for a tile.
@@ -93,7 +100,7 @@ public interface Board extends Serializable{
      * @param columnIndex
      * @return
      */
-    Unit createBigVerticalUnit(int centerRowIndex, int columnIndex);
+    AbstractMobileUnit createBigVerticalUnit(int centerRowIndex, int columnIndex);
 
     /**
      * Creates a three wall units out of the small units.
@@ -101,7 +108,7 @@ public interface Board extends Serializable{
      * @param columnIndex
      * @return
      */
-    Unit createWallUnit(int centerRowIndex, int columnIndex);
+    Wall createWallUnit(int centerRowIndex, int columnIndex);
 
     /**
      * Moves the specified big vertical unit next to the middle border.
@@ -109,15 +116,15 @@ public interface Board extends Serializable{
      * @param centerRowIndex
      * @param columnIndex
      */
-    void moveBigVerticalUnitIn(Unit bigUnit, int centerRowIndex, int columnIndex);
+    void moveBigVerticalUnitIn(AbstractMobileUnit bigUnit, int centerRowIndex, int columnIndex);
 
     /**
      * Moves the specified big horizontal unit next to the middle border.
-     * @param bigUnit
+     * @param wall
      * @param centerRowIndex
      * @param columnIndex
      */
-    void moveWallUnitIn(Unit bigUnit, int centerRowIndex, int columnIndex);
+    void moveWallUnitIn(Wall wall, int centerRowIndex, int columnIndex);
 
     /**
      *

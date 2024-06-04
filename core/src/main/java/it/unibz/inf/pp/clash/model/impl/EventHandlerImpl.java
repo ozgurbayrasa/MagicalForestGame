@@ -2,10 +2,7 @@ package it.unibz.inf.pp.clash.model.impl;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
@@ -16,6 +13,7 @@ import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
@@ -116,11 +114,17 @@ public class EventHandlerImpl implements EventHandler {
 			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
 			            		if(random.nextBoolean()) {
 									// Select random (possibly null) reinforcement unit and add it to the board.
+									AbstractMobileUnit unit = null;
 									int unitIndex = random.nextInt(s.getSizeOfReinforcement(activePlayer));
-				                    Unit unit = s.getReinforcementList(activePlayer).get(unitIndex);
+									for(AbstractMobileUnit u : s.getReinforcementSet(activePlayer)) {
+										if (unitIndex-- == 0) {
+											unit = u;
+											break;
+										}
+									}
 									// Add unit to board and remove from list.
 				                    board.addUnit(i, j, unit);
-									s.removeReinforcementFromList(activePlayer, unitIndex);
+									s.removeReinforcementFromSet(activePlayer, unit);
 				                    continue loop;
 			            		}
 							}
@@ -137,11 +141,17 @@ public class EventHandlerImpl implements EventHandler {
 			            	if(board.getUnit(i, j).isEmpty() && board.areValidCoordinates(i, j)) {
 			            		if(random.nextBoolean()) {
 									// Select random (possibly null) reinforcement unit and add it to the board.
+									AbstractMobileUnit unit = null;
 									int unitIndex = random.nextInt(s.getSizeOfReinforcement(activePlayer));
-									Unit unit = s.getReinforcementList(activePlayer).get(unitIndex);
+									for(AbstractMobileUnit u : s.getReinforcementSet(activePlayer)) {
+										if (unitIndex-- == 0) {
+											unit = u;
+											break;
+										}
+									}
 									// Add unit to board and remove from list.
 									board.addUnit(i, j, unit);
-									s.removeReinforcementFromList(activePlayer, unitIndex);
+									s.removeReinforcementFromSet(activePlayer, unit);
 				                    continue loop;
 			            		}
 							}
@@ -299,13 +309,15 @@ public class EventHandlerImpl implements EventHandler {
 			displayErrorMessage("Error: Selected tile is empty.");
 			return;
 		}
+		// Get unit.
+		Unit unit = board.getUnit(rowIndex, columnIndex).get();
 		// Check if there is an ongoing move.
 		if(ongoingMove.isPresent()) {
 			displayErrorMessage("Error: Cannot delete unit during an ongoing move.");
-		// Check if the unit is not a big unit.
-		} else if(!board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(board.getUnit(rowIndex, columnIndex).get())){
+		// Check if the unit is not a big unit (because big units cannot be removed).
+		} else if(!(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit))) {
 			// Add the unit to the reinforcement list and remove it from the board.
-			s.addReinforcementToList(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
+			s.addReinforcementToSet(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
 			board.removeUnit(rowIndex, columnIndex);
 			board.moveUnitsIn(activePlayer);
 			// Check if a big unit is detected, and if so, do not decrement the number of remaining actions.
@@ -343,7 +355,7 @@ public class EventHandlerImpl implements EventHandler {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if(((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
 								// Create a big unit and move it next to the border.
-								Unit bigUnit = board.createBigVerticalUnit(i, j);
+								AbstractMobileUnit bigUnit = board.createBigVerticalUnit(i, j);
 								board.moveBigVerticalUnitIn(bigUnit, i, j);
 								((AbstractMobileUnit) above).setAttackCountdown(3);
 								((AbstractMobileUnit) center).setAttackCountdown(3);
@@ -368,9 +380,9 @@ public class EventHandlerImpl implements EventHandler {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if (((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
 								// Create wall units and move them next to the border.
-								Unit leftWall = board.createWallUnit(i, j - 1);
-								Unit centerWall = board.createWallUnit(i, j);
-								Unit rightWall = board.createWallUnit(i, j + 1);
+								Wall leftWall = board.createWallUnit(i, j - 1);
+								Wall centerWall = board.createWallUnit(i, j);
+								Wall rightWall = board.createWallUnit(i, j + 1);
 								board.moveWallUnitIn(leftWall, i, j - 1);
 								board.moveWallUnitIn(centerWall, i, j);
 								board.moveWallUnitIn(rightWall, i, j + 1);
@@ -427,8 +439,11 @@ public class EventHandlerImpl implements EventHandler {
 						// Remove the attacking unit from the board and add it to reinforcements.
 						board.removeUnit(row, col);
 						// Add this unit to be set to -1 for attackCountdown.
+						if(board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(mobileUnit)) {
+							unitsAttackedAndRemoved.addAll(board.getBigUnitToSmallUnitsMap(activePlayer).get(mobileUnit));
+						}
 						unitsAttackedAndRemoved.add(mobileUnit);
-						s.addReinforcementToList(activePlayer, mobileUnit);
+						s.addReinforcementToSet(activePlayer, mobileUnit);
 
 					}
 				}
@@ -515,7 +530,7 @@ public class EventHandlerImpl implements EventHandler {
 					if(opponentUnit instanceof AbstractMobileUnit mobileUnit){
 						processedUnits.add(mobileUnit);
 					}
-					s.addReinforcementToList(opponent, opponentUnit);
+					s.addReinforcementToSet(opponent, opponentUnit);
 					// Decrement the attackValue by opponent's unit health.
 					attackValue -= unitHealth;
 				} else {
