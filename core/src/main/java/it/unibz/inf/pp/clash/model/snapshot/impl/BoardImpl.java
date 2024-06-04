@@ -188,9 +188,9 @@ public class BoardImpl implements Board {
             while(getUnit(rowIndex, columnIndex).isPresent() && getUnit(rowIndex, columnIndex).get() instanceof Wall) {
                 rowIndex++;
             }
+            addUnit(rowIndex, columnIndex, bigUnit);
             addUnit(rowIndex + 1, columnIndex, bigUnit);
             addUnit(rowIndex + 2, columnIndex, bigUnit);
-            addUnit(rowIndex + 3, columnIndex, bigUnit);
             // Move the units back in.
             moveUnitsIn(Player.FIRST);
         } else {
