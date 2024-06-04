@@ -8,6 +8,8 @@ import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 
 import java.io.Serial;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class BoardImpl implements Board {
@@ -18,6 +20,8 @@ public class BoardImpl implements Board {
 	@Serial
     private static final long serialVersionUID = 1L;
 	final Unit[][] grid;
+    private Map<Unit, Unit[]> bigUnitToSmallUnitsFIRST = new HashMap<>();
+    private Map<Unit, Unit[]> bigUnitToSmallUnitsSECOND = new HashMap<>();
 
     public static Board createEmptyBoard(int maxRowIndex, int maxColumnIndex) {
         Unit[][] grid = new Unit[maxRowIndex + 1][maxColumnIndex + 1];
@@ -159,10 +163,6 @@ public class BoardImpl implements Board {
     public Unit createBigVerticalUnit(int centerRowIndex, int columnIndex) {
         // Create a "big unit" out of one of the three small units.
         Unit bigUnit = getUnit(centerRowIndex, columnIndex).get();
-        // Remove the three small units from the board.
-        removeUnit(centerRowIndex - 1, columnIndex);
-        removeUnit(centerRowIndex, columnIndex);
-        removeUnit(centerRowIndex + 1, columnIndex);
         return bigUnit;
     }
 
@@ -179,8 +179,16 @@ public class BoardImpl implements Board {
     @Override
     public void moveBigVerticalUnitIn(Unit bigUnit, int centerRowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
+        // Create an array out of the three small units.
+        Unit[] smallUnits = {getUnit(centerRowIndex - 1, columnIndex).get(), getUnit(centerRowIndex + 1, columnIndex).get()};
+        // Remove the three small units from the board.
+        removeUnit(centerRowIndex - 1, columnIndex);
+        removeUnit(centerRowIndex, columnIndex);
+        removeUnit(centerRowIndex + 1, columnIndex);
         // Check which half the big unit is in.
         if(centerRowIndex > halfBoard) {
+            // Put the entry into the corresponding map.
+            bigUnitToSmallUnitsFIRST.put(bigUnit, smallUnits);
             // Move all other units in the column as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.FIRST);
             // Add the "big unit" to the board, as close to the border as possible, depending on the walls.
@@ -194,6 +202,8 @@ public class BoardImpl implements Board {
             // Move the units back in.
             moveUnitsIn(Player.FIRST);
         } else {
+            // Put the entry into the corresponding map.
+            bigUnitToSmallUnitsSECOND.put(bigUnit, smallUnits);
             // Move all other units in the column as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.SECOND);
             // Add the "big unit" to the board, as close to the border as possible, depending on the walls.
@@ -231,7 +241,7 @@ public class BoardImpl implements Board {
         }
     }
 
-    // Helper method which moves all units as far away from the middle border as possible.
+    // Helper method which moves all units of a column as far away from the middle border as possible.
     private void moveColumnOut(int columnIndex, Player player) {
         int halfBoard = (getMaxColumnIndex() / 2) + 1;
         switch(player) {
@@ -267,6 +277,22 @@ public class BoardImpl implements Board {
                     }
                 }
             }
+        }
+    }
+
+    @Override
+    public Map<Unit, Unit[]> getBigUnitToSmallUnitsMap(Player player) {
+        return switch(player) {
+            case FIRST -> bigUnitToSmallUnitsFIRST;
+            case SECOND -> bigUnitToSmallUnitsSECOND;
+        };
+    }
+
+    @Override
+    public void removeBigUnitFromMap(Player player, Unit bigUnit) {
+        switch (player) {
+            case FIRST -> bigUnitToSmallUnitsFIRST.remove(bigUnit);
+            case SECOND -> bigUnitToSmallUnitsSECOND.remove(bigUnit);
         }
     }
 }

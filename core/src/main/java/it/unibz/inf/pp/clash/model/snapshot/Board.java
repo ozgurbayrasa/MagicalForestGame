@@ -6,6 +6,7 @@ import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -22,6 +23,10 @@ import java.util.Optional;
  * A same unit may stand on multiple (adjacent) tiles.
  */
 public interface Board extends Serializable{
+
+    Map<Unit, Unit[]> getBigUnitToSmallUnitsMap(Player player);
+
+    void removeBigUnitFromMap(Player player, Unit bigUnit);
 
     /**
      * A pair of coordinates for a tile.

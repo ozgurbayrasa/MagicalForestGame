@@ -302,7 +302,8 @@ public class EventHandlerImpl implements EventHandler {
 		// Check if there is an ongoing move.
 		if(ongoingMove.isPresent()) {
 			displayErrorMessage("Error: Cannot delete unit during an ongoing move.");
-		} else {
+		// Check if the unit is not a big unit.
+		} else if(!board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(board.getUnit(rowIndex, columnIndex).get())){
 			// Add the unit to the reinforcement list and remove it from the board.
 			s.addReinforcementToList(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
 			board.removeUnit(rowIndex, columnIndex);
@@ -428,7 +429,7 @@ public class EventHandlerImpl implements EventHandler {
 						// Add this unit to be set to -1 for attackCountdown.
 						unitsAttackedAndRemoved.add(mobileUnit);
 						s.addReinforcementToList(activePlayer, mobileUnit);
-						
+
 					}
 				}
 			}
