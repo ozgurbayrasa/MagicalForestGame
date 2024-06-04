@@ -189,13 +189,13 @@ public class BoardImpl implements Board {
             // Move all other units in the column as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.FIRST);
             // Add the "big unit" to the board, as close to the border as possible, depending on the walls.
-            int rowIndex = halfBoard;
-            while(getUnit(rowIndex, columnIndex).isPresent() && getUnit(rowIndex, columnIndex).get() instanceof Wall) {
-                rowIndex++;
+            int rowOffset = halfBoard;
+            while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
+                rowOffset++;
             }
-            addUnit(rowIndex, columnIndex, bigUnit);
-            addUnit(rowIndex + 1, columnIndex, bigUnit);
-            addUnit(rowIndex + 2, columnIndex, bigUnit);
+            addUnit(rowOffset, columnIndex, bigUnit);
+            addUnit(rowOffset + 1, columnIndex, bigUnit);
+            addUnit(rowOffset + 2, columnIndex, bigUnit);
             // Move the units back in.
             moveUnitsIn(Player.FIRST);
         } else {
@@ -204,13 +204,13 @@ public class BoardImpl implements Board {
             // Move all other units in the column as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.SECOND);
             // Add the "big unit" to the board, as close to the border as possible, depending on the walls.
-            int rowIndex = halfBoard - 1;
-            while(getUnit(rowIndex, columnIndex).isPresent() && getUnit(rowIndex, columnIndex).get() instanceof Wall) {
-                rowIndex--;
+            int rowOffset = halfBoard - 1;
+            while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
+                rowOffset--;
             }
-            addUnit(rowIndex, columnIndex, bigUnit);
-            addUnit(rowIndex - 1, columnIndex, bigUnit);
-            addUnit(rowIndex - 2, columnIndex, bigUnit);
+            addUnit(rowOffset, columnIndex, bigUnit);
+            addUnit(rowOffset - 1, columnIndex, bigUnit);
+            addUnit(rowOffset - 2, columnIndex, bigUnit);
             // Move the units back in.
             moveUnitsIn(Player.SECOND);
         }
@@ -230,8 +230,13 @@ public class BoardImpl implements Board {
             wallToUnitFIRST.put(wall, unit);
             // Move all other units in the columns as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.FIRST);
+            // Add the wall to the board, as close to the border as possible, depending on the other walls.
+            int rowOffset = halfBoard;
+            while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
+                rowOffset++;
+            }
             // Add the wall to the board.
-            addUnit((getMaxRowIndex() / 2) + 1, columnIndex, wall);
+            addUnit(rowOffset, columnIndex, wall);
             // Move the units back in.
             moveUnitsIn(Player.FIRST);
         } else {
@@ -239,8 +244,13 @@ public class BoardImpl implements Board {
             wallToUnitSECOND.put(wall, unit);
             // Move all other units in the columns as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.SECOND);
+            // Add the wall to the board, as close to the border as possible, depending on the other walls.
+            int rowOffset = halfBoard - 1;
+            while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
+                rowOffset--;
+            }
             // Add the "big unit" to the board.
-            addUnit(getMaxRowIndex() / 2, columnIndex, wall);
+            addUnit(rowOffset, columnIndex, wall);
             // Move the units back in.
             moveUnitsIn(Player.SECOND);
         }
