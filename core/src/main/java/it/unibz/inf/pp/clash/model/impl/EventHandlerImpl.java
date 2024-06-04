@@ -366,9 +366,13 @@ public class EventHandlerImpl implements EventHandler {
 						if (center instanceof AbstractMobileUnit) {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if (((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
-								// Create a big unit and move it next to the border.
-								Unit bigUnit = board.createBigWallUnit(i, j);
-								board.moveBigWallUnitIn(bigUnit, i, j);
+								// Create wall units and move them next to the border.
+								Unit leftWall = board.createWallUnit(i, j - 1);
+								Unit centerWall = board.createWallUnit(i, j);
+								Unit rightWall = board.createWallUnit(i, j + 1);
+								board.moveWallUnitIn(leftWall, i, j - 1);
+								board.moveWallUnitIn(centerWall, i, j);
+								board.moveWallUnitIn(rightWall, i, j + 1);
 								return true;
 							}
 						}
@@ -420,7 +424,7 @@ public class EventHandlerImpl implements EventHandler {
 						encounter(board, mobileUnit, opponentPlayer, col);
 
 						// Remove the attacking unit from the board and add it to reinforcements.
-						deleteUnit(row, col);
+						board.removeUnit(row, col);
 						// Add this unit to be set to -1 for attackCountdown.
 						unitsAttackedAndRemoved.add(mobileUnit);
 						s.addReinforcementToList(activePlayer, mobileUnit);
@@ -454,7 +458,7 @@ public class EventHandlerImpl implements EventHandler {
 			// If it's the end of the game, clear the board. Display the end of game message.
 			clearBoard(board);
 			try {
-				displayManager.updateMessage("Player " + s.getHero(opponentPlayer).getName() + " has been defeated!");
+				displayManager.updateMessage(s.getHero(opponentPlayer).getName() + " has been defeated!");
 			} catch (NoGameOnScreenException e) {
 				throw new RuntimeException(e);
 			}
@@ -503,7 +507,7 @@ public class EventHandlerImpl implements EventHandler {
 				// If attacking is more than opponent's unit. It must be destroyed.
 				if (attackValue >= unitHealth) {
 					// Unit is destroyed
-					deleteUnit(r, attackingColumnIndex);
+					board.removeUnit(r, attackingColumnIndex);
 					// Don't forget to add it to the reinforcements list.
 					// And set it's attackCountDown to -1 if it's a mobile unit.
 					

@@ -167,14 +167,12 @@ public class BoardImpl implements Board {
     }
 
     @Override
-    public Unit createBigWallUnit(int centerRowIndex, int columnIndex) {
-        // Create a "big unit" out of one of the three small units.
-        Unit bigUnit = new Wall();
-        // Remove the three small units from the board.
-        removeUnit(centerRowIndex, columnIndex - 1);
-        removeUnit(centerRowIndex, columnIndex);
-        removeUnit(centerRowIndex, columnIndex + 1);
-        return bigUnit;
+    public Unit createWallUnit(int rowIndex, int columnIndex) {
+        // Create a wall out of one of the small unit.
+        Unit wall = new Wall();
+        // Remove the small unit from the board.
+        removeUnit(rowIndex, columnIndex);
+        return wall;
     }
 
     // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
@@ -213,29 +211,21 @@ public class BoardImpl implements Board {
 
     // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
     @Override
-    public void moveBigWallUnitIn(Unit bigUnit, int rowIndex, int centerColumnIndex) {
+    public void moveWallUnitIn(Unit wall, int rowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
         // Check which half the big unit is in.
         if(rowIndex >= halfBoard) {
             // Move all other units in the columns as far away from the middle border as possible.
-            moveColumnOut(centerColumnIndex - 1, Player.FIRST);
-            moveColumnOut(centerColumnIndex, Player.FIRST);
-            moveColumnOut(centerColumnIndex + 1, Player.FIRST);
+            moveColumnOut(columnIndex, Player.FIRST);
             // Add the "big unit" to the board.
-            addUnit((getMaxRowIndex() / 2) + 1, centerColumnIndex - 1, bigUnit);
-            addUnit((getMaxRowIndex() / 2) + 1, centerColumnIndex, bigUnit);
-            addUnit((getMaxRowIndex() / 2) + 1, centerColumnIndex + 1, bigUnit);
+            addUnit((getMaxRowIndex() / 2) + 1, columnIndex, wall);
             // Move the units back in.
             moveUnitsIn(Player.FIRST);
         } else {
             // Move all other units in the columns as far away from the middle border as possible.
-            moveColumnOut(centerColumnIndex - 1, Player.SECOND);
-            moveColumnOut(centerColumnIndex, Player.SECOND);
-            moveColumnOut(centerColumnIndex + 1, Player.SECOND);
+            moveColumnOut(columnIndex, Player.SECOND);
             // Add the "big unit" to the board.
-            addUnit(getMaxRowIndex() / 2, centerColumnIndex - 1, bigUnit);
-            addUnit(getMaxRowIndex() / 2, centerColumnIndex, bigUnit);
-            addUnit(getMaxRowIndex() / 2, centerColumnIndex + 1, bigUnit);
+            addUnit(getMaxRowIndex() / 2, columnIndex, wall);
             // Move the units back in.
             moveUnitsIn(Player.SECOND);
         }
