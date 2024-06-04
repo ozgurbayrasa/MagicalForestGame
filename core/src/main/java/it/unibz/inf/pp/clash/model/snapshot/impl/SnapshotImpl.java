@@ -1,10 +1,7 @@
 package it.unibz.inf.pp.clash.model.snapshot.impl;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
@@ -196,15 +193,10 @@ public class SnapshotImpl implements Snapshot {
 
 	@Override
 	public List<Unit> getReinforcementList(Player player) {
-		switch(player) {
-			case FIRST -> {
-				return reinforcementsFIRST;
-			}
-			case SECOND -> {
-				return reinforcementsSECOND;
-			}
-		}
-		return null;
+		return switch(player) {
+			case FIRST -> reinforcementsFIRST;
+			case SECOND -> reinforcementsSECOND;
+		};
 	}
 
 	@Override

@@ -79,6 +79,8 @@ public class EventHandlerImpl implements EventHandler {
 		s.setActivePlayer(nextPlayer);
 		// Reset number of remaining actions.
 		s.setNumberOfRemainingActions(s.getDefaultActionsRemaining());
+		// Cancels the ongoing move.
+		s.setOngoingMove(null);
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " skipped his turn!");
 		handleEncounters();
 	}
@@ -314,9 +316,9 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
-	// This method handles the detection and moving of big units (only vertical for now).
+	// This method handles the detection and moving of big units (only 3x1 and 1x3 for now).
 	// It returns true if a new big unit has been detected.
-	public boolean detectBigUnits() {
+	private boolean detectBigUnits() {
 		Board board = s.getBoard();
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		// Repeat for every row.
@@ -340,12 +342,33 @@ public class EventHandlerImpl implements EventHandler {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if(((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
 								// Create a big unit and move it next to the border.
-								// If the method returns false,
-								board.moveBigVerticalUnitIn(i, j);
+								Unit bigUnit = board.createBigVerticalUnit(i, j);
+								board.moveBigVerticalUnitIn(bigUnit, i, j);
 								((AbstractMobileUnit) above).setAttackCountdown(3);
 								((AbstractMobileUnit) center).setAttackCountdown(3);
 								((AbstractMobileUnit) below).setAttackCountdown(3);
-								displayManager.drawSnapshot(s, "");
+								return true;
+							}
+						}
+					}
+				}
+				// Check if the coordinates to the left and right of the cell are valid.
+				if(board.areValidCoordinates(i, j - 1) && board.areValidCoordinates(i, j + 1)
+						// Check if there are units in all three cells.
+						&& board.getUnit(i, j - 1).isPresent() && board.getUnit(i, j).isPresent() && board.getUnit(i, j + 1).isPresent()) {
+					// Get the three units.
+					Unit left = board.getUnit(i, j - 1).get();
+					Unit center = board.getUnit(i, j).get();
+					Unit right = board.getUnit(i, j + 1).get();
+					// Check if the three units have the same class.
+					if(left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass())) {
+						// Check if this class is a subclass of AbstractMobileUnit.
+						if (center instanceof AbstractMobileUnit) {
+							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
+							if (((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
+								// Create a big unit and move it next to the border.
+								Unit bigUnit = board.createBigWallUnit(i, j);
+								board.moveBigWallUnitIn(bigUnit, i, j);
 								return true;
 							}
 						}
@@ -397,7 +420,7 @@ public class EventHandlerImpl implements EventHandler {
 						encounter(board, mobileUnit, opponentPlayer, col);
 
 						// Remove the attacking unit from the board and add it to reinforcements.
-						board.removeUnit(row, col);
+						deleteUnit(row, col);
 						// Add this unit to be set to -1 for attackCountdown.
 						unitsAttackedAndRemoved.add(mobileUnit);
 						s.addReinforcementToList(activePlayer, mobileUnit);
@@ -480,7 +503,7 @@ public class EventHandlerImpl implements EventHandler {
 				// If attacking is more than opponent's unit. It must be destroyed.
 				if (attackValue >= unitHealth) {
 					// Unit is destroyed
-					board.removeUnit(r, attackingColumnIndex);
+					deleteUnit(r, attackingColumnIndex);
 					// Don't forget to add it to the reinforcements list.
 					// And set it's attackCountDown to -1 if it's a mobile unit.
 					

@@ -83,11 +83,36 @@ public interface Board extends Serializable{
     void moveUnitsIn(Player player);
 
     /**
+     * Creates a big vertical unit out of the small units.
+     * @param centerRowIndex
+     * @param columnIndex
+     * @return
+     */
+    Unit createBigVerticalUnit(int centerRowIndex, int columnIndex);
+
+    /**
+     * Creates a big horizontal unit out of the small units.
+     * @param centerRowIndex
+     * @param columnIndex
+     * @return
+     */
+    Unit createBigWallUnit(int centerRowIndex, int columnIndex);
+
+    /**
      * Moves the specified big vertical unit next to the middle border.
+     * @param bigUnit
      * @param centerRowIndex
      * @param columnIndex
      */
-    void moveBigVerticalUnitIn(int centerRowIndex, int columnIndex);
+    void moveBigVerticalUnitIn(Unit bigUnit, int centerRowIndex, int columnIndex);
+
+    /**
+     * Moves the specified big horizontal unit next to the middle border.
+     * @param bigUnit
+     * @param centerRowIndex
+     * @param columnIndex
+     */
+    void moveBigWallUnitIn(Unit bigUnit, int centerRowIndex, int columnIndex);
 
     /**
      *

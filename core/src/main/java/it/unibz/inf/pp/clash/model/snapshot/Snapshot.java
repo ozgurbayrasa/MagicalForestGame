@@ -5,6 +5,7 @@ import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
