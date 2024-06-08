@@ -100,7 +100,7 @@ public interface Board extends Serializable{
      * @param columnIndex
      * @return
      */
-    AbstractMobileUnit createBigVerticalUnit(int centerRowIndex, int columnIndex);
+    AbstractMobileUnit create3x1Formation(int centerRowIndex, int columnIndex);
 
     /**
      * Creates a three wall units out of the small units.
@@ -116,7 +116,7 @@ public interface Board extends Serializable{
      * @param centerRowIndex
      * @param columnIndex
      */
-    void moveBigVerticalUnitIn(AbstractMobileUnit bigUnit, int centerRowIndex, int columnIndex);
+    void move3x1In(AbstractMobileUnit bigUnit, int centerRowIndex, int columnIndex);
 
     /**
      * Moves the specified big horizontal unit next to the middle border.
@@ -124,7 +124,7 @@ public interface Board extends Serializable{
      * @param centerRowIndex
      * @param columnIndex
      */
-    void moveWallUnitIn(Wall wall, int centerRowIndex, int columnIndex);
+    void moveWallUnitsIn(Wall wall, int centerRowIndex, int columnIndex);
 
     /**
      *

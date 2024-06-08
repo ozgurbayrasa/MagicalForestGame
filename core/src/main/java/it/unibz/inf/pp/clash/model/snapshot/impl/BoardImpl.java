@@ -161,7 +161,7 @@ public class BoardImpl implements Board {
 	}
 
     @Override
-    public AbstractMobileUnit createBigVerticalUnit(int centerRowIndex, int columnIndex) {
+    public AbstractMobileUnit create3x1Formation(int centerRowIndex, int columnIndex) {
         // Create a "big unit" out of one of the three small units.
         return (AbstractMobileUnit) getUnit(centerRowIndex, columnIndex).orElse(null);
     }
@@ -174,7 +174,7 @@ public class BoardImpl implements Board {
 
     // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
     @Override
-    public void moveBigVerticalUnitIn(AbstractMobileUnit bigUnit, int centerRowIndex, int columnIndex) {
+    public void move3x1In(AbstractMobileUnit bigUnit, int centerRowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
         // Create an array out of the three small units.
         Set<AbstractMobileUnit> smallUnits = Set.of((AbstractMobileUnit) getUnit(centerRowIndex - 1, columnIndex).get(), (AbstractMobileUnit) getUnit(centerRowIndex + 1, columnIndex).get());
@@ -218,7 +218,7 @@ public class BoardImpl implements Board {
 
     // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
     @Override
-    public void moveWallUnitIn(Wall wall, int rowIndex, int columnIndex) {
+    public void moveWallUnitsIn(Wall wall, int rowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
         // Get the mobile unit.
         AbstractMobileUnit unit = (AbstractMobileUnit) getUnit(rowIndex, columnIndex).orElse(null);

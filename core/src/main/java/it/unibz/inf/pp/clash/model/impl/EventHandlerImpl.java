@@ -32,7 +32,7 @@ public class EventHandlerImpl implements EventHandler {
 		s = new SnapshotImpl(firstHero, secondHero);
 //		Snapshot dummy1 = new DummySnapshot(firstHero, secondHero);
 //		Snapshot dummy2 = new AnotherDummySnapshot(firstHero, secondHero);
-		detectBigUnits();
+		detectFormations();
 		displayManager.drawSnapshot(s, "A new game has been started!");
 	}
 
@@ -162,7 +162,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 		board.moveUnitsIn(activePlayer);
 		// Check if a big unit is detected, and if so, do not decrement the number of remaining actions.
-		if(!detectBigUnits()) {
+		if(!detectFormations()) {
 			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 		}
 		endTurnIfNoActionsRemaining();
@@ -276,7 +276,7 @@ public class EventHandlerImpl implements EventHandler {
 		s.setOngoingMove(null);
 		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
 		board.moveUnitsIn(activePlayer);
-		if (!detectBigUnits()) {
+		if (!detectFormations()) {
 			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 		}
 		endTurnIfNoActionsRemaining();
@@ -321,7 +321,7 @@ public class EventHandlerImpl implements EventHandler {
 			board.removeUnit(rowIndex, columnIndex);
 			board.moveUnitsIn(activePlayer);
 			// Check if a big unit is detected, and if so, do not decrement the number of remaining actions.
-			if(!detectBigUnits()) {
+			if(!detectFormations()) {
 				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 			}
 			endTurnIfNoActionsRemaining();
@@ -331,7 +331,7 @@ public class EventHandlerImpl implements EventHandler {
 
 	// This method handles the detection and moving of big units (only 3x1 and 1x3 for now).
 	// It returns true if a new big unit has been detected.
-	private boolean detectBigUnits() {
+	private boolean detectFormations() {
 		Board board = s.getBoard();
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		// Repeat for every row.
@@ -355,8 +355,8 @@ public class EventHandlerImpl implements EventHandler {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if(((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
 								// Create a big unit and move it next to the border.
-								AbstractMobileUnit bigUnit = board.createBigVerticalUnit(i, j);
-								board.moveBigVerticalUnitIn(bigUnit, i, j);
+								AbstractMobileUnit bigUnit = board.create3x1Formation(i, j);
+								board.move3x1In(bigUnit, i, j);
 								((AbstractMobileUnit) above).setAttackCountdown(3);
 								((AbstractMobileUnit) center).setAttackCountdown(3);
 								((AbstractMobileUnit) below).setAttackCountdown(3);
@@ -383,9 +383,9 @@ public class EventHandlerImpl implements EventHandler {
 								Wall leftWall = board.createWallUnit(i, j - 1);
 								Wall centerWall = board.createWallUnit(i, j);
 								Wall rightWall = board.createWallUnit(i, j + 1);
-								board.moveWallUnitIn(leftWall, i, j - 1);
-								board.moveWallUnitIn(centerWall, i, j);
-								board.moveWallUnitIn(rightWall, i, j + 1);
+								board.moveWallUnitsIn(leftWall, i, j - 1);
+								board.moveWallUnitsIn(centerWall, i, j);
+								board.moveWallUnitsIn(rightWall, i, j + 1);
 								return true;
 							}
 						}
