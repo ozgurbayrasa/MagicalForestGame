@@ -2,9 +2,11 @@ package it.unibz.inf.pp.clash.model.snapshot.modifiers;
 
 public interface Trap {
 
-    enum TrapType {COMMON, RARE, LEGENDARY}
+    enum TrapRarity {COMMON, UNCOMMON, RARE, EPIC, LEGENDARY}
 
-    TrapType getTrapType();
+    TrapRarity getTrapRarity();
+
+    int getDamage();
 
     int getActivationCountdown();
 }

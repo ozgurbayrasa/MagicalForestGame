@@ -74,6 +74,13 @@ public interface EventHandler {
     void deleteUnit(int rowIndex, int columnIndex);
 
     /**
+     * Deletes the unit from the board without adding it to reinforcements in exchange for a trap or buff.
+     * @param rowIndex
+     * @param columnIndex
+     */
+    void sacrificeUnit(int rowIndex, int columnIndex);
+
+    /**
      * Continues the game when the user clicks the appropriate button, given that there is a serialized snapshot at the path specified.
      */
 	void continueGame();

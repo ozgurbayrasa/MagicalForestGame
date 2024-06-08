@@ -11,9 +11,10 @@ import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.NormalTrap;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
@@ -22,6 +23,9 @@ public class EventHandlerImpl implements EventHandler {
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
+	private Trap[][] trapBoard;
+	private final List<Trap> trapListFIRST = new ArrayList<>(),
+							 trapListSECOND = new ArrayList<>();
 
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -575,7 +579,95 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
+	@Override
+	public void sacrificeUnit(int rowIndex, int columnIndex) {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
+		// Check if the selected tile is within the board limits.
+		if (!board.areValidCoordinates(rowIndex, columnIndex)) {
+			return;
+		}
+		// Check if the tile is on the active player's board.
+		if (tileIsOnActivePlayerBoard(activePlayer, board, rowIndex)) {
+			displayErrorMessage("Error: Selected tile is not on the active player's board.");
+			return;
+		}
+		// Check if the tile is empty.
+		if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
+			displayErrorMessage("Error: Selected tile is empty.");
+			return;
+		}
+		// Get unit.
+		Unit unit = board.getUnit(rowIndex, columnIndex).get();
+		// Check if there is an ongoing move.
+		if (ongoingMove.isPresent()) {
+			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
+		} else {
+			if(trapBoard == null) {
+				createTrapBoard();
+			}
+			if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit)) {
+				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.LEGENDARY));
+				removeFormation(unit, activePlayer);
+			} else if(unit.getClass().equals(Fairy.class)) {
+				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.COMMON));
+				board.removeUnit(rowIndex, columnIndex);
+			} else if (unit.getClass().equals(Unicorn.class)) {
+				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.UNCOMMON));
+				board.removeUnit(rowIndex, columnIndex);
+			} else if(unit.getClass().equals(Butterfly.class)) {
+				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.RARE));
+				board.removeUnit(rowIndex, columnIndex);
+			} else if(unit.getClass().equals(Wall.class)) {
+				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.EPIC));
+				board.removeUnit(rowIndex, columnIndex);
+			}
+			board.moveUnitsIn(activePlayer);
+			// Check if a big unit is detected, and if so, do not decrement the number of remaining actions.
+			if (!detectFormations()) {
+				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+			}
+			endTurnIfNoActionsRemaining();
+			displayManager.drawSnapshot(s, "Player " + activePlayer + " sacrificed unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
+		}
+	}
 
+	private void removeFormation(Unit unit, Player activePlayer) {
+		Board board = s.getBoard();
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
+		switch (activePlayer) {
+			case FIRST -> {
+				for(int i = halfBoard; i <= board.getMaxRowIndex(); i++) {
+					for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+						if(board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+							board.removeUnit(i, j);
+						}
+					}
+				}
+			}
+			case SECOND -> {
+				for(int i = 0; i < halfBoard; i++) {
+					for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+						if(board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+							board.removeUnit(i, j);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void addTrapToList(Player activePlayer, Trap trap) {
+		switch (activePlayer) {
+			case FIRST -> trapListFIRST.add(trap);
+			case SECOND -> trapListSECOND.add(trap);
+		}
+	}
+
+	private void createTrapBoard() {
+		trapBoard = new Trap[s.getBoard().getMaxRowIndex() + 1][s.getBoard().getMaxColumnIndex() + 1];
+	}
 
 
 	// FOLLOWING METHOD CAN BE IMPLEMENTED IN BOARD
