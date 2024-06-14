@@ -1,5 +1,6 @@
 package it.unibz.inf.pp.clash.model.snapshot;
 
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 
@@ -102,6 +103,9 @@ public interface Snapshot extends Serializable{
      * Randomly populates the board with units.
      */
     void populateTiles();
-    
+
+    void addTrapToList(Player activePlayer, Trap trap);
+
+    int getSizeOfTrapSet(Player activePlayer);
     
 }

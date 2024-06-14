@@ -12,7 +12,9 @@ import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.BigTrap;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.NormalTrap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.WallTrap;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
@@ -24,8 +26,6 @@ public class EventHandlerImpl implements EventHandler {
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
 	private Trap[][] trapBoard;
-	private final List<Trap> trapListFIRST = new ArrayList<>(),
-							 trapListSECOND = new ArrayList<>();
 
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -604,23 +604,30 @@ public class EventHandlerImpl implements EventHandler {
 		if (ongoingMove.isPresent()) {
 			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
 		} else {
+			// Create a new trap board if one isn't created yet.
 			if(trapBoard == null) {
 				createTrapBoard();
 			}
-			if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit)) {
-				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.LEGENDARY));
+			if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
+				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.COMMON));
 				removeFormation(unit, activePlayer);
-			} else if(unit.getClass().equals(Fairy.class)) {
-				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.COMMON));
+			} else if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
+				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.RARE));
+				removeFormation(unit, activePlayer);
+			} else if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
+				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.EPIC));
+				removeFormation(unit, activePlayer);
+			} else if(unit instanceof Fairy) {
+				s.addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.COMMON));
 				board.removeUnit(rowIndex, columnIndex);
-			} else if (unit.getClass().equals(Unicorn.class)) {
-				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.UNCOMMON));
+			} else if (unit instanceof Unicorn) {
+				s.addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.RARE));
 				board.removeUnit(rowIndex, columnIndex);
-			} else if(unit.getClass().equals(Butterfly.class)) {
-				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.RARE));
+			} else if(unit instanceof Butterfly) {
+				s.addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.EPIC));
 				board.removeUnit(rowIndex, columnIndex);
 			} else if(unit.getClass().equals(Wall.class)) {
-				addTrapToList(activePlayer, new NormalTrap(Trap.TrapRarity.EPIC));
+				s.addTrapToList(activePlayer, new WallTrap());
 				board.removeUnit(rowIndex, columnIndex);
 			}
 			board.moveUnitsIn(activePlayer);
@@ -658,13 +665,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
-	private void addTrapToList(Player activePlayer, Trap trap) {
-		switch (activePlayer) {
-			case FIRST -> trapListFIRST.add(trap);
-			case SECOND -> trapListSECOND.add(trap);
-		}
-	}
-
+	// This method creates a new board with the size of the unit board, which stores traps.
 	private void createTrapBoard() {
 		trapBoard = new Trap[s.getBoard().getMaxRowIndex() + 1][s.getBoard().getMaxColumnIndex() + 1];
 	}

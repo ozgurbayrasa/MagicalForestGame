@@ -3,6 +3,7 @@ package it.unibz.inf.pp.clash.view.screen.game;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import it.unibz.inf.pp.clash.controller.listeners.ReinforcementButtonListener;
 import it.unibz.inf.pp.clash.controller.listeners.SkipTurnButtonListener;
+import it.unibz.inf.pp.clash.controller.listeners.TrapButtonListener;
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.snapshot.Hero;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
@@ -42,6 +43,7 @@ public class PlayerCompositor extends Compositor {
         switch (player) {
             case FIRST -> {
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
+                addTrapButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
                 addSkipTurnButton(playerTable, firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
@@ -67,6 +69,7 @@ public class PlayerCompositor extends Compositor {
                 addSkipTurnButton(playerTable, !firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
+                addTrapButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
             }
         }
         return playerTable;
@@ -124,6 +127,43 @@ public class PlayerCompositor extends Compositor {
                         GuiColor.REINFORCEMENT,
                         animation
                 ));
+    }
+
+    private void addTrapButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player, Table playerTable, boolean activePlayer) {
+        int numOfTraps = newSnapshot.getSizeOfTrapSet(player);
+        boolean animation = previousSnapshot != null && numOfTraps != previousSnapshot.getSizeOfTrapSet(player);
+
+        if(activePlayer) {
+            ImageButton button = getImageButton(
+                    SWORDS,
+                    LARGE,
+                    animation
+            );
+
+            button.addListener(
+                    new TrapButtonListener(eventHandler)
+            );
+
+            addSquareImageButton(
+                    playerTable,
+                    button,
+                    Dimensions.instance().getLargeSquareIconLength()
+            );
+        } else {
+
+            addSquareIcon(
+                    playerTable,
+                    createIcon(SWORDS, LARGE, animation),
+                    Dimensions.instance().getLargeSquareIconLength()
+            );
+        }
+
+        playerTable.add(
+                createLabel(
+                        numOfTraps,
+                        GuiColor.REINFORCEMENT,
+                        animation
+                )).padLeft(40).padRight(40);
 
         playerTable.row();
     }

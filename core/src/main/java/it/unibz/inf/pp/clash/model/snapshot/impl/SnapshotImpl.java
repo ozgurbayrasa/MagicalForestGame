@@ -5,6 +5,7 @@ import java.util.*;
 
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
@@ -29,6 +30,9 @@ public class SnapshotImpl implements Snapshot {
 
 	private final Set<AbstractMobileUnit> reinforcementsFIRST = new HashSet<>(),
 										  reinforcementsSECOND = new HashSet<>();
+
+	private final List<Trap> trapListFIRST = new ArrayList<>(),
+							 trapListSECOND = new ArrayList<>();
 
 	public SnapshotImpl(String firstHeroName, String secondHeroName) {
 		firstHero = new HeroImpl(firstHeroName, 20);
@@ -240,5 +244,21 @@ public class SnapshotImpl implements Snapshot {
 			case FIRST -> reinforcementsFIRST.remove(unit);
 			case SECOND -> reinforcementsSECOND.remove(unit);
 		}
+	}
+
+	@Override
+	public void addTrapToList(Player activePlayer, Trap trap) {
+		switch (activePlayer) {
+			case FIRST -> trapListFIRST.add(trap);
+			case SECOND -> trapListSECOND.add(trap);
+		}
+	}
+
+	@Override
+	public int getSizeOfTrapSet(Player activePlayer) {
+		return switch (activePlayer) {
+			case FIRST -> trapListFIRST.size();
+			case SECOND -> trapListSECOND.size();
+		};
 	}
 }
