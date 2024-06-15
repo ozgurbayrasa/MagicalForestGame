@@ -13,15 +13,15 @@ public class BigTrap implements Trap {
         switch (rarity) {
             case COMMON -> {
                 countdown = 2;
-                damage = 4;
+                damage = 2;
             }
             case RARE -> {
                 countdown = 3;
-                damage = 6;
+                damage = 3;
             }
             case EPIC -> {
-                countdown = 4;
-                damage = 10;
+                countdown = 5;
+                damage = 5;
             }
         }
     }

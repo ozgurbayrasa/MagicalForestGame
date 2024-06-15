@@ -32,7 +32,11 @@ public class EmptyTileHoverAndLeftClickListener extends TileHoverListener {
                 columnIndex
         );
         try {
-            eventHandler.selectTile(rowIndex, columnIndex);
+            if(eventHandler.trapTimeIsOn()) {
+                eventHandler.placeTrap(rowIndex, columnIndex);
+            } else {
+                eventHandler.selectTile(rowIndex, columnIndex);
+            }
         } catch (NoGameOnScreenException e) {
             throw new RuntimeException(e);
         }

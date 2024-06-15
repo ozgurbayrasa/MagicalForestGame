@@ -17,6 +17,6 @@ public class TrapButtonListener extends ClickListener {
     @Override
     public void clicked(InputEvent event, float x, float y) {
         System.out.println("Trap button pressed");
-//        eventHandler.placeTrap();
+        eventHandler.switchTrapTime();
     }
 }

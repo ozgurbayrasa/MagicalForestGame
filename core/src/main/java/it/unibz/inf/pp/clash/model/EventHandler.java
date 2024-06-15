@@ -60,6 +60,9 @@ public interface EventHandler {
      */
     void selectTile(int rowIndex, int columnIndex) throws NoGameOnScreenException;
 
+    // Helper method simply returns if tile on active player's board.
+    boolean tileIsOnPlayerBoard(Player activePlayer, Board board, int rowIndex);
+
     /**
      * This method is called if the user tries to delete the unit standing on the tile with coordinates
      * ({@code rowIndex}, {@code columnIndex}).
@@ -92,6 +95,23 @@ public interface EventHandler {
      *
      *
      */
-
     void encounter(Board board, AbstractMobileUnit attackingUnit, Player opponent, int col);
+
+    /**
+     * This method handles the placement of traps on the opponent player's board.
+     *
+     * @param rowIndex
+     * @param columnIndex
+     */
+    void placeTrap(int rowIndex, int columnIndex);
+
+    /**
+     * This method switches the trapTime boolean value between true and false.
+     */
+    void switchTrapTime();
+
+    /**
+     * @return the boolean value of trapTime.
+     */
+    boolean trapTimeIsOn();
 }

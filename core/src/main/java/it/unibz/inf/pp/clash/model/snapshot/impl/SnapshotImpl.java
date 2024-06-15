@@ -240,25 +240,30 @@ public class SnapshotImpl implements Snapshot {
 
 	@Override
 	public void removeReinforcementFromSet(Player player, AbstractMobileUnit unit) {
-		switch (player) {
-			case FIRST -> reinforcementsFIRST.remove(unit);
-			case SECOND -> reinforcementsSECOND.remove(unit);
-		}
+		getReinforcementSet(player).remove(unit);
+	}
+
+	@Override
+	public List<Trap> getTrapList(Player activePlayer) {
+		return switch (activePlayer) {
+			case FIRST -> trapListFIRST;
+			case SECOND -> trapListSECOND;
+		};
 	}
 
 	@Override
 	public void addTrapToList(Player activePlayer, Trap trap) {
-		switch (activePlayer) {
-			case FIRST -> trapListFIRST.add(trap);
-			case SECOND -> trapListSECOND.add(trap);
-		}
+		getTrapList(activePlayer).add(trap);
 	}
 
 	@Override
-	public int getSizeOfTrapSet(Player activePlayer) {
-		return switch (activePlayer) {
-			case FIRST -> trapListFIRST.size();
-			case SECOND -> trapListSECOND.size();
-		};
+	public void removeTrapFromList(Player activePlayer, int trapIndex) {
+		getTrapList(activePlayer).remove(trapIndex);
+
+	}
+
+	@Override
+	public int getSizeOfTrapList(Player activePlayer) {
+		return getTrapList(activePlayer).size();
 	}
 }

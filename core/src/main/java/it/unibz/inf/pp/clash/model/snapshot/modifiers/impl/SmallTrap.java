@@ -2,13 +2,14 @@ package it.unibz.inf.pp.clash.model.snapshot.modifiers.impl;
 
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 
-public class NormalTrap implements Trap {
+public class SmallTrap implements Trap {
 
     TrapRarity rarity;;
     int damage;
 
-    public NormalTrap(TrapRarity rarity) {
+    public SmallTrap(TrapRarity rarity) {
         this.rarity = rarity;
+
         switch (rarity) {
             case COMMON -> {
                 damage = 2;

@@ -4,7 +4,7 @@ import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 
 public class WallTrap implements Trap {
 
-    public WallTrap() {
+    public WallTrap(int rowIndex, int columnIndex) {
 
     }
 

@@ -69,7 +69,7 @@ public class PlayerCompositor extends Compositor {
                 addSkipTurnButton(playerTable, !firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
-                addTrapButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
+                addTrapButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
             }
         }
         return playerTable;
@@ -129,9 +129,10 @@ public class PlayerCompositor extends Compositor {
                 ));
     }
 
-    private void addTrapButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player, Table playerTable, boolean activePlayer) {
-        int numOfTraps = newSnapshot.getSizeOfTrapSet(player);
-        boolean animation = previousSnapshot != null && numOfTraps != previousSnapshot.getSizeOfTrapSet(player);
+    private void addTrapButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player,
+                               Table playerTable, boolean activePlayer) {
+        int numOfTraps = newSnapshot.getSizeOfTrapList(player);
+        boolean animation = previousSnapshot != null && numOfTraps != previousSnapshot.getSizeOfTrapList(player);
 
         if(activePlayer) {
             ImageButton button = getImageButton(

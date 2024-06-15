@@ -6,6 +6,7 @@ import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -104,8 +105,34 @@ public interface Snapshot extends Serializable{
      */
     void populateTiles();
 
+    /**
+     *
+     * @param activePlayer
+     * @return the list of traps of the given player.
+     */
+    List<Trap> getTrapList(Player activePlayer);
+
+    /**
+     * Adds a trap to the list of traps of the given player.
+     *
+     * @param activePlayer
+     * @param trap
+     */
     void addTrapToList(Player activePlayer, Trap trap);
 
-    int getSizeOfTrapSet(Player activePlayer);
+    /**
+     * Removes a trap from the list of traps of the given player.
+     *
+     * @param player
+     * @param trapIndex
+     */
+    void removeTrapFromList(Player player, int trapIndex);
+
+    /**
+     *
+     * @param activePlayer
+     * @return the size of the trap list of the given player.
+     */
+    int getSizeOfTrapList(Player activePlayer);
     
 }
