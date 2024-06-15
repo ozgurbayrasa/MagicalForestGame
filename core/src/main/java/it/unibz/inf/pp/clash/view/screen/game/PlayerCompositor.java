@@ -135,7 +135,7 @@ public class PlayerCompositor extends Compositor {
 
         if(activePlayer) {
             ImageButton button = getImageButton(
-                    SWORDS,
+                    TRAP,
                     LARGE,
                     animation
             );
@@ -153,7 +153,7 @@ public class PlayerCompositor extends Compositor {
 
             addSquareIcon(
                     playerTable,
-                    createIcon(SWORDS, LARGE, animation),
+                    createIcon(TRAP, LARGE, animation),
                     Dimensions.instance().getLargeSquareIconLength()
             );
         }
