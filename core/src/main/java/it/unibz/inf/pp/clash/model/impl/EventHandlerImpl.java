@@ -324,7 +324,7 @@ public class EventHandlerImpl implements EventHandler {
 		if(ongoingMove.isPresent()) {
 			displayErrorMessage("Error: Cannot delete unit during an ongoing move.");
 		// Check if the unit is not a big unit (because big units cannot be removed).
-		} else if(!(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit))) {
+		} else if(!(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit))) {
 			// Add the unit to the reinforcement list and remove it from the board.
 			s.addReinforcementToSet(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
 			board.removeUnit(rowIndex, columnIndex);
@@ -364,8 +364,8 @@ public class EventHandlerImpl implements EventHandler {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if(((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
 								// Create a big unit and move it next to the border.
-								AbstractMobileUnit bigUnit = board.create3x1Formation(i, j);
-								board.move3x1In(bigUnit, i, j);
+								AbstractMobileUnit formation = board.create3x1Formation(i, j);
+								board.move3x1In(formation, i, j);
 								((AbstractMobileUnit) above).setAttackCountdown(3);
 								((AbstractMobileUnit) center).setAttackCountdown(3);
 								((AbstractMobileUnit) below).setAttackCountdown(3);
@@ -389,9 +389,9 @@ public class EventHandlerImpl implements EventHandler {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if (((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
 								// Create wall units and move them next to the border.
-								Wall leftWall = board.createWallUnit(i, j - 1);
-								Wall centerWall = board.createWallUnit(i, j);
-								Wall rightWall = board.createWallUnit(i, j + 1);
+								Wall leftWall = new Wall();
+								Wall centerWall = new Wall();
+								Wall rightWall = new Wall();
 								board.moveWallUnitsIn(leftWall, i, j - 1);
 								board.moveWallUnitsIn(centerWall, i, j);
 								board.moveWallUnitsIn(rightWall, i, j + 1);
@@ -448,8 +448,8 @@ public class EventHandlerImpl implements EventHandler {
 						// Remove the attacking unit from the board and add it to reinforcements.
 						board.removeUnit(row, col);
 						// Add this unit to be set to -1 for attackCountdown.
-						if(board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(mobileUnit)) {
-							unitsAttackedAndRemoved.addAll(board.getBigUnitToSmallUnitsMap(activePlayer).get(mobileUnit));
+						if(board.getFormationToSmallUnitsMap(activePlayer).containsKey(mobileUnit)) {
+							unitsAttackedAndRemoved.addAll(board.getFormationToSmallUnitsMap(activePlayer).get(mobileUnit));
 						}
 						unitsAttackedAndRemoved.add(mobileUnit);
 						s.addReinforcementToSet(activePlayer, mobileUnit);
@@ -610,15 +610,18 @@ public class EventHandlerImpl implements EventHandler {
 			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
 		} else {
 			// Remove the unit or formation from the board and add a corresponding trap to the trap list.
-			if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
+			if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
 				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.COMMON));
 				removeFormation(unit, activePlayer);
-			} else if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
+				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
 				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.RARE));
 				removeFormation(unit, activePlayer);
-			} else if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
+				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
 				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.EPIC));
 				removeFormation(unit, activePlayer);
+				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
 			} else if(unit instanceof Fairy) {
 				s.addTrapToList(activePlayer, new SmallTrap(Trap.TrapRarity.COMMON));
 				board.removeUnit(rowIndex, columnIndex);
@@ -705,13 +708,13 @@ public class EventHandlerImpl implements EventHandler {
 		Trap trap = s.getTrapList(activePlayer).get(0);
 
 		// Check if a small trap is placed on a formation.
-		if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(opponentPlayer).containsKey(unit) && trap instanceof SmallTrap) {
+		if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit) && trap instanceof SmallTrap) {
 			displayErrorMessage("Formations can only be damaged by big traps.");
 			return;
 		}
 
 		// Check if a big trap is placed on a small unit.
-		if(unit instanceof AbstractMobileUnit && !board.getBigUnitToSmallUnitsMap(opponentPlayer).containsKey(unit) && trap instanceof BigTrap) {
+		if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit) && trap instanceof BigTrap) {
 			displayErrorMessage("Small units can only be damaged by small traps.");
 			return;
 		}
@@ -741,6 +744,9 @@ public class EventHandlerImpl implements EventHandler {
 	// Helper method that activates the trap upon placement.
 	private void activateTrap(Trap trap, int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+
 		// Assert that the unit is present, since the placeTrap() method has already checked it.
 		assert board.getUnit(rowIndex, columnIndex).isPresent();
 		// Get the unit.
@@ -758,7 +764,13 @@ public class EventHandlerImpl implements EventHandler {
 			((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() + ((BigTrap) trap).getCountdown());
 		// Activate a wall trap.
 		} else if(trap instanceof WallTrap) {
-			// TODO
+			if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit)) {
+				Wall wall = new Wall();
+				wall.setHealth(unit.getHealth());
+				board.moveWallUnitsIn(wall, rowIndex, columnIndex);
+			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit)) {
+				replaceFormationWithWalls(unit, trap);
+			}
 		}
 	}
 
@@ -774,7 +786,7 @@ public class EventHandlerImpl implements EventHandler {
 		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
 			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
 				// Check if the unit matches the input big unit.
-				if(board.getUnit(i, j).isPresent() && board.getUnit(i,j).get().equals(unit)) {
+				if(board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
 					// Save the initial coordinates of that unit.
 					int initialRow = i;
 					int initialColumn = j;
@@ -793,11 +805,12 @@ public class EventHandlerImpl implements EventHandler {
 							// Remove the unit from the board if it's health is depleted.
 							if(top.getHealth() <= 0) {
 								// Check if the unit is a small unit...
-								if(top instanceof AbstractMobileUnit && !board.getBigUnitToSmallUnitsMap(opponentPlayer).containsKey(top)) {
+								if(top instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(top)) {
 									board.removeUnit(i - 1, j);
 								// or a formation
 								} else {
 									removeFormation(top, opponentPlayer);
+									board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 								}
 							}
 						}
@@ -822,11 +835,12 @@ public class EventHandlerImpl implements EventHandler {
 							// Remove the unit from the board if it's health is depleted.
 							if(bottom.getHealth() <= 0) {
 								// Check if the unit is a small unit...
-								if(bottom instanceof AbstractMobileUnit && !board.getBigUnitToSmallUnitsMap(opponentPlayer).containsKey(bottom)) {
+								if(bottom instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(bottom)) {
 									board.removeUnit(i + 1, j);
 								// or a formation
 								} else {
 									removeFormation(bottom, opponentPlayer);
+									board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 								}
 							}
 						}
@@ -851,11 +865,12 @@ public class EventHandlerImpl implements EventHandler {
 							// Remove the unit from the board if it's health is depleted.
 							if(left.getHealth() <= 0) {
 								// Check if the unit is a small unit...
-								if(left instanceof AbstractMobileUnit && !board.getBigUnitToSmallUnitsMap(opponentPlayer).containsKey(left)) {
+								if(left instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(left)) {
 									board.removeUnit(i, j - 1);
 								// or a formation
 								} else {
 									removeFormation(left, opponentPlayer);
+									board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 								}
 							}
 						}
@@ -880,11 +895,12 @@ public class EventHandlerImpl implements EventHandler {
 							// Remove the unit from the board if it's health is depleted.
 							if(right.getHealth() <= 0) {
 								// Check if the unit is a small unit...
-								if(right instanceof AbstractMobileUnit && !board.getBigUnitToSmallUnitsMap(opponentPlayer).containsKey(right)) {
+								if(right instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(right)) {
 									board.removeUnit(i, j + 1);
 								// or a formation
 								} else {
 									removeFormation(right, opponentPlayer);
+									board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 								}
 							}
 						}
@@ -896,6 +912,37 @@ public class EventHandlerImpl implements EventHandler {
 		}
 		// Move the units in.
 		board.moveUnitsIn(opponentPlayer);
+	}
+
+	private void replaceFormationWithWalls(Unit unit, Trap trap) {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+		loop:
+		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				if (board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+					Wall wall = new Wall();
+					wall.setHealth(unit.getHealth());
+					board.moveWallUnitsIn(wall, i, j);
+					break loop;
+				}
+			}
+		}
+		int index = 0;
+		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				if (board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+
+					List<AbstractMobileUnit> smallUnits = new ArrayList<>(board.getFormationToSmallUnitsMap(opponentPlayer).get((AbstractMobileUnit) unit));
+					board.removeUnit(i, j);
+					board.addUnit(i, j, smallUnits.get(index));
+					smallUnits.get(index).setAttackCountdown(-1);
+					index++;
+				}
+			}
+		}
+		board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 	}
 
 	// FOLLOWING METHOD CAN BE IMPLEMENTED IN BOARD

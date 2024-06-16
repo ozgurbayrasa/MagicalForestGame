@@ -207,9 +207,9 @@ public class SnapshotImpl implements Snapshot {
 		switch (player) {
 			case FIRST -> {
 				// If the unit is big, add all the corresponding distinct references to the list and remove the entry (AbstractMobileUnit, Set<AbstractMobileUnit>) from the map.
-				if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(player).containsKey(unit)) {
-					reinforcementsFIRST.addAll(board.getBigUnitToSmallUnitsMap(player).get(unit));
-					board.removeBigUnitFromMap(player, (AbstractMobileUnit) unit);
+				if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(player).containsKey(unit)) {
+					reinforcementsFIRST.addAll(board.getFormationToSmallUnitsMap(player).get(unit));
+					board.removeFormationFromMap(player, (AbstractMobileUnit) unit);
 					reinforcementsFIRST.add((AbstractMobileUnit) unit);
 				// If the unit is a wall, add the corresponding reference to the list and remove the entry (Wall, AbstractMobileUnit) from the map.
 				} else if(unit instanceof Wall && board.getWallToUnitMap(player).containsKey(unit)) {
@@ -222,9 +222,9 @@ public class SnapshotImpl implements Snapshot {
 			}
 			case SECOND -> {
 				// If the unit is big, add all the corresponding distinct references to the list and remove the entry (AbstractMobileUnit, Set<AbstractMobileUnit>) from the map.
-				if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(player).containsKey(unit)) {
-					reinforcementsSECOND.addAll(board.getBigUnitToSmallUnitsMap(player).get(unit));
-					board.removeBigUnitFromMap(player, (AbstractMobileUnit) unit);
+				if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(player).containsKey(unit)) {
+					reinforcementsSECOND.addAll(board.getFormationToSmallUnitsMap(player).get(unit));
+					board.removeFormationFromMap(player, (AbstractMobileUnit) unit);
 					reinforcementsSECOND.add((AbstractMobileUnit) unit);
 				// If the unit is a wall, add the corresponding reference to the list and remove the entry (Wall, AbstractMobileUnit) from the map.
 				} else if(unit instanceof Wall && board.getWallToUnitMap(player).containsKey(unit)) {

@@ -19,8 +19,8 @@ public class BoardImpl implements Board {
 	@Serial
     private static final long serialVersionUID = 1L;
 	final Unit[][] grid;
-    private final Map<AbstractMobileUnit, Set<AbstractMobileUnit>> bigUnitToSmallUnitsFIRST = new HashMap<>(),
-                                                                   bigUnitToSmallUnitsSECOND = new HashMap<>();
+    private final Map<AbstractMobileUnit, Set<AbstractMobileUnit>> formationToSmallUnitsFIRST = new HashMap<>(),
+                                                                   formationToSmallUnitsSECOND = new HashMap<>();
     private final Map<Wall, AbstractMobileUnit> wallToUnitFIRST = new HashMap<>(),
                                                 wallToUnitSECOND = new HashMap<>();
 
@@ -166,15 +166,9 @@ public class BoardImpl implements Board {
         return (AbstractMobileUnit) getUnit(centerRowIndex, columnIndex).orElse(null);
     }
 
-    @Override
-    public Wall createWallUnit(int rowIndex, int columnIndex) {
-        // Create a wall out of one of the small unit.
-        return new Wall();
-    }
-
     // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
     @Override
-    public void move3x1In(AbstractMobileUnit bigUnit, int centerRowIndex, int columnIndex) {
+    public void move3x1In(AbstractMobileUnit formation, int centerRowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
         // Create an array out of the three small units.
         Set<AbstractMobileUnit> smallUnits = Set.of((AbstractMobileUnit) getUnit(centerRowIndex - 1, columnIndex).get(), (AbstractMobileUnit) getUnit(centerRowIndex + 1, columnIndex).get());
@@ -185,7 +179,7 @@ public class BoardImpl implements Board {
         // Check which half the big unit is in.
         if(centerRowIndex > halfBoard) {
             // Put the entry into the corresponding map.
-            bigUnitToSmallUnitsFIRST.put(bigUnit, smallUnits);
+            formationToSmallUnitsFIRST.put(formation, smallUnits);
             // Move all other units in the column as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.FIRST);
             // Add the "big unit" to the board, as close to the border as possible, depending on the walls.
@@ -193,14 +187,14 @@ public class BoardImpl implements Board {
             while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
                 rowOffset++;
             }
-            addUnit(rowOffset, columnIndex, bigUnit);
-            addUnit(rowOffset + 1, columnIndex, bigUnit);
-            addUnit(rowOffset + 2, columnIndex, bigUnit);
+            addUnit(rowOffset, columnIndex, formation);
+            addUnit(rowOffset + 1, columnIndex, formation);
+            addUnit(rowOffset + 2, columnIndex, formation);
             // Move the units back in.
             moveUnitsIn(Player.FIRST);
         } else {
             // Put the entry into the corresponding map.
-            bigUnitToSmallUnitsSECOND.put(bigUnit, smallUnits);
+            formationToSmallUnitsSECOND.put(formation, smallUnits);
             // Move all other units in the column as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.SECOND);
             // Add the "big unit" to the board, as close to the border as possible, depending on the walls.
@@ -208,9 +202,9 @@ public class BoardImpl implements Board {
             while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
                 rowOffset--;
             }
-            addUnit(rowOffset, columnIndex, bigUnit);
-            addUnit(rowOffset - 1, columnIndex, bigUnit);
-            addUnit(rowOffset - 2, columnIndex, bigUnit);
+            addUnit(rowOffset, columnIndex, formation);
+            addUnit(rowOffset - 1, columnIndex, formation);
+            addUnit(rowOffset - 2, columnIndex, formation);
             // Move the units back in.
             moveUnitsIn(Player.SECOND);
         }
@@ -296,19 +290,16 @@ public class BoardImpl implements Board {
     }
 
     @Override
-    public Map<AbstractMobileUnit, Set<AbstractMobileUnit>> getBigUnitToSmallUnitsMap(Player player) {
+    public Map<AbstractMobileUnit, Set<AbstractMobileUnit>> getFormationToSmallUnitsMap(Player player) {
         return switch(player) {
-            case FIRST -> bigUnitToSmallUnitsFIRST;
-            case SECOND -> bigUnitToSmallUnitsSECOND;
+            case FIRST -> formationToSmallUnitsFIRST;
+            case SECOND -> formationToSmallUnitsSECOND;
         };
     }
 
     @Override
-    public void removeBigUnitFromMap(Player player, AbstractMobileUnit bigUnit) {
-        switch (player) {
-            case FIRST -> bigUnitToSmallUnitsFIRST.remove(bigUnit);
-            case SECOND -> bigUnitToSmallUnitsSECOND.remove(bigUnit);
-        }
+    public void removeFormationFromMap(Player player, AbstractMobileUnit formation) {
+        getFormationToSmallUnitsMap(player).remove(formation);
     }
 
     @Override
@@ -321,10 +312,7 @@ public class BoardImpl implements Board {
 
     @Override
     public void removeWallFromMap(Player player, Wall wall) {
-        switch(player) {
-            case FIRST -> wallToUnitFIRST.remove(wall);
-            case SECOND -> wallToUnitSECOND.remove(wall);
-        }
+        getWallToUnitMap(player).remove(wall);
     }
 }
 
