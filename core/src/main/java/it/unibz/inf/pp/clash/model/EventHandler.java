@@ -60,8 +60,8 @@ public interface EventHandler {
      */
     void selectTile(int rowIndex, int columnIndex) throws NoGameOnScreenException;
 
-    // Helper method simply returns if tile on active player's board.
-    boolean tileIsOnPlayerBoard(Player activePlayer, Board board, int rowIndex);
+    // Helper method simply returns if the tile is on the player's board.
+    boolean tileIsOnPlayerBoard(Player player, Board board, int rowIndex);
 
     /**
      * This method is called if the user tries to delete the unit standing on the tile with coordinates

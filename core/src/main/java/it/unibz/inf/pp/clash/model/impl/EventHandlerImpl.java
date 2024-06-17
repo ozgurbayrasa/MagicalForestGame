@@ -198,6 +198,7 @@ public class EventHandlerImpl implements EventHandler {
 	public void selectTile(int rowIndex, int columnIndex) throws CoordinatesOutOfBoardException {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
 
 		// Check if the selected tile is within the board limits.
@@ -206,7 +207,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 
 		// Check if the tile is on the active player's board
-		if (tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
+		if (tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
 			return;
 		}
@@ -245,14 +246,12 @@ public class EventHandlerImpl implements EventHandler {
 
 	// Helper method simply returns if tile on active player's board.
 	@Override
-	public boolean tileIsOnPlayerBoard(Player activePlayer, Board board, int rowIndex) {
+	public boolean tileIsOnPlayerBoard(Player player, Board board, int rowIndex) {
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
-		if (activePlayer == Player.FIRST) {
-            return rowIndex < halfBoard || rowIndex > board.getMaxRowIndex();
-		} else if (activePlayer == Player.SECOND) {
-            return rowIndex < 0 || rowIndex >= halfBoard;
-		}
-		return true;
+		return switch (player) {
+			case FIRST -> rowIndex >= halfBoard && rowIndex < board.getMaxRowIndex() + 1;
+			case SECOND -> rowIndex >= 0 && rowIndex < halfBoard;
+		};
 	}
 
 	// Helper method for displaying error messages.
@@ -303,13 +302,14 @@ public class EventHandlerImpl implements EventHandler {
 	public void deleteUnit(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
 		// Check if the selected tile is within the board limits.
 		if(!board.areValidCoordinates(rowIndex, columnIndex)) {
 			return;
 		}
 		// Check if the tile is on the active player's board.
-		if(tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
+		if(tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
 			return;
 		}
@@ -588,13 +588,14 @@ public class EventHandlerImpl implements EventHandler {
 	public void sacrificeUnit(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
 		// Check if the selected tile is within the board limits.
 		if (!board.areValidCoordinates(rowIndex, columnIndex)) {
 			return;
 		}
 		// Check if the tile is on the active player's board.
-		if (tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
+		if (tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
 			return;
 		}
@@ -692,7 +693,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 
 		// Check if the tile is on the enemy player's board
-		if (!tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
+		if (tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile must be on the enemy player's board.");
 			return;
 		}
@@ -720,8 +721,8 @@ public class EventHandlerImpl implements EventHandler {
 		}
 
 		// Check if a wall trap is placed on wall.
-		if(unit instanceof Wall && trap instanceof WallTrap) {
-			displayErrorMessage("Walls can only be damaged by normal and big traps.");
+		if(unit instanceof Wall && (trap instanceof WallTrap || trap instanceof BigTrap)) {
+			displayErrorMessage("Walls can only be damaged by small traps.");
 			return;
 		}
 
@@ -774,144 +775,55 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
-	// Helper method that deals applies the damage from the big trap on all adjacent tiles of the formation (of any type).
 	private void dealSideDamage(Unit unit, Trap trap) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 
-		// A set for the adjacent damaged units.
-		Set<Unit> damagedSideUnits = new HashSet<>();
-		// Go through the whole board.
 		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
-			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				// Check if the unit matches the input big unit.
-				if(board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
-					// Save the initial coordinates of that unit.
-					int initialRow = i;
-					int initialColumn = j;
-					// Go up until another unit.
-					while(board.areValidCoordinates(i - 1, j) && unit.equals(board.getUnit(i - 1, j).orElse(null))) {
-						i--;
-					}
-					// Check if that unit is on the player's board and is present.
-					if(board.areValidCoordinates(i - 1, j) && tileIsOnPlayerBoard(activePlayer, board, i - 1) && board.getUnit(i - 1, j).isPresent()) {
-						// Get the unit.
-						Unit top = board.getUnit(i - 1, j).get();
-						// Check if the unit is already in the set of side units.
-						if (!damagedSideUnits.contains(top)) {
-							// If not apply the damage.
-							top.setHealth(top.getHealth() - trap.getDamage());
-							// Remove the unit from the board if it's health is depleted.
-							if(top.getHealth() <= 0) {
-								// Check if the unit is a small unit...
-								if(top instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(top)) {
-									board.removeUnit(i - 1, j);
-								// or a formation
-								} else {
-									removeFormation(top, opponentPlayer);
-									board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
-								}
-							}
-						}
-						// Add the unit to the set of side units.
-						damagedSideUnits.add(top);
-					}
-					// Return to the initial position.
-					i = initialRow;
-
-					// Go down until another unit.
-					while(board.areValidCoordinates(i + 1, j) && unit.equals(board.getUnit(i + 1, j).orElse(null))) {
-						i++;
-					}
-					// Check if that unit is on the player's board and is present.
-					if(board.areValidCoordinates(i + 1, j) && tileIsOnPlayerBoard(activePlayer, board, i + 1) && board.getUnit(i + 1, j).isPresent()) {
-						// Get the unit.
-						Unit bottom = board.getUnit(i + 1, j).get();
-						// Check if the unit is already in the set of side units.
-						if (!damagedSideUnits.contains(bottom)) {
-							// If not apply the damage.
-							bottom.setHealth(bottom.getHealth() - trap.getDamage());
-							// Remove the unit from the board if it's health is depleted.
-							if(bottom.getHealth() <= 0) {
-								// Check if the unit is a small unit...
-								if(bottom instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(bottom)) {
-									board.removeUnit(i + 1, j);
-								// or a formation
-								} else {
-									removeFormation(bottom, opponentPlayer);
-									board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
-								}
-							}
-						}
-						// Add the unit to the set of side units.
-						damagedSideUnits.add(bottom);
-					}
-					// Return to the initial position.
-					i = initialRow;
-
-					// Go left until another unit.
-					while(board.areValidCoordinates(i, j - 1) && unit.equals(board.getUnit(i, j - 1).orElse(null))) {
-						j--;
-					}
-					// Check if that unit is on the player's board and is present.
-					if(board.areValidCoordinates(i, j - 1) && board.getUnit(i, j - 1).isPresent()) {
-						// Get the unit.
-						Unit left = board.getUnit(i, j - 1).get();
-						// Check if the unit is already in the set of side units.
-						if (!damagedSideUnits.contains(left)) {
-							// If not apply the damage.
-							left.setHealth(left.getHealth() - trap.getDamage());
-							// Remove the unit from the board if it's health is depleted.
-							if(left.getHealth() <= 0) {
-								// Check if the unit is a small unit...
-								if(left instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(left)) {
-									board.removeUnit(i, j - 1);
-								// or a formation
-								} else {
-									removeFormation(left, opponentPlayer);
-									board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
-								}
-							}
-						}
-						// Add the unit to the set of side units.
-						damagedSideUnits.add(left);
-					}
-					// Return to the initial position.
-					j = initialColumn;
-
-					// Go right until another unit.
-					while(board.areValidCoordinates(i, j + 1) && unit.equals(board.getUnit(i, j + 1).orElse(null))) {
-						j++;
-					}
-					// Check if that unit is on the player's board and is present.
-					if(board.areValidCoordinates(i, j + 1) && board.getUnit(i, j + 1).isPresent()) {
-						// Get the unit.
-						Unit right = board.getUnit(i, j + 1).get();
-						// Check if the unit is already in the set of side units.
-						if (!damagedSideUnits.contains(right)) {
-							// If not apply the damage.
-							right.setHealth(right.getHealth() - trap.getDamage());
-							// Remove the unit from the board if it's health is depleted.
-							if(right.getHealth() <= 0) {
-								// Check if the unit is a small unit...
-								if(right instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(right)) {
-									board.removeUnit(i, j + 1);
-								// or a formation
-								} else {
-									removeFormation(right, opponentPlayer);
-									board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
-								}
-							}
-						}
-						// Add the unit to the set of side units.
-						damagedSideUnits.add(right);
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				if(board.getUnit(i, j).isPresent() && !board.getUnit(i, j).get().equals(unit)) {
+					if(board.areValidCoordinates(i - 1, j) && board.getUnit(i - 1, j).isPresent()
+							&& tileIsOnPlayerBoard(opponentPlayer, board, i) && board.getUnit(i - 1, j).get().equals(unit)) {
+						handleSideUnit(board, trap, opponentPlayer, i, j);
+					} else if (board.areValidCoordinates(i + 1, j) && board.getUnit(i + 1, j).isPresent()
+							&& tileIsOnPlayerBoard(opponentPlayer, board, i) && board.getUnit(i + 1, j).get().equals(unit)) {
+						handleSideUnit(board, trap, opponentPlayer, i, j);
+					} else if (board.areValidCoordinates(i, j - 1) && board.getUnit(i, j - 1).isPresent()
+							&& board.getUnit(i, j - 1).get().equals(unit)) {
+						handleSideUnit(board, trap, opponentPlayer, i, j);
+					} else if (board.areValidCoordinates(i, j + 1) && board.getUnit(i, j + 1).isPresent()
+							&& board.getUnit(i, j + 1).get().equals(unit)) {
+						handleSideUnit(board, trap, opponentPlayer, i, j);
 					}
 				}
 			}
 		}
 		// Move the units in.
 		board.moveUnitsIn(opponentPlayer);
+	}
+
+	private void handleSideUnit(Board board, Trap trap, Player opponentPlayer, int rowIndex, int columnIndex) {
+		assert board.getUnit(rowIndex, columnIndex).isPresent();
+		// Get the unit.
+		Unit sideUnit = board.getUnit(rowIndex, columnIndex).get();
+		// Check if the unit is small...
+		if((sideUnit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(sideUnit) || sideUnit instanceof Wall)) {
+			// Apply the damage.
+			sideUnit.setHealth(sideUnit.getHealth() - trap.getDamage());
+			// Remove the unit from the board if it's health is depleted.
+			if(sideUnit.getHealth() <= 0) {
+				board.removeUnit(rowIndex, columnIndex);
+			}
+			// ...or a formation
+		} else if(sideUnit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(sideUnit)) {
+			// Apply the damage.
+			sideUnit.setHealth(sideUnit.getHealth() - Math.round((float) trap.getDamage() / 3));
+			if (sideUnit.getHealth() <= 0) {
+				removeFormation(sideUnit, opponentPlayer);
+				board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) sideUnit);
+			}
+		}
 	}
 
 	private void replaceFormationWithWalls(Unit unit, Trap trap) {
