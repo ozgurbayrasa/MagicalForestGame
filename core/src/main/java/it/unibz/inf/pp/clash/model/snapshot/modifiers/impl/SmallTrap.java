@@ -1,6 +1,5 @@
 package it.unibz.inf.pp.clash.model.snapshot.modifiers.impl;
 
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 
 public class SmallTrap implements Trap {

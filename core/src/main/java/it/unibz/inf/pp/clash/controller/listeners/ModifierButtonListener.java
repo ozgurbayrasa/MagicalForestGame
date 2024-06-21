@@ -17,6 +17,7 @@ public class ModifierButtonListener extends ClickListener {
     @Override
     public void clicked(InputEvent event, float x, float y) {
         System.out.println("Modifier button pressed");
+        eventHandler.getSnapshot().setOngoingMove(null);
         eventHandler.switchModifierMode();
     }
 }

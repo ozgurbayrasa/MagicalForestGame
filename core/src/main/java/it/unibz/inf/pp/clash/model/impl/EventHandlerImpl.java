@@ -604,6 +604,10 @@ public class EventHandlerImpl implements EventHandler {
 			displayErrorMessage("Error: Selected tile is empty.");
 			return;
 		}
+		// Check if modifier mode is on and switch it off is so.
+		if(modifierMode) {
+			switchModifierMode();
+		}
 		// Get unit.
 		Unit unit = board.getUnit(rowIndex, columnIndex).get();
 		// Generate random number to choose between trap and buff.
@@ -637,20 +641,20 @@ public class EventHandlerImpl implements EventHandler {
 				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
 			} else if(unit instanceof Fairy) {
 				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
-					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
+					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.COMMON));
+					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.COMMON));
 				}
 				board.removeUnit(rowIndex, columnIndex);
 			} else if (unit instanceof Unicorn) {
 				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
-					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
+					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.RARE));
+					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.RARE));
 				}
 				board.removeUnit(rowIndex, columnIndex);
 			} else if(unit instanceof Butterfly) {
 				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
-					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
+					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.EPIC));
+					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.EPIC));
 				}
 				board.removeUnit(rowIndex, columnIndex);
 			} else if(unit.getClass().equals(Wall.class)) {
@@ -713,6 +717,12 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		}
 
+		// Check if the tile is empty.
+		if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
+			displayErrorMessage("Error: Selected tile cannot be empty when placing a modifier.");
+			return;
+		}
+
 		// Get the unit and the modifier.
 		Unit unit = board.getUnit(rowIndex, columnIndex).get();
 		Modifier modifier = s.getModifierList(activePlayer).get(0);
@@ -723,12 +733,6 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		} else if(modifier instanceof Buff && tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile must be on the active player's board.");
-			return;
-		}
-
-		// Check if the tile is empty.
-		if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
-			displayErrorMessage("Error: Selected tile cannot be empty when placing a modifier.");
 			return;
 		}
 
@@ -746,6 +750,7 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		} else if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && modifier instanceof BigBuff) {
 			displayErrorMessage("Small units can only be affected by small buffs.");
+			return;
 		}
 
 		// Check if a wall trap is placed on wall.
@@ -754,11 +759,11 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		}
 
-		// Activate the trap.
+		// Activate the modifier.
 		activateModifier(modifier, rowIndex, columnIndex);
-		// Switch off trap time.
+		// Switch off modifier mode.
 		switchModifierMode();
-		// Remove the trap from the list.
+		// Remove the modifier from the list.
 		s.removeModifierFromList(activePlayer, 0);
 		// Decrement the number of remaining actions if no formation is created.
 		if(!detectFormations()) {
@@ -767,16 +772,16 @@ public class EventHandlerImpl implements EventHandler {
 		// End the turn if the actions are depleted.
 		endTurnIfNoActionsRemaining();
 		// Draw the snapshot.
-		displayManager.drawSnapshot(s,"Trap placed on tile (" + rowIndex + ", " + columnIndex + ")");
+		displayManager.drawSnapshot(s,"Modifier placed on tile (" + rowIndex + ", " + columnIndex + ")");
     }
 
-	// Helper method that activates the trap upon placement.
+	// Helper method that activates the modifier upon placement.
 	private void activateModifier(Modifier modifier, int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 
-		// Assert that the unit is present, since the placeTrap() method has already checked it.
+		// Assert that the unit is present, since the placeModifier() method has already checked it.
 		assert board.getUnit(rowIndex, columnIndex).isPresent();
 		// Get the unit.
 		Unit unit = board.getUnit(rowIndex, columnIndex).get();
@@ -957,11 +962,19 @@ public class EventHandlerImpl implements EventHandler {
 		modifierMode = !modifierMode;
 		// Update the message depending on the new value.
 		if(modifierMode) {
-            try {
-                displayManager.updateMessage("Modifier mode switched on.");
-            } catch (NoGameOnScreenException e) {
-                throw new RuntimeException(e);
-            }
+			if(s.getModifierList(activePlayer).get(0) instanceof Trap) {
+				try {
+					displayManager.updateMessage("Trap picked.");
+				} catch (NoGameOnScreenException e) {
+					throw new RuntimeException(e);
+				}
+			} else {
+				try {
+					displayManager.updateMessage("Buff picked.");
+				} catch (NoGameOnScreenException e) {
+					throw new RuntimeException(e);
+				}
+			}
         } else {
             try {
                 displayManager.updateMessage("Modifier mode switched off.");

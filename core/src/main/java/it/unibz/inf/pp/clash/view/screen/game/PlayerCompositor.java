@@ -164,7 +164,7 @@ public class PlayerCompositor extends Compositor {
                         numOfModifiers,
                         GuiColor.REINFORCEMENT,
                         animation
-                )).padLeft(40).padRight(40);
+                )).padLeft(30).padRight(40);
 
         playerTable.row();
     }
