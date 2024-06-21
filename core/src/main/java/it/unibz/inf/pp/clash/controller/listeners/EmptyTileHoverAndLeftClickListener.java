@@ -32,8 +32,8 @@ public class EmptyTileHoverAndLeftClickListener extends TileHoverListener {
                 columnIndex
         );
         try {
-            if(eventHandler.trapTimeIsOn()) {
-                eventHandler.placeTrap(rowIndex, columnIndex);
+            if(eventHandler.modifierModeIsOn()) {
+                eventHandler.placeModifier(rowIndex, columnIndex);
             } else {
                 eventHandler.selectTile(rowIndex, columnIndex);
             }

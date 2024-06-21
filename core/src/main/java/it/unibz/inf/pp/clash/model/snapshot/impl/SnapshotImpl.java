@@ -5,7 +5,7 @@ import java.util.*;
 
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
@@ -31,8 +31,8 @@ public class SnapshotImpl implements Snapshot {
 	private final Set<AbstractMobileUnit> reinforcementsFIRST = new HashSet<>(),
 										  reinforcementsSECOND = new HashSet<>();
 
-	private final List<Trap> trapListFIRST = new ArrayList<>(),
-							 trapListSECOND = new ArrayList<>();
+	private final List<Modifier> modifierListFIRST = new ArrayList<>(),
+								 modifierListSECOND = new ArrayList<>();
 
 	public SnapshotImpl(String firstHeroName, String secondHeroName) {
 		firstHero = new HeroImpl(firstHeroName, 20);
@@ -244,26 +244,26 @@ public class SnapshotImpl implements Snapshot {
 	}
 
 	@Override
-	public List<Trap> getTrapList(Player activePlayer) {
+	public List<Modifier> getModifierList(Player activePlayer) {
 		return switch (activePlayer) {
-			case FIRST -> trapListFIRST;
-			case SECOND -> trapListSECOND;
+			case FIRST -> modifierListFIRST;
+			case SECOND -> modifierListSECOND;
 		};
 	}
 
 	@Override
-	public void addTrapToList(Player activePlayer, Trap trap) {
-		getTrapList(activePlayer).add(trap);
+	public void addModifierToList(Player activePlayer, Modifier modifier) {
+		getModifierList(activePlayer).add(modifier);
 	}
 
 	@Override
-	public void removeTrapFromList(Player activePlayer, int trapIndex) {
-		getTrapList(activePlayer).remove(trapIndex);
+	public void removeModifierFromList(Player activePlayer, int modifierIndex) {
+		getModifierList(activePlayer).remove(modifierIndex);
 
 	}
 
 	@Override
-	public int getSizeOfTrapList(Player activePlayer) {
-		return getTrapList(activePlayer).size();
+	public int getSizeOfModifierList(Player activePlayer) {
+		return getModifierList(activePlayer).size();
 	}
 }

@@ -77,7 +77,7 @@ public interface EventHandler {
     void deleteUnit(int rowIndex, int columnIndex);
 
     /**
-     * Deletes the unit from the board without adding it to reinforcements in exchange for a trap or buff.
+     * Deletes the unit from the board without adding it to reinforcements in exchange for a modifier or buff.
      * @param rowIndex
      * @param columnIndex
      */
@@ -98,20 +98,20 @@ public interface EventHandler {
     void encounter(Board board, AbstractMobileUnit attackingUnit, Player opponent, int col);
 
     /**
-     * This method handles the placement of traps on the opponent player's board.
+     * This method handles the placement of modifiers on the opponent player's board.
      *
      * @param rowIndex
      * @param columnIndex
      */
-    void placeTrap(int rowIndex, int columnIndex);
+    void placeModifier(int rowIndex, int columnIndex);
 
     /**
-     * This method switches the trapTime boolean value between true and false.
+     * This method switches the modifierTime boolean value between true and false.
      */
-    void switchTrapTime();
+    void switchModifierMode();
 
     /**
-     * @return the boolean value of trapTime.
+     * @return the boolean value of modifierMode.
      */
-    boolean trapTimeIsOn();
+    boolean modifierModeIsOn();
 }

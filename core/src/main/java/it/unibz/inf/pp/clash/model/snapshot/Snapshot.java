@@ -1,6 +1,6 @@
 package it.unibz.inf.pp.clash.model.snapshot;
 
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 
@@ -108,31 +108,31 @@ public interface Snapshot extends Serializable{
     /**
      *
      * @param activePlayer
-     * @return the list of traps of the given player.
+     * @return the list of modifiers of the given player.
      */
-    List<Trap> getTrapList(Player activePlayer);
+    List<Modifier> getModifierList(Player activePlayer);
 
     /**
-     * Adds a trap to the list of traps of the given player.
+     * Adds a modifier to the list of modifiers of the given player.
      *
      * @param activePlayer
-     * @param trap
+     * @param modifier
      */
-    void addTrapToList(Player activePlayer, Trap trap);
+    void addModifierToList(Player activePlayer, Modifier modifier);
 
     /**
-     * Removes a trap from the list of traps of the given player.
+     * Removes a modifier from the list of modifiers of the given player.
      *
      * @param player
-     * @param trapIndex
+     * @param modifierIndex
      */
-    void removeTrapFromList(Player player, int trapIndex);
+    void removeModifierFromList(Player player, int modifierIndex);
 
     /**
      *
      * @param activePlayer
-     * @return the size of the trap list of the given player.
+     * @return the size of the modifier list of the given player.
      */
-    int getSizeOfTrapList(Player activePlayer);
+    int getSizeOfModifierList(Player activePlayer);
     
 }

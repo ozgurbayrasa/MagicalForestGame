@@ -4,36 +4,36 @@ import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 
 public class BigTrap implements Trap {
 
-    TrapRarity rarity;;
-    int damage;
+    Rarity rarity;;
+    int health;
     int countdown;
 
-    public BigTrap(TrapRarity rarity) {
+    public BigTrap(Rarity rarity) {
         this.rarity = rarity;
         switch (rarity) {
             case COMMON -> {
                 countdown = 2;
-                damage = 2;
+                health = -2;
             }
             case RARE -> {
                 countdown = 3;
-                damage = 3;
+                health = -3;
             }
             case EPIC -> {
                 countdown = 5;
-                damage = 5;
+                health = -5;
             }
         }
     }
 
     @Override
-    public TrapRarity getTrapRarity() {
+    public Rarity getRarity() {
         return rarity;
     }
 
     @Override
-    public int getDamage() {
-        return damage;
+    public int getHealth() {
+        return health;
     }
 
     public int getCountdown() {

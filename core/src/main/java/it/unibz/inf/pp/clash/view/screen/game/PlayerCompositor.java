@@ -3,7 +3,7 @@ package it.unibz.inf.pp.clash.view.screen.game;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import it.unibz.inf.pp.clash.controller.listeners.ReinforcementButtonListener;
 import it.unibz.inf.pp.clash.controller.listeners.SkipTurnButtonListener;
-import it.unibz.inf.pp.clash.controller.listeners.TrapButtonListener;
+import it.unibz.inf.pp.clash.controller.listeners.ModifierButtonListener;
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.snapshot.Hero;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
@@ -43,7 +43,7 @@ public class PlayerCompositor extends Compositor {
         switch (player) {
             case FIRST -> {
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
-                addTrapButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
+                addModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
                 addSkipTurnButton(playerTable, firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
@@ -69,7 +69,7 @@ public class PlayerCompositor extends Compositor {
                 addSkipTurnButton(playerTable, !firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
-                addTrapButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
+                addModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
             }
         }
         return playerTable;
@@ -129,20 +129,20 @@ public class PlayerCompositor extends Compositor {
                 ));
     }
 
-    private void addTrapButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player,
+    private void addModifierButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player,
                                Table playerTable, boolean activePlayer) {
-        int numOfTraps = newSnapshot.getSizeOfTrapList(player);
-        boolean animation = previousSnapshot != null && numOfTraps != previousSnapshot.getSizeOfTrapList(player);
+        int numOfModifiers = newSnapshot.getSizeOfModifierList(player);
+        boolean animation = previousSnapshot != null && numOfModifiers != previousSnapshot.getSizeOfModifierList(player);
 
         if(activePlayer) {
             ImageButton button = getImageButton(
-                    TRAP,
+                    MODIFIER,
                     LARGE,
                     animation
             );
 
             button.addListener(
-                    new TrapButtonListener(eventHandler)
+                    new ModifierButtonListener(eventHandler)
             );
 
             addSquareImageButton(
@@ -154,14 +154,14 @@ public class PlayerCompositor extends Compositor {
 
             addSquareIcon(
                     playerTable,
-                    createIcon(TRAP, LARGE, animation),
+                    createIcon(MODIFIER, LARGE, animation),
                     Dimensions.instance().getLargeSquareIconLength()
             );
         }
 
         playerTable.add(
                 createLabel(
-                        numOfTraps,
+                        numOfModifiers,
                         GuiColor.REINFORCEMENT,
                         animation
                 )).padLeft(40).padRight(40);

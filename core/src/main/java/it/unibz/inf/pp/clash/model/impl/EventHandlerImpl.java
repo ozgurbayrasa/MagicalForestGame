@@ -11,10 +11,10 @@ import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Buff;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.BigTrap;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.SmallTrap;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.WallTrap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.*;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
@@ -26,8 +26,8 @@ public class EventHandlerImpl implements EventHandler {
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
 
-	// A boolean which is true while the trap button is pressed and allows players to place traps.
-	public static boolean trapTime = false;
+	// A boolean which is true while the modifier button is pressed and allows players to place modifiers.
+	public static boolean modifierMode = false;
 
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -74,8 +74,8 @@ public class EventHandlerImpl implements EventHandler {
 	@Override
 	public void skipTurn() {
 		s.setOngoingMove(null);
-		if(trapTime) {
-			switchTrapTime();
+		if(modifierMode) {
+			switchModifierMode();
 		}
 		Player activePlayer = s.getActivePlayer();
 		Player nextPlayer;
@@ -606,34 +606,55 @@ public class EventHandlerImpl implements EventHandler {
 		}
 		// Get unit.
 		Unit unit = board.getUnit(rowIndex, columnIndex).get();
+		// Generate random number to choose between trap and buff.
+		Random random = new Random();
+		int randomNumber = random.nextInt(2);
 		// Check if there is an ongoing move.
 		if (ongoingMove.isPresent()) {
 			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
 		} else {
-			// Remove the unit or formation from the board and add a corresponding trap to the trap list.
+			// Remove the unit or formation from the board and add a corresponding modifier (trap or buff) to the modifier list.
 			if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
-				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.COMMON));
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
+				}
 				removeFormation(unit, activePlayer);
 				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
-				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.RARE));
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
+				}
 				removeFormation(unit, activePlayer);
 				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
-				s.addTrapToList(activePlayer, new BigTrap(Trap.TrapRarity.EPIC));
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
+				}
 				removeFormation(unit, activePlayer);
 				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
 			} else if(unit instanceof Fairy) {
-				s.addTrapToList(activePlayer, new SmallTrap(Trap.TrapRarity.COMMON));
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
+				}
 				board.removeUnit(rowIndex, columnIndex);
 			} else if (unit instanceof Unicorn) {
-				s.addTrapToList(activePlayer, new SmallTrap(Trap.TrapRarity.RARE));
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
+				}
 				board.removeUnit(rowIndex, columnIndex);
 			} else if(unit instanceof Butterfly) {
-				s.addTrapToList(activePlayer, new SmallTrap(Trap.TrapRarity.EPIC));
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
+				}
 				board.removeUnit(rowIndex, columnIndex);
 			} else if(unit.getClass().equals(Wall.class)) {
-				s.addTrapToList(activePlayer, new WallTrap(rowIndex, columnIndex));
+				s.addModifierToList(activePlayer, new WallTrap(rowIndex, columnIndex));
 				board.removeUnit(rowIndex, columnIndex);
 			}
 			// Move the units in.
@@ -676,14 +697,14 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	@Override
-	public void placeTrap(int rowIndex, int columnIndex) {
+	public void placeModifier(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 
-		// Check if trap time is on.
-		if(!trapTime) {
-			displayErrorMessage("Error: Trap time must be on!");
+		// Check if modifier mode is on.
+		if(!modifierMode) {
+			displayErrorMessage("Error: Modifier mode must be on!");
 			return;
 		}
 
@@ -692,46 +713,53 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		}
 
+		// Get the unit and the modifier.
+		Unit unit = board.getUnit(rowIndex, columnIndex).get();
+		Modifier modifier = s.getModifierList(activePlayer).get(0);
+
 		// Check if the tile is on the enemy player's board
-		if (tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
+		if (modifier instanceof Trap && tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile must be on the enemy player's board.");
+			return;
+		} else if(modifier instanceof Buff && tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
+			displayErrorMessage("Error: Selected tile must be on the active player's board.");
 			return;
 		}
 
 		// Check if the tile is empty.
 		if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
-			displayErrorMessage("Error: Selected tile cannot be empty when placing a trap.");
+			displayErrorMessage("Error: Selected tile cannot be empty when placing a modifier.");
 			return;
 		}
 
-		// Get the unit and the trap.
-		Unit unit = board.getUnit(rowIndex, columnIndex).get();
-		Trap trap = s.getTrapList(activePlayer).get(0);
-
-		// Check if a small trap is placed on a formation.
-		if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit) && trap instanceof SmallTrap) {
+		// Check if a small modifier is placed on a formation.
+		if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit) && modifier instanceof SmallTrap) {
 			displayErrorMessage("Formations can only be damaged by big traps.");
 			return;
+		} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && modifier instanceof SmallBuff) {
+			displayErrorMessage("Formations can only be affected by big buffs.");
 		}
 
-		// Check if a big trap is placed on a small unit.
-		if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit) && trap instanceof BigTrap) {
+		// Check if a big modifier is placed on a small unit.
+		if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit) && modifier instanceof BigTrap) {
 			displayErrorMessage("Small units can only be damaged by small traps.");
 			return;
+		} else if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && modifier instanceof BigBuff) {
+			displayErrorMessage("Small units can only be affected by small buffs.");
 		}
 
 		// Check if a wall trap is placed on wall.
-		if(unit instanceof Wall && (trap instanceof WallTrap || trap instanceof BigTrap)) {
+		if(unit instanceof Wall && (modifier instanceof WallTrap || modifier instanceof BigTrap)) {
 			displayErrorMessage("Walls can only be damaged by small traps.");
 			return;
 		}
 
 		// Activate the trap.
-		activateTrap(trap, rowIndex, columnIndex);
+		activateModifier(modifier, rowIndex, columnIndex);
 		// Switch off trap time.
-		switchTrapTime();
+		switchModifierMode();
 		// Remove the trap from the list.
-		s.removeTrapFromList(activePlayer, 0);
+		s.removeModifierFromList(activePlayer, 0);
 		// Decrement the number of remaining actions if no formation is created.
 		if(!detectFormations()) {
 			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
@@ -743,7 +771,7 @@ public class EventHandlerImpl implements EventHandler {
     }
 
 	// Helper method that activates the trap upon placement.
-	private void activateTrap(Trap trap, int rowIndex, int columnIndex) {
+	private void activateModifier(Modifier modifier, int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
@@ -754,47 +782,66 @@ public class EventHandlerImpl implements EventHandler {
 		Unit unit = board.getUnit(rowIndex, columnIndex).get();
 
 		// Activate a small trap.
-		if(trap instanceof SmallTrap) {
-			unit.setHealth(unit.getHealth() - trap.getDamage());
-			if(unit.getHealth() <= 0) {
+		if(modifier instanceof SmallTrap) {
+			unit.setHealth(unit.getHealth() + modifier.getHealth());
+			if (unit.getHealth() <= 0) {
 				board.removeUnit(rowIndex, columnIndex);
 			}
 		// Activate a big trap.
-		} else if(trap instanceof BigTrap) {
-			dealSideDamage(unit, trap);
-			((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() + ((BigTrap) trap).getCountdown());
+		} else if(modifier instanceof BigTrap) {
+			modifySideHealth(unit, modifier);
+			((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() + modifier.getCountdown());
 		// Activate a wall trap.
-		} else if(trap instanceof WallTrap) {
+		} else if(modifier instanceof WallTrap) {
 			if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit)) {
 				Wall wall = new Wall();
 				wall.setHealth(unit.getHealth());
 				board.moveWallUnitsIn(wall, rowIndex, columnIndex);
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit)) {
-				replaceFormationWithWalls(unit, trap);
+				replaceFormationWithWalls(unit);
 			}
+		// Activate a small buff.
+		} else if(modifier instanceof SmallBuff) {
+			unit.setHealth(unit.getHealth() + modifier.getHealth());
+		// Activate a big buff.
+		} else if(modifier instanceof BigBuff) {
+			modifySideHealth(unit, modifier);
+			((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() - modifier.getCountdown());
 		}
 	}
 
-	private void dealSideDamage(Unit unit, Trap trap) {
+	// Helper method for big modifiers.
+	private void modifySideHealth(Unit unit, Modifier modifier) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 
+		// Iterate over rows.
 		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			// Iterate over columns.
 			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the unit is present and that it doesn't equal the target unit.
 				if(board.getUnit(i, j).isPresent() && !board.getUnit(i, j).get().equals(unit)) {
+					// Check if the unit above is present, is on the same player's board and matches the target unit.
 					if(board.areValidCoordinates(i - 1, j) && board.getUnit(i - 1, j).isPresent()
 							&& tileIsOnPlayerBoard(opponentPlayer, board, i) && board.getUnit(i - 1, j).get().equals(unit)) {
-						handleSideUnit(board, trap, opponentPlayer, i, j);
+						// Modify the health.
+						handleSideUnit(board, modifier, opponentPlayer, i, j);
+					// Check if the unit below is present, is on the same player's board and matches the target unit.
 					} else if (board.areValidCoordinates(i + 1, j) && board.getUnit(i + 1, j).isPresent()
 							&& tileIsOnPlayerBoard(opponentPlayer, board, i) && board.getUnit(i + 1, j).get().equals(unit)) {
-						handleSideUnit(board, trap, opponentPlayer, i, j);
+						// Modify the health.
+						handleSideUnit(board, modifier, opponentPlayer, i, j);
+					// Check if the unit to the left is present, is on the same player's board and matches the target unit.
 					} else if (board.areValidCoordinates(i, j - 1) && board.getUnit(i, j - 1).isPresent()
 							&& board.getUnit(i, j - 1).get().equals(unit)) {
-						handleSideUnit(board, trap, opponentPlayer, i, j);
+						// Modify the health.
+						handleSideUnit(board, modifier, opponentPlayer, i, j);
+					// Check if the unit to the right is present, is on the same player's board and matches the target unit.
 					} else if (board.areValidCoordinates(i, j + 1) && board.getUnit(i, j + 1).isPresent()
 							&& board.getUnit(i, j + 1).get().equals(unit)) {
-						handleSideUnit(board, trap, opponentPlayer, i, j);
+						// Modify the health.
+						handleSideUnit(board, modifier, opponentPlayer, i, j);
 					}
 				}
 			}
@@ -803,22 +850,24 @@ public class EventHandlerImpl implements EventHandler {
 		board.moveUnitsIn(opponentPlayer);
 	}
 
-	private void handleSideUnit(Board board, Trap trap, Player opponentPlayer, int rowIndex, int columnIndex) {
+	// Helper method which modifies health of side unit.
+	private void handleSideUnit(Board board, Modifier modifier, Player opponentPlayer, int rowIndex, int columnIndex) {
 		assert board.getUnit(rowIndex, columnIndex).isPresent();
 		// Get the unit.
 		Unit sideUnit = board.getUnit(rowIndex, columnIndex).get();
 		// Check if the unit is small...
 		if((sideUnit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(sideUnit) || sideUnit instanceof Wall)) {
-			// Apply the damage.
-			sideUnit.setHealth(sideUnit.getHealth() - trap.getDamage());
+			// Modify the health.
+			sideUnit.setHealth(sideUnit.getHealth() + modifier.getHealth());
 			// Remove the unit from the board if it's health is depleted.
 			if(sideUnit.getHealth() <= 0) {
 				board.removeUnit(rowIndex, columnIndex);
 			}
 			// ...or a formation
 		} else if(sideUnit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(sideUnit)) {
-			// Apply the damage.
-			sideUnit.setHealth(sideUnit.getHealth() - Math.round((float) trap.getDamage() / 3));
+			// Modify the health.
+			sideUnit.setHealth(sideUnit.getHealth() + Math.round((float) modifier.getHealth() / 3));
+			// Remove the formation from the board if it's health is depleted.
 			if (sideUnit.getHealth() <= 0) {
 				removeFormation(sideUnit, opponentPlayer);
 				board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) sideUnit);
@@ -826,14 +875,19 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
-	private void replaceFormationWithWalls(Unit unit, Trap trap) {
+	// Helper method for wall traps.
+	private void replaceFormationWithWalls(Unit unit) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		loop:
+		// Iterate over rows.
 		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			// Iterate over columns.
 			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the unit is present and equals the target unit.
 				if (board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+					// Replace the unit with a wall (with the same health) and move the wall up to the border.
 					Wall wall = new Wall();
 					wall.setHealth(unit.getHealth());
 					board.moveWallUnitsIn(wall, i, j);
@@ -841,19 +895,29 @@ public class EventHandlerImpl implements EventHandler {
 				}
 			}
 		}
+		// If the small unit replaced by a wall is a part of a formation, only that small unit is replaced, and the remaining formation is split into small units.
+		// Index of unit in formation list.
 		int index = 0;
+		// Iterate over rows.
 		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			// Iterate over columns.
 			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the unit is present and equals the target unit (which means the target unit was a part of a formation).
 				if (board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
-
+					// Make a list from formationToSmallUnitsMap.
 					List<AbstractMobileUnit> smallUnits = new ArrayList<>(board.getFormationToSmallUnitsMap(opponentPlayer).get((AbstractMobileUnit) unit));
+					// Remove the unit.
 					board.removeUnit(i, j);
+					// Replace it with the next small unit from the list.
 					board.addUnit(i, j, smallUnits.get(index));
+					// Reset the attack countdown.
 					smallUnits.get(index).setAttackCountdown(-1);
+					// Increment the index.
 					index++;
 				}
 			}
 		}
+		// Remove the formation from the map.
 		board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 	}
 
@@ -877,30 +941,30 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	@Override
-	public boolean trapTimeIsOn() {
-		return trapTime;
+	public boolean modifierModeIsOn() {
+		return modifierMode;
 	}
 
 	@Override
-	public void switchTrapTime() {
+	public void switchModifierMode() {
 		Player activePlayer = s.getActivePlayer();
-		// Check if there are any traps available.
-		if(s.getSizeOfTrapList(activePlayer) <= 0) {
-			displayErrorMessage("Error: No traps available!");
+		// Check if there are any modifiers available.
+		if(s.getSizeOfModifierList(activePlayer) <= 0) {
+			displayErrorMessage("Error: No modifiers available!");
 			return;
 		}
 		// Switch the boolean value.
-		trapTime = !trapTime;
+		modifierMode = !modifierMode;
 		// Update the message depending on the new value.
-		if(trapTime) {
+		if(modifierMode) {
             try {
-                displayManager.updateMessage("Trap time switched on.");
+                displayManager.updateMessage("Modifier mode switched on.");
             } catch (NoGameOnScreenException e) {
                 throw new RuntimeException(e);
             }
         } else {
             try {
-                displayManager.updateMessage("Trap time switched off.");
+                displayManager.updateMessage("Modifier mode switched off.");
             } catch (NoGameOnScreenException e) {
                 throw new RuntimeException(e);
             }

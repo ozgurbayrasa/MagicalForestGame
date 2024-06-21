@@ -1,25 +1,25 @@
 package it.unibz.inf.pp.clash.model.snapshot.modifiers.impl;
 
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Buff;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 
-public class SmallTrap implements Trap {
+public class SmallBuff implements Buff {
 
-    Rarity rarity;;
+    Rarity rarity;
     int health;
 
-    public SmallTrap(Rarity rarity) {
+    public SmallBuff(Rarity rarity) {
         this.rarity = rarity;
 
         switch (rarity) {
             case COMMON -> {
-                health = -2;
+                health = 2;
             }
             case RARE -> {
-                health = -3;
+                health = 3;
             }
             case EPIC -> {
-                health = -5;
+                health = 5;
             }
         }
     }

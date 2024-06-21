@@ -5,18 +5,18 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import it.unibz.inf.pp.clash.model.EventHandler;
 
-public class TrapButtonListener extends ClickListener {
+public class ModifierButtonListener extends ClickListener {
 
     private final EventHandler eventHandler;
 
-    public TrapButtonListener(EventHandler eventHandler) {
+    public ModifierButtonListener(EventHandler eventHandler) {
         super(Input.Buttons.LEFT);
         this.eventHandler = eventHandler;
     }
 
     @Override
     public void clicked(InputEvent event, float x, float y) {
-        System.out.println("Trap button pressed");
-        eventHandler.switchTrapTime();
+        System.out.println("Modifier button pressed");
+        eventHandler.switchModifierMode();
     }
 }

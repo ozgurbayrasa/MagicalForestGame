@@ -1,25 +1,28 @@
 package it.unibz.inf.pp.clash.model.snapshot.modifiers.impl;
 
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Buff;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 
-public class SmallTrap implements Trap {
+public class BigBuff implements Buff {
 
-    Rarity rarity;;
+    Rarity rarity;
     int health;
+    int countdown;
 
-    public SmallTrap(Rarity rarity) {
+    public BigBuff(Rarity rarity) {
         this.rarity = rarity;
-
         switch (rarity) {
             case COMMON -> {
-                health = -2;
+                countdown = 2;
+                health = 2;
             }
             case RARE -> {
-                health = -3;
+                countdown = 3;
+                health = 3;
             }
             case EPIC -> {
-                health = -5;
+                countdown = 5;
+                health = 5;
             }
         }
     }
@@ -34,8 +37,7 @@ public class SmallTrap implements Trap {
         return health;
     }
 
-    @Override
     public int getCountdown() {
-        return -1;
+        return countdown;
     }
 }
