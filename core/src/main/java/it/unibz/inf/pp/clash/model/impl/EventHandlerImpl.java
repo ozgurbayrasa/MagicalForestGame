@@ -11,9 +11,12 @@ import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Buff;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.*;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
@@ -22,6 +25,9 @@ public class EventHandlerImpl implements EventHandler {
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
+
+	// A boolean which is true while the modifier button is pressed and allows players to place modifiers.
+	public static boolean modifierMode = false;
 
     public EventHandlerImpl(DisplayManager displayManager) {
         this.displayManager = displayManager;
@@ -32,7 +38,7 @@ public class EventHandlerImpl implements EventHandler {
 		s = new SnapshotImpl(firstHero, secondHero);
 //		Snapshot dummy1 = new DummySnapshot(firstHero, secondHero);
 //		Snapshot dummy2 = new AnotherDummySnapshot(firstHero, secondHero);
-		detectBigUnits();
+		detectFormations();
 		displayManager.drawSnapshot(s, "A new game has been started!");
 	}
 
@@ -67,6 +73,10 @@ public class EventHandlerImpl implements EventHandler {
 	// Skip the current turn.
 	@Override
 	public void skipTurn() {
+		s.setOngoingMove(null);
+		if(modifierMode) {
+			switchModifierMode();
+		}
 		Player activePlayer = s.getActivePlayer();
 		Player nextPlayer;
 		if (activePlayer == Player.FIRST) {
@@ -78,7 +88,6 @@ public class EventHandlerImpl implements EventHandler {
 		// Reset number of remaining actions.
 		s.setNumberOfRemainingActions(s.getDefaultActionsRemaining());
 		// Cancels the ongoing move.
-		s.setOngoingMove(null);
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " skipped his turn!");
 		handleEncounters();
 	}
@@ -162,7 +171,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 		board.moveUnitsIn(activePlayer);
 		// Check if a big unit is detected, and if so, do not decrement the number of remaining actions.
-		if(!detectBigUnits()) {
+		if(!detectFormations()) {
 			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 		}
 		endTurnIfNoActionsRemaining();
@@ -188,7 +197,8 @@ public class EventHandlerImpl implements EventHandler {
 	@Override
 	public void selectTile(int rowIndex, int columnIndex) throws CoordinatesOutOfBoardException {
 		Board board = s.getBoard();
-		Player activeplayer = s.getActivePlayer();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
 
 		// Check if the selected tile is within the board limits.
@@ -197,8 +207,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 
 		// Check if the tile is on the active player's board
-		Player activePlayer = s.getActivePlayer();
-		if (tileIsOnActivePlayerBoard(activePlayer, board, rowIndex)) {
+		if (tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
 			return;
 		}
@@ -210,7 +219,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 
 		// Check if the destination cell is the same or an empty cell in the same column, and if so, cancel the move.
-		if(ongoingMove.isPresent() && unitStaysStationary(ongoingMove.get(), rowIndex, columnIndex, board, activeplayer)) {
+		if(ongoingMove.isPresent() && unitStaysStationary(ongoingMove.get(), rowIndex, columnIndex, board, activePlayer)) {
 			s.setOngoingMove(null);
 			displayManager.drawSnapshot(s, "Move canceled!");
 			return;
@@ -236,14 +245,13 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	// Helper method simply returns if tile on active player's board.
-	private boolean tileIsOnActivePlayerBoard(Player activePlayer, Board board, int rowIndex) {
+	@Override
+	public boolean tileIsOnPlayerBoard(Player player, Board board, int rowIndex) {
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
-		if (activePlayer == Player.FIRST) {
-            return rowIndex < halfBoard || rowIndex > board.getMaxRowIndex();
-		} else if (activePlayer == Player.SECOND) {
-            return rowIndex < 0 || rowIndex >= halfBoard;
-		}
-		return true;
+		return switch (player) {
+			case FIRST -> rowIndex >= halfBoard && rowIndex < board.getMaxRowIndex() + 1;
+			case SECOND -> rowIndex >= 0 && rowIndex < halfBoard;
+		};
 	}
 
 	// Helper method for displaying error messages.
@@ -276,7 +284,7 @@ public class EventHandlerImpl implements EventHandler {
 		s.setOngoingMove(null);
 		board.moveUnit(ongoingMove.rowIndex(), ongoingMove.columnIndex(), rowIndex, columnIndex);
 		board.moveUnitsIn(activePlayer);
-		if (!detectBigUnits()) {
+		if (!detectFormations()) {
 			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 		}
 		endTurnIfNoActionsRemaining();
@@ -294,13 +302,14 @@ public class EventHandlerImpl implements EventHandler {
 	public void deleteUnit(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
 		// Check if the selected tile is within the board limits.
 		if(!board.areValidCoordinates(rowIndex, columnIndex)) {
 			return;
 		}
 		// Check if the tile is on the active player's board.
-		if(tileIsOnActivePlayerBoard(activePlayer, board, rowIndex)) {
+		if(tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
 			return;
 		}
@@ -315,13 +324,13 @@ public class EventHandlerImpl implements EventHandler {
 		if(ongoingMove.isPresent()) {
 			displayErrorMessage("Error: Cannot delete unit during an ongoing move.");
 		// Check if the unit is not a big unit (because big units cannot be removed).
-		} else if(!(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(unit))) {
+		} else if(!(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit))) {
 			// Add the unit to the reinforcement list and remove it from the board.
 			s.addReinforcementToSet(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
 			board.removeUnit(rowIndex, columnIndex);
 			board.moveUnitsIn(activePlayer);
 			// Check if a big unit is detected, and if so, do not decrement the number of remaining actions.
-			if(!detectBigUnits()) {
+			if(!detectFormations()) {
 				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 			}
 			endTurnIfNoActionsRemaining();
@@ -331,7 +340,7 @@ public class EventHandlerImpl implements EventHandler {
 
 	// This method handles the detection and moving of big units (only 3x1 and 1x3 for now).
 	// It returns true if a new big unit has been detected.
-	private boolean detectBigUnits() {
+	private boolean detectFormations() {
 		Board board = s.getBoard();
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		// Repeat for every row.
@@ -355,8 +364,8 @@ public class EventHandlerImpl implements EventHandler {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if(((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
 								// Create a big unit and move it next to the border.
-								AbstractMobileUnit bigUnit = board.createBigVerticalUnit(i, j);
-								board.moveBigVerticalUnitIn(bigUnit, i, j);
+								AbstractMobileUnit formation = board.create3x1Formation(i, j);
+								board.move3x1In(formation, i, j);
 								((AbstractMobileUnit) above).setAttackCountdown(3);
 								((AbstractMobileUnit) center).setAttackCountdown(3);
 								((AbstractMobileUnit) below).setAttackCountdown(3);
@@ -380,12 +389,12 @@ public class EventHandlerImpl implements EventHandler {
 							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
 							if (((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
 								// Create wall units and move them next to the border.
-								Wall leftWall = board.createWallUnit(i, j - 1);
-								Wall centerWall = board.createWallUnit(i, j);
-								Wall rightWall = board.createWallUnit(i, j + 1);
-								board.moveWallUnitIn(leftWall, i, j - 1);
-								board.moveWallUnitIn(centerWall, i, j);
-								board.moveWallUnitIn(rightWall, i, j + 1);
+								Wall leftWall = new Wall();
+								Wall centerWall = new Wall();
+								Wall rightWall = new Wall();
+								board.moveWallUnitsIn(leftWall, i, j - 1);
+								board.moveWallUnitsIn(centerWall, i, j);
+								board.moveWallUnitsIn(rightWall, i, j + 1);
 								return true;
 							}
 						}
@@ -439,8 +448,8 @@ public class EventHandlerImpl implements EventHandler {
 						// Remove the attacking unit from the board and add it to reinforcements.
 						board.removeUnit(row, col);
 						// Add this unit to be set to -1 for attackCountdown.
-						if(board.getBigUnitToSmallUnitsMap(activePlayer).containsKey(mobileUnit)) {
-							unitsAttackedAndRemoved.addAll(board.getBigUnitToSmallUnitsMap(activePlayer).get(mobileUnit));
+						if(board.getFormationToSmallUnitsMap(activePlayer).containsKey(mobileUnit)) {
+							unitsAttackedAndRemoved.addAll(board.getFormationToSmallUnitsMap(activePlayer).get(mobileUnit));
 						}
 						unitsAttackedAndRemoved.add(mobileUnit);
 						s.addReinforcementToSet(activePlayer, mobileUnit);
@@ -564,7 +573,7 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	// Helper method that returns the board section of the player.
-	// This method is similar to tileIsOnActivePlayerBoard method.
+	// This method is similar to tileIsOnPlayerBoard method.
 	// We may make it more modular for readability later.
 	private int[] getPlayerBoardRange(Player activePlayer, Board board) {
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
@@ -575,8 +584,347 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
+	@Override
+	public void sacrificeUnit(int rowIndex, int columnIndex) {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
+		// Check if the selected tile is within the board limits.
+		if (!board.areValidCoordinates(rowIndex, columnIndex)) {
+			return;
+		}
+		// Check if the tile is on the active player's board.
+		if (tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
+			displayErrorMessage("Error: Selected tile is not on the active player's board.");
+			return;
+		}
+		// Check if the tile is empty.
+		if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
+			displayErrorMessage("Error: Selected tile is empty.");
+			return;
+		}
+		// Check if modifier mode is on and switch it off is so.
+		if(modifierMode) {
+			switchModifierMode();
+		}
+		// Get unit.
+		Unit unit = board.getUnit(rowIndex, columnIndex).get();
+		// Generate random number to choose between trap and buff.
+		Random random = new Random();
+		int randomNumber = random.nextInt(2);
+		// Check if there is an ongoing move.
+		if (ongoingMove.isPresent()) {
+			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
+		} else {
+			// Remove the unit or formation from the board and add a corresponding modifier (trap or buff) to the modifier list.
+			if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
+				}
+				removeFormation(unit, activePlayer);
+				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
+				}
+				removeFormation(unit, activePlayer);
+				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
+					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
+				}
+				removeFormation(unit, activePlayer);
+				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+			} else if(unit instanceof Fairy) {
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.COMMON));
+					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.COMMON));
+				}
+				board.removeUnit(rowIndex, columnIndex);
+			} else if (unit instanceof Unicorn) {
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.RARE));
+					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.RARE));
+				}
+				board.removeUnit(rowIndex, columnIndex);
+			} else if(unit instanceof Butterfly) {
+				switch(randomNumber) {
+					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.EPIC));
+					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.EPIC));
+				}
+				board.removeUnit(rowIndex, columnIndex);
+			} else if(unit.getClass().equals(Wall.class)) {
+				s.addModifierToList(activePlayer, new WallTrap(rowIndex, columnIndex));
+				board.removeUnit(rowIndex, columnIndex);
+			}
+			// Move the units in.
+			board.moveUnitsIn(activePlayer);
+			// Decrement the number of remaining actions if no formation is created.
+			if(!detectFormations()) {
+				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+			}
+			// End the turn if the actions are depleted.
+			endTurnIfNoActionsRemaining();
+			// Draw the snapshot.
+			displayManager.drawSnapshot(s, "Player " + activePlayer + " sacrificed unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
+		}
+	}
 
+	// Helper method which removes a single whole formation from the board.
+	private void removeFormation(Unit unit, Player activePlayer) {
+		Board board = s.getBoard();
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
+		switch (activePlayer) {
+			case FIRST -> {
+				for(int i = halfBoard; i <= board.getMaxRowIndex(); i++) {
+					for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+						if(board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+							board.removeUnit(i, j);
+						}
+					}
+				}
+			}
+			case SECOND -> {
+				for(int i = 0; i < halfBoard; i++) {
+					for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+						if(board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+							board.removeUnit(i, j);
+						}
+					}
+				}
+			}
+		}
+	}
 
+	@Override
+	public void placeModifier(int rowIndex, int columnIndex) {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+
+		// Check if modifier mode is on.
+		if(!modifierMode) {
+			displayErrorMessage("Error: Modifier mode must be on!");
+			return;
+		}
+
+		// Check if the selected tile is within the board limits.
+		if (!board.areValidCoordinates(rowIndex, columnIndex)) {
+			return;
+		}
+
+		// Check if the tile is empty.
+		if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
+			displayErrorMessage("Error: Selected tile cannot be empty when placing a modifier.");
+			return;
+		}
+
+		// Get the unit and the modifier.
+		Unit unit = board.getUnit(rowIndex, columnIndex).get();
+		Modifier modifier = s.getModifierList(activePlayer).get(0);
+
+		// Check if the tile is on the enemy player's board
+		if (modifier instanceof Trap && tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
+			displayErrorMessage("Error: Selected tile must be on the enemy player's board.");
+			return;
+		} else if(modifier instanceof Buff && tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
+			displayErrorMessage("Error: Selected tile must be on the active player's board.");
+			return;
+		}
+
+		// Check if a small modifier is placed on a formation.
+		if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit) && modifier instanceof SmallTrap) {
+			displayErrorMessage("Formations can only be damaged by big traps.");
+			return;
+		} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && modifier instanceof SmallBuff) {
+			displayErrorMessage("Formations can only be affected by big buffs.");
+		}
+
+		// Check if a big modifier is placed on a small unit.
+		if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit) && modifier instanceof BigTrap) {
+			displayErrorMessage("Small units can only be damaged by small traps.");
+			return;
+		} else if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && modifier instanceof BigBuff) {
+			displayErrorMessage("Small units can only be affected by small buffs.");
+			return;
+		}
+
+		// Check if a wall trap is placed on wall.
+		if(unit instanceof Wall && (modifier instanceof WallTrap || modifier instanceof BigTrap)) {
+			displayErrorMessage("Walls can only be damaged by small traps.");
+			return;
+		}
+
+		// Activate the modifier.
+		activateModifier(modifier, rowIndex, columnIndex);
+		// Switch off modifier mode.
+		switchModifierMode();
+		// Remove the modifier from the list.
+		s.removeModifierFromList(activePlayer, 0);
+		// Decrement the number of remaining actions if no formation is created.
+		if(!detectFormations()) {
+			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+		}
+		// End the turn if the actions are depleted.
+		endTurnIfNoActionsRemaining();
+		// Draw the snapshot.
+		displayManager.drawSnapshot(s,"Modifier placed on tile (" + rowIndex + ", " + columnIndex + ")");
+    }
+
+	// Helper method that activates the modifier upon placement.
+	private void activateModifier(Modifier modifier, int rowIndex, int columnIndex) {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+
+		// Assert that the unit is present, since the placeModifier() method has already checked it.
+		assert board.getUnit(rowIndex, columnIndex).isPresent();
+		// Get the unit.
+		Unit unit = board.getUnit(rowIndex, columnIndex).get();
+
+		// Activate a small trap.
+		if(modifier instanceof SmallTrap) {
+			unit.setHealth(unit.getHealth() + modifier.getHealth());
+			if (unit.getHealth() <= 0) {
+				board.removeUnit(rowIndex, columnIndex);
+			}
+		// Activate a big trap.
+		} else if(modifier instanceof BigTrap) {
+			modifySideHealth(unit, modifier);
+			((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() + modifier.getCountdown());
+		// Activate a wall trap.
+		} else if(modifier instanceof WallTrap) {
+			if(unit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit)) {
+				Wall wall = new Wall();
+				wall.setHealth(unit.getHealth());
+				board.moveWallUnitsIn(wall, rowIndex, columnIndex);
+			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(unit)) {
+				replaceFormationWithWalls(unit);
+			}
+		// Activate a small buff.
+		} else if(modifier instanceof SmallBuff) {
+			unit.setHealth(unit.getHealth() + modifier.getHealth());
+		// Activate a big buff.
+		} else if(modifier instanceof BigBuff) {
+			modifySideHealth(unit, modifier);
+			((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() - modifier.getCountdown());
+		}
+	}
+
+	// Helper method for big modifiers.
+	private void modifySideHealth(Unit unit, Modifier modifier) {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+
+		// Iterate over rows.
+		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			// Iterate over columns.
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the unit is present and that it doesn't equal the target unit.
+				if(board.getUnit(i, j).isPresent() && !board.getUnit(i, j).get().equals(unit)) {
+					// Check if the unit above is present, is on the same player's board and matches the target unit.
+					if(board.areValidCoordinates(i - 1, j) && board.getUnit(i - 1, j).isPresent()
+							&& tileIsOnPlayerBoard(opponentPlayer, board, i) && board.getUnit(i - 1, j).get().equals(unit)) {
+						// Modify the health.
+						handleSideUnit(board, modifier, opponentPlayer, i, j);
+					// Check if the unit below is present, is on the same player's board and matches the target unit.
+					} else if (board.areValidCoordinates(i + 1, j) && board.getUnit(i + 1, j).isPresent()
+							&& tileIsOnPlayerBoard(opponentPlayer, board, i) && board.getUnit(i + 1, j).get().equals(unit)) {
+						// Modify the health.
+						handleSideUnit(board, modifier, opponentPlayer, i, j);
+					// Check if the unit to the left is present, is on the same player's board and matches the target unit.
+					} else if (board.areValidCoordinates(i, j - 1) && board.getUnit(i, j - 1).isPresent()
+							&& board.getUnit(i, j - 1).get().equals(unit)) {
+						// Modify the health.
+						handleSideUnit(board, modifier, opponentPlayer, i, j);
+					// Check if the unit to the right is present, is on the same player's board and matches the target unit.
+					} else if (board.areValidCoordinates(i, j + 1) && board.getUnit(i, j + 1).isPresent()
+							&& board.getUnit(i, j + 1).get().equals(unit)) {
+						// Modify the health.
+						handleSideUnit(board, modifier, opponentPlayer, i, j);
+					}
+				}
+			}
+		}
+		// Move the units in.
+		board.moveUnitsIn(opponentPlayer);
+	}
+
+	// Helper method which modifies health of side unit.
+	private void handleSideUnit(Board board, Modifier modifier, Player opponentPlayer, int rowIndex, int columnIndex) {
+		assert board.getUnit(rowIndex, columnIndex).isPresent();
+		// Get the unit.
+		Unit sideUnit = board.getUnit(rowIndex, columnIndex).get();
+		// Check if the unit is small...
+		if((sideUnit instanceof AbstractMobileUnit && !board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(sideUnit) || sideUnit instanceof Wall)) {
+			// Modify the health.
+			sideUnit.setHealth(sideUnit.getHealth() + modifier.getHealth());
+			// Remove the unit from the board if it's health is depleted.
+			if(sideUnit.getHealth() <= 0) {
+				board.removeUnit(rowIndex, columnIndex);
+			}
+			// ...or a formation
+		} else if(sideUnit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(sideUnit)) {
+			// Modify the health.
+			sideUnit.setHealth(sideUnit.getHealth() + Math.round((float) modifier.getHealth() / 3));
+			// Remove the formation from the board if it's health is depleted.
+			if (sideUnit.getHealth() <= 0) {
+				removeFormation(sideUnit, opponentPlayer);
+				board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) sideUnit);
+			}
+		}
+	}
+
+	// Helper method for wall traps.
+	private void replaceFormationWithWalls(Unit unit) {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+		loop:
+		// Iterate over rows.
+		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			// Iterate over columns.
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the unit is present and equals the target unit.
+				if (board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+					// Replace the unit with a wall (with the same health) and move the wall up to the border.
+					Wall wall = new Wall();
+					wall.setHealth(unit.getHealth());
+					board.moveWallUnitsIn(wall, i, j);
+					break loop;
+				}
+			}
+		}
+		// If the small unit replaced by a wall is a part of a formation, only that small unit is replaced, and the remaining formation is split into small units.
+		// Index of unit in formation list.
+		int index = 0;
+		// Iterate over rows.
+		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			// Iterate over columns.
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the unit is present and equals the target unit (which means the target unit was a part of a formation).
+				if (board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
+					// Make a list from formationToSmallUnitsMap.
+					List<AbstractMobileUnit> smallUnits = new ArrayList<>(board.getFormationToSmallUnitsMap(opponentPlayer).get((AbstractMobileUnit) unit));
+					// Remove the unit.
+					board.removeUnit(i, j);
+					// Replace it with the next small unit from the list.
+					board.addUnit(i, j, smallUnits.get(index));
+					// Reset the attack countdown.
+					smallUnits.get(index).setAttackCountdown(-1);
+					// Increment the index.
+					index++;
+				}
+			}
+		}
+		// Remove the formation from the map.
+		board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
+	}
 
 	// FOLLOWING METHOD CAN BE IMPLEMENTED IN BOARD
 
@@ -597,4 +945,42 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
+	@Override
+	public boolean modifierModeIsOn() {
+		return modifierMode;
+	}
+
+	@Override
+	public void switchModifierMode() {
+		Player activePlayer = s.getActivePlayer();
+		// Check if there are any modifiers available.
+		if(s.getSizeOfModifierList(activePlayer) <= 0) {
+			displayErrorMessage("Error: No modifiers available!");
+			return;
+		}
+		// Switch the boolean value.
+		modifierMode = !modifierMode;
+		// Update the message depending on the new value.
+		if(modifierMode) {
+			if(s.getModifierList(activePlayer).get(0) instanceof Trap) {
+				try {
+					displayManager.updateMessage("Trap picked.");
+				} catch (NoGameOnScreenException e) {
+					throw new RuntimeException(e);
+				}
+			} else {
+				try {
+					displayManager.updateMessage("Buff picked.");
+				} catch (NoGameOnScreenException e) {
+					throw new RuntimeException(e);
+				}
+			}
+        } else {
+            try {
+                displayManager.updateMessage("Modifier mode switched off.");
+            } catch (NoGameOnScreenException e) {
+                throw new RuntimeException(e);
+            }
+        }
+	}
 }

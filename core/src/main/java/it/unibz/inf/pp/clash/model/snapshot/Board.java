@@ -27,9 +27,9 @@ import java.util.Set;
  */
 public interface Board extends Serializable{
 
-    Map<AbstractMobileUnit, Set<AbstractMobileUnit>> getBigUnitToSmallUnitsMap(Player player);
+    Map<AbstractMobileUnit, Set<AbstractMobileUnit>> getFormationToSmallUnitsMap(Player player);
 
-    void removeBigUnitFromMap(Player player, AbstractMobileUnit bigUnit);
+    void removeFormationFromMap(Player player, AbstractMobileUnit formation);
 
     Map<Wall, AbstractMobileUnit> getWallToUnitMap(Player player);
 
@@ -100,23 +100,15 @@ public interface Board extends Serializable{
      * @param columnIndex
      * @return
      */
-    AbstractMobileUnit createBigVerticalUnit(int centerRowIndex, int columnIndex);
-
-    /**
-     * Creates a three wall units out of the small units.
-     * @param centerRowIndex
-     * @param columnIndex
-     * @return
-     */
-    Wall createWallUnit(int centerRowIndex, int columnIndex);
+    AbstractMobileUnit create3x1Formation(int centerRowIndex, int columnIndex);
 
     /**
      * Moves the specified big vertical unit next to the middle border.
-     * @param bigUnit
+     * @param formation
      * @param centerRowIndex
      * @param columnIndex
      */
-    void moveBigVerticalUnitIn(AbstractMobileUnit bigUnit, int centerRowIndex, int columnIndex);
+    void move3x1In(AbstractMobileUnit formation, int centerRowIndex, int columnIndex);
 
     /**
      * Moves the specified big horizontal unit next to the middle border.
@@ -124,7 +116,7 @@ public interface Board extends Serializable{
      * @param centerRowIndex
      * @param columnIndex
      */
-    void moveWallUnitIn(Wall wall, int centerRowIndex, int columnIndex);
+    void moveWallUnitsIn(Wall wall, int centerRowIndex, int columnIndex);
 
     /**
      *

@@ -2,12 +2,15 @@ package it.unibz.inf.pp.clash.model.snapshot.impl;
 
 import it.unibz.inf.pp.clash.model.snapshot.Hero;
 
+import java.io.Serial;
+
 public class HeroImpl implements Hero {
 
     /**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	@Serial
+    private static final long serialVersionUID = 1L;
 
 	private int health;
 

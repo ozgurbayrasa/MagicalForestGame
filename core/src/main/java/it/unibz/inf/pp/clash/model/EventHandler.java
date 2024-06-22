@@ -60,6 +60,9 @@ public interface EventHandler {
      */
     void selectTile(int rowIndex, int columnIndex) throws NoGameOnScreenException;
 
+    // Helper method simply returns if the tile is on the player's board.
+    boolean tileIsOnPlayerBoard(Player player, Board board, int rowIndex);
+
     /**
      * This method is called if the user tries to delete the unit standing on the tile with coordinates
      * ({@code rowIndex}, {@code columnIndex}).
@@ -74,6 +77,13 @@ public interface EventHandler {
     void deleteUnit(int rowIndex, int columnIndex);
 
     /**
+     * Deletes the unit from the board without adding it to reinforcements in exchange for a modifier or buff.
+     * @param rowIndex
+     * @param columnIndex
+     */
+    void sacrificeUnit(int rowIndex, int columnIndex);
+
+    /**
      * Continues the game when the user clicks the appropriate button, given that there is a serialized snapshot at the path specified.
      */
 	void continueGame();
@@ -85,6 +95,23 @@ public interface EventHandler {
      *
      *
      */
-
     void encounter(Board board, AbstractMobileUnit attackingUnit, Player opponent, int col);
+
+    /**
+     * This method handles the placement of modifiers on the opponent player's board.
+     *
+     * @param rowIndex
+     * @param columnIndex
+     */
+    void placeModifier(int rowIndex, int columnIndex);
+
+    /**
+     * This method switches the modifierTime boolean value between true and false.
+     */
+    void switchModifierMode();
+
+    /**
+     * @return the boolean value of modifierMode.
+     */
+    boolean modifierModeIsOn();
 }

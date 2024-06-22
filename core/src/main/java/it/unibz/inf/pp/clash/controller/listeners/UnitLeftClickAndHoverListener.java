@@ -4,6 +4,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import it.unibz.inf.pp.clash.model.EventHandler;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
 public class UnitLeftClickAndHoverListener extends TileHoverListener {
@@ -26,13 +27,18 @@ public class UnitLeftClickAndHoverListener extends TileHoverListener {
 
     @Override
     public void clicked(InputEvent event, float x, float y) {
+        Snapshot s = eventHandler.getSnapshot();
         System.out.printf(
                 "Left click on the unit at Tile(%s, %s)%n",
                 rowIndex,
                 columnIndex
         );
         try {
-            eventHandler.selectTile(rowIndex, columnIndex);
+            if(eventHandler.modifierModeIsOn()) {
+                eventHandler.placeModifier(rowIndex, columnIndex);
+            } else {
+                eventHandler.selectTile(rowIndex, columnIndex);
+            }
         } catch (NoGameOnScreenException e) {
             throw new RuntimeException(e);
         }

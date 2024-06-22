@@ -1,10 +1,12 @@
 package it.unibz.inf.pp.clash.model.snapshot;
 
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -102,6 +104,35 @@ public interface Snapshot extends Serializable{
      * Randomly populates the board with units.
      */
     void populateTiles();
-    
+
+    /**
+     *
+     * @param activePlayer
+     * @return the list of modifiers of the given player.
+     */
+    List<Modifier> getModifierList(Player activePlayer);
+
+    /**
+     * Adds a modifier to the list of modifiers of the given player.
+     *
+     * @param activePlayer
+     * @param modifier
+     */
+    void addModifierToList(Player activePlayer, Modifier modifier);
+
+    /**
+     * Removes a modifier from the list of modifiers of the given player.
+     *
+     * @param player
+     * @param modifierIndex
+     */
+    void removeModifierFromList(Player player, int modifierIndex);
+
+    /**
+     *
+     * @param activePlayer
+     * @return the size of the modifier list of the given player.
+     */
+    int getSizeOfModifierList(Player activePlayer);
     
 }

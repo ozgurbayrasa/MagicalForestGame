@@ -5,6 +5,7 @@ import java.util.*;
 
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Board.TileCoordinates;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
@@ -29,6 +30,9 @@ public class SnapshotImpl implements Snapshot {
 
 	private final Set<AbstractMobileUnit> reinforcementsFIRST = new HashSet<>(),
 										  reinforcementsSECOND = new HashSet<>();
+
+	private final List<Modifier> modifierListFIRST = new ArrayList<>(),
+								 modifierListSECOND = new ArrayList<>();
 
 	public SnapshotImpl(String firstHeroName, String secondHeroName) {
 		firstHero = new HeroImpl(firstHeroName, 20);
@@ -203,9 +207,9 @@ public class SnapshotImpl implements Snapshot {
 		switch (player) {
 			case FIRST -> {
 				// If the unit is big, add all the corresponding distinct references to the list and remove the entry (AbstractMobileUnit, Set<AbstractMobileUnit>) from the map.
-				if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(player).containsKey(unit)) {
-					reinforcementsFIRST.addAll(board.getBigUnitToSmallUnitsMap(player).get(unit));
-					board.removeBigUnitFromMap(player, (AbstractMobileUnit) unit);
+				if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(player).containsKey(unit)) {
+					reinforcementsFIRST.addAll(board.getFormationToSmallUnitsMap(player).get(unit));
+					board.removeFormationFromMap(player, (AbstractMobileUnit) unit);
 					reinforcementsFIRST.add((AbstractMobileUnit) unit);
 				// If the unit is a wall, add the corresponding reference to the list and remove the entry (Wall, AbstractMobileUnit) from the map.
 				} else if(unit instanceof Wall && board.getWallToUnitMap(player).containsKey(unit)) {
@@ -218,9 +222,9 @@ public class SnapshotImpl implements Snapshot {
 			}
 			case SECOND -> {
 				// If the unit is big, add all the corresponding distinct references to the list and remove the entry (AbstractMobileUnit, Set<AbstractMobileUnit>) from the map.
-				if(unit instanceof AbstractMobileUnit && board.getBigUnitToSmallUnitsMap(player).containsKey(unit)) {
-					reinforcementsSECOND.addAll(board.getBigUnitToSmallUnitsMap(player).get(unit));
-					board.removeBigUnitFromMap(player, (AbstractMobileUnit) unit);
+				if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(player).containsKey(unit)) {
+					reinforcementsSECOND.addAll(board.getFormationToSmallUnitsMap(player).get(unit));
+					board.removeFormationFromMap(player, (AbstractMobileUnit) unit);
 					reinforcementsSECOND.add((AbstractMobileUnit) unit);
 				// If the unit is a wall, add the corresponding reference to the list and remove the entry (Wall, AbstractMobileUnit) from the map.
 				} else if(unit instanceof Wall && board.getWallToUnitMap(player).containsKey(unit)) {
@@ -236,9 +240,30 @@ public class SnapshotImpl implements Snapshot {
 
 	@Override
 	public void removeReinforcementFromSet(Player player, AbstractMobileUnit unit) {
-		switch (player) {
-			case FIRST -> reinforcementsFIRST.remove(unit);
-			case SECOND -> reinforcementsSECOND.remove(unit);
-		}
+		getReinforcementSet(player).remove(unit);
+	}
+
+	@Override
+	public List<Modifier> getModifierList(Player activePlayer) {
+		return switch (activePlayer) {
+			case FIRST -> modifierListFIRST;
+			case SECOND -> modifierListSECOND;
+		};
+	}
+
+	@Override
+	public void addModifierToList(Player activePlayer, Modifier modifier) {
+		getModifierList(activePlayer).add(modifier);
+	}
+
+	@Override
+	public void removeModifierFromList(Player activePlayer, int modifierIndex) {
+		getModifierList(activePlayer).remove(modifierIndex);
+
+	}
+
+	@Override
+	public int getSizeOfModifierList(Player activePlayer) {
+		return getModifierList(activePlayer).size();
 	}
 }
