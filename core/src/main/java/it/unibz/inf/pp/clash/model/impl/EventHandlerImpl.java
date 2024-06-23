@@ -106,9 +106,11 @@ public class EventHandlerImpl implements EventHandler {
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		Random random = new Random();
 		// Check if the active player has deleted units.
+		System.out.println(s.getSizeOfReinforcement(activePlayer) + " ----");
 		if(s.getSizeOfReinforcement(activePlayer) <= 0) {
 			try {
 				displayManager.updateMessage("No reinforcements available!");
+				return;
 			} catch (NoGameOnScreenException e) {
 				throw new RuntimeException(e);
 			}
