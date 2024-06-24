@@ -7,8 +7,10 @@ import java.util.*;
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
+import it.unibz.inf.pp.clash.model.snapshot.Hero;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
+import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.Buff;
@@ -19,6 +21,7 @@ import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
+import static it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl.HeroType.DEFFENSIVE;
 
 public class EventHandlerImpl implements EventHandler {
 
@@ -339,57 +342,34 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
-	// This method handles the detection and moving of big units (only 3x1 and 1x3 for now).
-	// It returns true if a new big unit has been detected.
+	// This method handles the detection and moving of units based on the hero type.
+	// It returns true if a new formation has been detected.
 	private boolean detectFormations() {
+		return handleDetecting();
+	}
+
+	// This method handles the detection and moving of wall units (1x3).
+	// It returns true if a new wall unit has been detected.
+	private boolean detectWall() {
 		Board board = s.getBoard();
-		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
-		// Repeat for every row.
-		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
-			// Repeat for every column.
-			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				// Check if the coordinates above and below the cell are valid.
-				if (board.areValidCoordinates(i - 1, j) && board.areValidCoordinates(i + 1, j)
-						// Check if there are units in all three cells.
-						&& board.getUnit(i - 1, j).isPresent() && board.getUnit(i, j).isPresent() && board.getUnit(i + 1, j).isPresent()
-						// Make sure that the three cells are not on the border (the center unit is offset by 1).
-						&& (i < halfBoard - 1 || i >= halfBoard + 1)) {
-					// Get the three units.
-					Unit above = board.getUnit(i - 1, j).get();
-					Unit center = board.getUnit(i, j).get();
-					Unit below = board.getUnit(i + 1, j).get();
-					// Check if the three units have the same class.
-					if(above.getClass().equals(center.getClass()) && center.getClass().equals(below.getClass())) {
-						// Check if this class is a subclass of AbstractMobileUnit.
-						if(center instanceof AbstractMobileUnit) {
-							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
-							if(((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
-								// Create a big unit and move it next to the border.
-								AbstractMobileUnit formation = board.create3x1Formation(i, j);
-								board.move3x1In(formation, i, j);
-								((AbstractMobileUnit) above).setAttackCountdown(3);
-								((AbstractMobileUnit) center).setAttackCountdown(3);
-								((AbstractMobileUnit) below).setAttackCountdown(3);
-								return true;
-							}
-						}
-					}
-				}
-				// Check if the coordinates to the left and right of the cell are valid.
-				if(board.areValidCoordinates(i, j - 1) && board.areValidCoordinates(i, j + 1)
-						// Check if there are units in all three cells.
+
+		// Iterate through each cell in the board
+		for (int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the coordinates to the left and right of the cell are valid
+				if (board.areValidCoordinates(i, j - 1) && board.areValidCoordinates(i, j + 1)
 						&& board.getUnit(i, j - 1).isPresent() && board.getUnit(i, j).isPresent() && board.getUnit(i, j + 1).isPresent()) {
-					// Get the three units.
+					// Get the three units
 					Unit left = board.getUnit(i, j - 1).get();
 					Unit center = board.getUnit(i, j).get();
 					Unit right = board.getUnit(i, j + 1).get();
-					// Check if the three units have the same class.
-					if(left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass())) {
-						// Check if this class is a subclass of AbstractMobileUnit.
+					// Check if the three units have the same class
+					if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass())) {
+						// Check if this class is a subclass of AbstractMobileUnit
 						if (center instanceof AbstractMobileUnit) {
-							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match.
+							// Check if the unit has an attack countdown (which means that it is already a part of a wall unit) and if the colors of the units match
 							if (((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
-								// Create wall units and move them next to the border.
+								// Create wall units and move them next to the border
 								Wall leftWall = new Wall();
 								Wall centerWall = new Wall();
 								Wall rightWall = new Wall();
@@ -406,6 +386,55 @@ public class EventHandlerImpl implements EventHandler {
 		return false;
 	}
 
+	// This method handles the detection and moving of big units (3x1).
+	// It returns true if a new big unit has been detected.
+	private boolean detectBigUnit() {
+		Board board = s.getBoard();
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
+
+		// Iterate through each cell in the board
+		for (int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the coordinates above and below the cell are valid
+				if (board.areValidCoordinates(i - 1, j) && board.areValidCoordinates(i + 1, j)
+						&& board.getUnit(i - 1, j).isPresent() && board.getUnit(i, j).isPresent() && board.getUnit(i + 1, j).isPresent()
+						&& (i < halfBoard - 1 || i >= halfBoard + 1)) {
+					// Get the three units
+					Unit above = board.getUnit(i - 1, j).get();
+					Unit center = board.getUnit(i, j).get();
+					Unit below = board.getUnit(i + 1, j).get();
+					// Check if the three units have the same class
+					if (above.getClass().equals(center.getClass()) && center.getClass().equals(below.getClass())) {
+						// Check if this class is a subclass of AbstractMobileUnit
+						if (center instanceof AbstractMobileUnit) {
+							// Check if the unit has an attack countdown (which means that it is already a part of a big unit) and if the colors of the units match
+							if (((AbstractMobileUnit) center).getAttackCountdown() == -1 && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
+								// Create a big unit and move it next to the border
+								AbstractMobileUnit formation = board.create3x1Formation(i, j);
+								board.move3x1In(formation, i, j);
+								((AbstractMobileUnit) above).setAttackCountdown(3);
+								((AbstractMobileUnit) center).setAttackCountdown(3);
+								((AbstractMobileUnit) below).setAttackCountdown(3);
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	// This method handles the detection of formations based on the hero type.
+	// It prioritizes wall detection for defensive heroes and big unit detection for offensive heroes.
+	private boolean handleDetecting() {
+		if (s.getHero(s.getActivePlayer()).getHeroType() == DEFFENSIVE) {
+			return detectWall() || detectBigUnit();
+		} else {
+			return detectBigUnit() || detectWall();
+		}
+	}
+
 	// This method handles encounters. It is called when players turn ends. End the turn has
 	// just changed to other player (At that moment active player has just gotten the turn.)
 	// And for that player handleEncounters check if there are units with attackCountdown > 0
@@ -418,7 +447,7 @@ public class EventHandlerImpl implements EventHandler {
 
 		// Set to track units that have been processed (for decreasing attackCountdown).
 		Set<AbstractMobileUnit> unitsWithAttackingCountdown = new HashSet<>();
-		
+
 		Set<AbstractMobileUnit> unitsAttackedAndRemoved = new HashSet<>();
 
 		// Get the range of rows for the active player's board section.
@@ -536,7 +565,7 @@ public class EventHandlerImpl implements EventHandler {
 					board.removeUnit(r, attackingColumnIndex);
 					// Don't forget to add it to the reinforcements list.
 					// And set it's attackCountDown to -1 if it's a mobile unit.
-					
+
 					if(opponentUnit instanceof AbstractMobileUnit mobileUnit){
 						processedUnits.add(mobileUnit);
 					}
@@ -551,7 +580,7 @@ public class EventHandlerImpl implements EventHandler {
 					break; // Attack value depleted
 				}
 			}
-			
+
 		}
 		for (AbstractMobileUnit mobileUnit: processedUnits) {
 			mobileUnit.setAttackCountdown(-1);
