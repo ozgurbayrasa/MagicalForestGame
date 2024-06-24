@@ -69,6 +69,17 @@ public class BoardImpl implements Board {
         grid[rowIndex][columnIndex] = null;
     }
 
+    @Override
+    public void removeUnit(Unit unit) {
+        for(int i = 0; i < getMaxRowIndex() + 1; i++) {
+            for(int j = 0; j < getMaxColumnIndex() + 1; j++) {
+                if(getUnit(i, j).isPresent() && getUnit(i, j).get().equals(unit)) {
+                    grid[i][j] = null;
+                }
+            }
+        }
+    }
+
     // It simply returns 12, we may change this method
     // so player can decide it before the game, or
     // it can stay like fixed number such as 12.

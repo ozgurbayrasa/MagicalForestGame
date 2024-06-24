@@ -1,7 +1,9 @@
 package it.unibz.inf.pp.clash.view.screen.game;
 
 import com.badlogic.gdx.scenes.scene2d.ui.*;
+import it.unibz.inf.pp.clash.controller.listeners.ContinueGameListener;
 import it.unibz.inf.pp.clash.controller.listeners.ExitButtonListener;
+import it.unibz.inf.pp.clash.controller.listeners.ReceiveModifierListener;
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
@@ -23,7 +25,8 @@ public class GameCompositor extends Compositor {
 
     private final PlayerCompositor playerCompositor;
     private final BoardCompositor boardCompositor;
-    private boolean showModifierSelectBox = false; // Flag to control modifierSelectBox visibility
+    private static boolean showModifierSelectBox = false; // Flag to control modifierSelectBox visibility
+    private static String[] listOfModifiers;
 
     public GameCompositor(EventHandler eventHandler, AnimationCounter animationCounter, boolean debug) {
         super(eventHandler, animationCounter, debug);
@@ -77,7 +80,7 @@ public class GameCompositor extends Compositor {
                 .fill();
 
         if (showModifierSelectBox) { // Only draw modifierSelectBox if flag is true
-            mainTable.add(drawModifierSelectBox()).height(dimensions.getPlayerSeparatorHeight());
+            mainTable.add(drawModifierSelector(listOfModifiers)).height(dimensions.getPlayerSeparatorHeight());
         }
 
         mainTable.add();
@@ -133,17 +136,25 @@ public class GameCompositor extends Compositor {
         return button;
     }
 
-    private Table drawModifierSelectBox() {
+    private Table drawModifierSelector(String[] listOfModifiers) {
+        Table table = new Table();
         Skin skin = SkinManager.instance().getDefaultSkin();
         SelectBox<String> modifierSelectBox = new SelectBox<>(skin);
-        modifierSelectBox.setItems("Option 1", "Option 2", "Option 3");
-        Table table = new Table();
+        modifierSelectBox.setItems(listOfModifiers);
+        TextButton receiveButton = new TextButton("Receive", skin);
+        receiveButton.addListener(new ReceiveModifierListener(modifierSelectBox, eventHandler));
         table.add(modifierSelectBox);
+        addMediumVerticalSpace(table);
+        table.add(receiveButton).height(50);
         return table;
     }
 
-    // Method to toggle the modifierSelectBox visibility
-    public void showModifierSelectBox(boolean show) {
-        this.showModifierSelectBox = show;
+    // Method to toggle the modifierSelectBox visibility and set the list of modifiers
+    public static void showModifierSelectBox(boolean show) {
+        showModifierSelectBox = show;
+    }
+
+    public static void setListOfModifiers(String[] modifiers) {
+        listOfModifiers = modifiers;
     }
 }

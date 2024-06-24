@@ -3,6 +3,7 @@ package it.unibz.inf.pp.clash.model;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
+import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
@@ -96,6 +97,9 @@ public interface EventHandler {
      *
      */
     void encounter(Board board, AbstractMobileUnit attackingUnit, Player opponent, int col);
+
+    // This method removes the unit or formation from the board and adds a corresponding modifier (trap or buff) to the modifier list.
+    void awardModifier(String modifier);
 
     /**
      * This method handles the placement of modifiers on the opponent player's board.

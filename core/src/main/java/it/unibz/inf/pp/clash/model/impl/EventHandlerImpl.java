@@ -26,6 +26,7 @@ public class EventHandlerImpl implements EventHandler {
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
+	private Unit unitToSacrifice;
 
 	// A boolean which is true while the modifier button is pressed and allows players to place modifiers.
 	public static boolean modifierMode = false;
@@ -592,6 +593,7 @@ public class EventHandlerImpl implements EventHandler {
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
+		s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
 		// Check if the selected tile is within the board limits.
 		if (!board.areValidCoordinates(rowIndex, columnIndex)) {
 			return;
@@ -610,71 +612,151 @@ public class EventHandlerImpl implements EventHandler {
 		if(modifierMode) {
 			switchModifierMode();
 		}
-		// Get unit.
-		Unit unit = board.getUnit(rowIndex, columnIndex).get();
 
-
-		// Generate random number to choose between trap and buff.
-		Random random = new Random();
-		int randomNumber = random.nextInt(2);
 		// Check if there is an ongoing move.
 		if (ongoingMove.isPresent()) {
 			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
-		} else {
-			// Remove the unit or formation from the board and add a corresponding modifier (trap or buff) to the modifier list.
+			return;
+		}
+
+		// Get unit.
+		Unit unit = board.getUnit(rowIndex, columnIndex).get();
+
+		List<String> modifiers = new ArrayList<>();
+		if(s.getHero(activePlayer).getName().equals("Alice") || s.getHero(activePlayer).getName().equals("Carol")) {
 			if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
-				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
-					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
-				}
-				removeFormation(unit, activePlayer);
-				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+				modifiers.add("Common big buff");
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
-				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
-					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
-				}
-				removeFormation(unit, activePlayer);
-				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+				modifiers.add("Common big trap");
+				modifiers.add("Rare big buff");
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
-				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
-					case 1 -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
-				}
-				removeFormation(unit, activePlayer);
-				board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+				modifiers.add("Rare big trap");
+				modifiers.add("Epic big buff");
 			} else if(unit instanceof Fairy) {
-				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.COMMON));
-					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.COMMON));
-				}
-				board.removeUnit(rowIndex, columnIndex);
+				modifiers.add("Common small buff");
 			} else if (unit instanceof Unicorn) {
-				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.RARE));
-					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.RARE));
-				}
-				board.removeUnit(rowIndex, columnIndex);
+				modifiers.add("Common small trap");
+				modifiers.add("Rare small buff");
 			} else if(unit instanceof Butterfly) {
-				switch(randomNumber) {
-					case 0 -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.EPIC));
-					case 1 -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.EPIC));
-				}
-				board.removeUnit(rowIndex, columnIndex);
+				modifiers.add("Rare small trap");
+				modifiers.add("Epic small buff");
 			} else if(unit.getClass().equals(Wall.class)) {
-				s.addModifierToList(activePlayer, new WallTrap(rowIndex, columnIndex));
-				board.removeUnit(rowIndex, columnIndex);
+				modifiers.add("Wall buff");
 			}
-			// Move the units in.
-			board.moveUnitsIn(activePlayer);
-			// Decrement the number of remaining actions if no formation is created.
-			if(!detectFormations()) {
-				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+		} else {
+			if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
+				modifiers.add("Common big trap");
+			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
+				modifiers.add("Rare big trap");
+				modifiers.add("Common big buff");
+			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
+				modifiers.add("Epic big trap");
+				modifiers.add("Rare big buff");
+			} else if(unit instanceof Fairy) {
+				modifiers.add("Common small trap");
+			} else if (unit instanceof Unicorn) {
+				modifiers.add("Rare small trap");
+				modifiers.add("Common small buff");
+			} else if(unit instanceof Butterfly) {
+				modifiers.add("Epic small trap");
+				modifiers.add("Rare small buff");
+			} else if(unit.getClass().equals(Wall.class)) {
+				modifiers.add("Wall trap");
 			}
-			// End the turn if the actions are depleted.
-			endTurnIfNoActionsRemaining();
-			// Draw the snapshot.
-			displayManager.drawSnapshot(s, "Player " + activePlayer + " sacrificed unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
+		}
+
+		unitToSacrifice = unit;
+
+		// Set the list of modifiers
+		String[] modifiersArray = modifiers.toArray(new String[0]);
+		GameCompositor.setListOfModifiers(modifiersArray);
+
+		// Show the modifier select box.
+		GameCompositor.showModifierSelectBox(true);
+
+		displayManager.drawSnapshot(s, "Player " + activePlayer + " sacrificed a unit!");
+	}
+
+	// This method removes the unit or formation from the board and adds a corresponding modifier (trap or buff) to the modifier list.
+	@Override
+	public void awardModifier(String modifier) {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+		s.setOngoingMove(null);
+		switch (modifier) {
+			case "Common big buff" -> {
+				s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Common big trap" -> {
+				s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Rare big buff" -> {
+				s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Rare big trap" -> {
+				s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Epic big buff" -> {
+				s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Epic big trap" -> {
+				s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Common small buff" -> {
+				s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.COMMON));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Common small trap" -> {
+				s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.COMMON));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Rare small buff" -> {
+				s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.RARE));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Rare small trap" -> {
+				s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.RARE));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Epic small buff" -> {
+				s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.EPIC));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Epic small trap" -> {
+				s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.EPIC));
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+			case "Wall trap" -> {
+				s.addModifierToList(activePlayer, new WallTrap());
+				handleSacrificedUnit(unitToSacrifice, board, activePlayer);
+			}
+		}
+		// Hide the modifier select box.
+		GameCompositor.showModifierSelectBox(false);
+		// Move the units in.
+		board.moveUnitsIn(activePlayer);
+		// Decrement the number of remaining actions if no formation is created.
+		if(!detectFormations()) {
+			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+		}
+		// End the turn if the actions are depleted.
+		endTurnIfNoActionsRemaining();
+		// Draw the snapshot.
+		displayManager.drawSnapshot(s, "Player " + activePlayer + " received a modifier!");
+	}
+
+	private void handleSacrificedUnit(Unit unit, Board board, Player activePlayer) {
+		if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit)) {
+			removeFormation(unit, activePlayer);
+			board.removeFormationFromMap(activePlayer, (AbstractMobileUnit) unit);
+		} else {
+			board.removeUnit(unit);
 		}
 	}
 

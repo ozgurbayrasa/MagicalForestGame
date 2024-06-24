@@ -118,6 +118,8 @@ public interface Board extends Serializable{
      */
     void moveWallUnitsIn(Wall wall, int centerRowIndex, int columnIndex);
 
+    void removeUnit(Unit unit);
+
     /**
      *
      *

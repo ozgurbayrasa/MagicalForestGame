@@ -4,10 +4,6 @@ import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
 
 public class WallTrap implements Trap {
 
-    public WallTrap(int rowIndex, int columnIndex) {
-
-    }
-
     @Override
     public Rarity getRarity() {
         return null;
