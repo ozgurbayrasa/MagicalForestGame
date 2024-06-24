@@ -19,6 +19,7 @@ import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
+import it.unibz.inf.pp.clash.view.screen.game.GameCompositor;
 
 public class EventHandlerImpl implements EventHandler {
 
@@ -611,6 +612,8 @@ public class EventHandlerImpl implements EventHandler {
 		}
 		// Get unit.
 		Unit unit = board.getUnit(rowIndex, columnIndex).get();
+
+
 		// Generate random number to choose between trap and buff.
 		Random random = new Random();
 		int randomNumber = random.nextInt(2);

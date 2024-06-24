@@ -1,8 +1,6 @@
 package it.unibz.inf.pp.clash.view.screen.game;
 
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import it.unibz.inf.pp.clash.controller.listeners.ExitButtonListener;
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
@@ -12,6 +10,7 @@ import it.unibz.inf.pp.clash.view.screen.sync.AnimationCounter;
 import it.unibz.inf.pp.clash.view.singletons.Dimensions;
 import it.unibz.inf.pp.clash.view.singletons.FontManager;
 import it.unibz.inf.pp.clash.view.singletons.ImageManager;
+import it.unibz.inf.pp.clash.view.singletons.SkinManager;
 
 import static it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player.FIRST;
 import static it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player.SECOND;
@@ -24,6 +23,7 @@ public class GameCompositor extends Compositor {
 
     private final PlayerCompositor playerCompositor;
     private final BoardCompositor boardCompositor;
+    private boolean showModifierSelectBox = false; // Flag to control modifierSelectBox visibility
 
     public GameCompositor(EventHandler eventHandler, AnimationCounter animationCounter, boolean debug) {
         super(eventHandler, animationCounter, debug);
@@ -61,7 +61,7 @@ public class GameCompositor extends Compositor {
                 )).expandY().bottom();
 
         Label messageLabel = drawMessage(
-                        message
+                message
         );
         mainTable.add(messageLabel)
                 .width(dimensions.getInfoboxWidth())
@@ -75,6 +75,10 @@ public class GameCompositor extends Compositor {
                 .height(dimensions.getPlayerSeparatorHeight())
                 .expand()
                 .fill();
+
+        if (showModifierSelectBox) { // Only draw modifierSelectBox if flag is true
+            mainTable.add(drawModifierSelectBox()).height(dimensions.getPlayerSeparatorHeight());
+        }
 
         mainTable.add();
 
@@ -127,5 +131,19 @@ public class GameCompositor extends Compositor {
                 new ExitButtonListener(eventHandler)
         );
         return button;
+    }
+
+    private Table drawModifierSelectBox() {
+        Skin skin = SkinManager.instance().getDefaultSkin();
+        SelectBox<String> modifierSelectBox = new SelectBox<>(skin);
+        modifierSelectBox.setItems("Option 1", "Option 2", "Option 3");
+        Table table = new Table();
+        table.add(modifierSelectBox);
+        return table;
+    }
+
+    // Method to toggle the modifierSelectBox visibility
+    public void showModifierSelectBox(boolean show) {
+        this.showModifierSelectBox = show;
     }
 }
