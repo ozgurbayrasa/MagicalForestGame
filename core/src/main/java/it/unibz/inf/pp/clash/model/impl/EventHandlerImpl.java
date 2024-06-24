@@ -183,19 +183,40 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	@Override
-    public void requestInformation(int rowIndex, int columnIndex) {
-		// TODO info about unit?
-        try {
-            displayManager.updateMessage(
-                    String.format(
-                            "Tile (%s,%s), ",
-                            rowIndex,
-                            columnIndex
-                    ));
-        } catch (NoGameOnScreenException e) {
-            throw new RuntimeException(e);
-        }
-    }
+	public void requestInformation(int rowIndex, int columnIndex) {
+		Board board = s.getBoard();
+		try {
+			if (board.areValidCoordinates(rowIndex, columnIndex)) {
+				Optional<Unit> unit = board.getUnit(rowIndex, columnIndex);
+				if (unit.isPresent()) {
+					Unit currentUnit = unit.get();
+					displayManager.updateMessage(
+							String.format(
+									"Tile (%d,%d)\n\nUnit: %s",
+									rowIndex,
+									columnIndex,
+									currentUnit.getClass().getSimpleName()
+							));
+				} else {
+					displayManager.updateMessage(
+							String.format(
+									"Tile (%d,%d)\n\nEmpty tile",
+									rowIndex,
+									columnIndex
+							));
+				}
+			} else {
+				displayManager.updateMessage(
+						String.format(
+								"Tile (%d,%d)\n\nInvalid coordinates",
+								rowIndex,
+								columnIndex
+						));
+			}
+		} catch (NoGameOnScreenException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	// This method simply allows user to select a unit from their board and put it somewhere in their board.
 	@Override
