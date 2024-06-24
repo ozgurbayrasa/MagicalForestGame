@@ -43,7 +43,7 @@ public class HeroImpl implements Hero {
 
     @Override
     public HeroType getHeroType() {
-        if(name.equalsIgnoreCase("Alice")){
+        if(name.equalsIgnoreCase("Alice") || name.equalsIgnoreCase("Carol")){
             return HeroType.DEFFENSIVE;
         }
         else{
