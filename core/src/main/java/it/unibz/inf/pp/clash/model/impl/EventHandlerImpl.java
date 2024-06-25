@@ -1077,8 +1077,45 @@ public class EventHandlerImpl implements EventHandler {
 		board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 	}
 
-	private void wallBuffActivation() {
-   		// TODO
+	private void wallBuffActivation1x3(int rowIndex, int columnIndex) {
+		Board board = s.getBoard();
+		if(board.getUnit(rowIndex, columnIndex).isPresent()) {
+			if(board.areValidCoordinates(rowIndex - 2, columnIndex) && board.areValidCoordinates(rowIndex - 1, columnIndex) &&
+				board.getUnit(rowIndex - 2, columnIndex).isPresent() && board.getUnit(rowIndex - 1, columnIndex).isPresent() &&
+				board.getUnit(rowIndex - 2, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit right) {
+				if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) && 
+					left.getColor().equals(center.getColor()) && !center.getColor().equals(right.getColor())) {
+					right.setColor(left.getColor());
+				}
+			} else if(board.areValidCoordinates(rowIndex - 1, columnIndex) && board.areValidCoordinates(rowIndex + 1, columnIndex) &&
+					board.getUnit(rowIndex - 1, columnIndex).isPresent() && board.getUnit(rowIndex + 1, columnIndex).isPresent() &&
+					board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex + 1, columnIndex).get() instanceof AbstractMobileUnit right) {
+				if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
+					left.getColor().equals(right.getColor()) && !center.getColor().equals(left.getColor())) {
+					center.setColor(left.getColor());
+				}
+			} else if(board.areValidCoordinates(rowIndex + 1, columnIndex) && board.areValidCoordinates(rowIndex + 2, columnIndex) &&
+					board.getUnit(rowIndex + 1, columnIndex).isPresent() && board.getUnit(rowIndex + 2, columnIndex).isPresent() &&
+					board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex + 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex + 2, columnIndex).get() instanceof AbstractMobileUnit right) {
+				if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
+						left.getColor().equals(right.getColor()) && !center.getColor().equals(left.getColor())) {
+					center.setColor(left.getColor());
+				}
+			}
+		}
+	}
+
+	private void wallBuffActivation3x1(int rowIndex, int columnIndex) {
+		Board board = s.getBoard();
+		if(board.getUnit(rowIndex, columnIndex).isPresent()) {
+			if(board.areValidCoordinates(rowIndex - 2, columnIndex) && board.areValidCoordinates(rowIndex - 1, columnIndex) &&
+					board.getUnit(rowIndex - 2, columnIndex).isPresent() && board.getUnit(rowIndex - 1, columnIndex).isPresent() &&
+					board.getUnit(rowIndex - 2, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit right) {
+				if(left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) && left.getColor().equals(center.getColor()) && !center.getColor().equals(right.getColor())) {
+					right.setColor(left.getColor());
+				}
+			}
+		}
 	}
 
 	// FOLLOWING METHOD CAN BE IMPLEMENTED IN BOARD

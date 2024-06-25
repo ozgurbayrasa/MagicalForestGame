@@ -13,6 +13,13 @@ public interface MobileUnit extends Unit {
     UnitColor getColor();
 
     /**
+     * Sets the color of a unit.
+     *
+     * @param color
+     */
+    void setColor(UnitColor color);
+
+    /**
      * @return number of turns before this unit attacks; returns a value < 0 if no attack is scheduled for this unit.
      */
     int getAttackCountdown();

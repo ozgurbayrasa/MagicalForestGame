@@ -4,7 +4,7 @@ import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit;
 
 public abstract class AbstractMobileUnit extends AbstractUnit implements MobileUnit {
 
-    final UnitColor color;
+    UnitColor color;
     int attackCountDown = -1;
 
     protected AbstractMobileUnit(int health, UnitColor color) {
@@ -15,6 +15,11 @@ public abstract class AbstractMobileUnit extends AbstractUnit implements MobileU
     @Override
     public UnitColor getColor() {
         return color;
+    }
+
+    @Override
+    public void setColor(UnitColor color) {
+        this.color = color;
     }
 
     @Override
