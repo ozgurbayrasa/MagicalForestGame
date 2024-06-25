@@ -162,7 +162,7 @@ public class PlayerCompositor extends Compositor {
         playerTable.add(
                 createLabel(
                         numOfModifiers,
-                        GuiColor.REINFORCEMENT,
+                        GuiColor.EMPTY_CELL,
                         animation
                 )).padLeft(30).padRight(40);
 

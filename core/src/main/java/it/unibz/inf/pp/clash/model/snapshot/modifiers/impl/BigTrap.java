@@ -1,8 +1,6 @@
 package it.unibz.inf.pp.clash.model.snapshot.modifiers.impl;
 
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
-
-public class BigTrap implements Trap {
+public class BigTrap extends AbstractTrap {
 
     Rarity rarity;;
     int health;
@@ -24,19 +22,5 @@ public class BigTrap implements Trap {
                 health = -5;
             }
         }
-    }
-
-    @Override
-    public Rarity getRarity() {
-        return rarity;
-    }
-
-    @Override
-    public int getHealth() {
-        return health;
-    }
-
-    public int getCountdown() {
-        return countdown;
     }
 }

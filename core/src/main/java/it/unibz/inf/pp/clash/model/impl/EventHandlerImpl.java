@@ -11,16 +11,17 @@ import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
 //import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Buff;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.AbstractBuff;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Trap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.AbstractTrap;
 import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.*;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
 import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 import it.unibz.inf.pp.clash.view.screen.game.GameCompositor;
-import static it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl.HeroType.DEFFENSIVE;
+
+import static it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl.HeroType.DEFENSIVE;
 
 public class EventHandlerImpl implements EventHandler {
 
@@ -451,7 +452,7 @@ public class EventHandlerImpl implements EventHandler {
 	// This method handles the detection of formations based on the hero type.
 	// It prioritizes wall detection for defensive heroes and formation detection for offensive heroes.
 	private boolean handleDetecting() {
-		if (s.getHero(s.getActivePlayer()).getHeroType() == DEFFENSIVE) {
+		if (s.getHero(s.getActivePlayer()).getHeroType() == DEFENSIVE) {
 			return detectWall() || detectFormation();
 		} else {
 			return detectFormation() || detectWall();
@@ -714,7 +715,7 @@ public class EventHandlerImpl implements EventHandler {
 			// If the unit to be sacrificed is a fairy formation, add a common big trap to the list.
 			if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
 				modifiers.add("Big trap(+1 CD, -2 HP)");
-			// If the unit to be sacrificed is a unicorn formation, add a common big buff and a rare big trap to the list.
+				// If the unit to be sacrificed is a unicorn formation, add a common big buff and a rare big trap to the list.
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
 				modifiers.add("Big buff(-1 CD, +2 HP)");
 				modifiers.add("Big trap(+2 CD, -3 HP)");
@@ -752,7 +753,7 @@ public class EventHandlerImpl implements EventHandler {
 		GameCompositor.showModifierSelectBox(true);
 
 		// Draw the snapshot.
-		displayManager.drawSnapshot(s, "Player " + activePlayer + " sacrificed a " + unit.getClass().getSimpleName() + " at tile (" + rowIndex + ", " + columnIndex +")!");
+		displayManager.drawSnapshot(s, "Player " + activePlayer + " sacrificed a " + unit.getClass().getSimpleName() + " at tile (" + rowIndex + ", " + columnIndex + ")!");
 	}
 
 	@Override
@@ -866,10 +867,10 @@ public class EventHandlerImpl implements EventHandler {
 		Modifier modifier = s.getModifierList(activePlayer).get(0);
 
 		// Check if the tile is on the enemy player's board
-		if (modifier instanceof Trap && tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
+		if (modifier instanceof AbstractTrap && tileIsOnPlayerBoard(activePlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile must be on the enemy player's board.");
 			return;
-		} else if(modifier instanceof Buff && tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
+		} else if(modifier instanceof AbstractBuff && tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile must be on the active player's board.");
 			return;
 		}
@@ -916,8 +917,6 @@ public class EventHandlerImpl implements EventHandler {
 	// Helper method that activates the modifier upon placement.
 	private void activateModifier(Modifier modifier, int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
-		Player activePlayer = s.getActivePlayer();
-		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 
 		// Assert that the unit is present, since the placeModifier() method has already checked it.
 		assert board.getUnit(rowIndex, columnIndex).isPresent();
@@ -969,7 +968,7 @@ public class EventHandlerImpl implements EventHandler {
 
 		// The player who the modifier is applied on.
 		Player modifiedPlayer = activePlayer;
-		if(modifier instanceof Trap) {
+		if(modifier instanceof AbstractTrap) {
 			modifiedPlayer = opponentPlayer;
 		}
 
@@ -1078,6 +1077,10 @@ public class EventHandlerImpl implements EventHandler {
 		board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 	}
 
+	private void wallBuffActivation() {
+   		// TODO
+	}
+
 	// FOLLOWING METHOD CAN BE IMPLEMENTED IN BOARD
 
 	/**
@@ -1114,7 +1117,7 @@ public class EventHandlerImpl implements EventHandler {
 		modifierMode = !modifierMode;
 		// Update the message depending on the new value.
 		if(modifierMode) {
-			if(s.getModifierList(activePlayer).get(0) instanceof Trap) {
+			if(s.getModifierList(activePlayer).get(0) instanceof AbstractTrap) {
 				try {
 					displayManager.updateMessage("Trap picked.");
 				} catch (NoGameOnScreenException e) {

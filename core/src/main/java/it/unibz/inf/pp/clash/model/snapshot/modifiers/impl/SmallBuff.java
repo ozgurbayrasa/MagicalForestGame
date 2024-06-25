@@ -1,9 +1,6 @@
 package it.unibz.inf.pp.clash.model.snapshot.modifiers.impl;
 
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Buff;
-import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
-
-public class SmallBuff implements Buff {
+public class SmallBuff extends AbstractBuff {
 
     Rarity rarity;
     int health;
@@ -22,20 +19,5 @@ public class SmallBuff implements Buff {
                 health = 5;
             }
         }
-    }
-
-    @Override
-    public Rarity getRarity() {
-        return rarity;
-    }
-
-    @Override
-    public int getHealth() {
-        return health;
-    }
-
-    @Override
-    public int getCountdown() {
-        return -1;
     }
 }

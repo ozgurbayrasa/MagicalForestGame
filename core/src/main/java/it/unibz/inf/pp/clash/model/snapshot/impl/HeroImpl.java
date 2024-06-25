@@ -14,7 +14,7 @@ public class HeroImpl implements Hero {
     private static final long serialVersionUID = 1L;
 
     public enum HeroType{
-        DEFFENSIVE,
+        DEFENSIVE,
         OFFENSIVE
     }
 	private int health;
@@ -49,7 +49,7 @@ public class HeroImpl implements Hero {
     @Override
     public HeroType getHeroType() {
         if(name.equalsIgnoreCase("Alice") || name.equalsIgnoreCase("Carol")){
-            return HeroType.DEFFENSIVE;
+            return HeroType.DEFENSIVE;
         }
         else{
             return HeroType.OFFENSIVE;
