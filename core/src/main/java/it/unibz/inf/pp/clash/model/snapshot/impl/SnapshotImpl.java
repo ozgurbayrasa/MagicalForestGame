@@ -95,6 +95,9 @@ public class SnapshotImpl implements Snapshot {
 	public void populateTiles() {
 		Random random = new Random();
 		int numberOfPlacedUnits = 0;
+		if(getHero(Player.FIRST).getHeroType() == HeroImpl.HeroType.OFFENSIVE){
+			numberOfPlacedUnits -= 5;
+		}
 		// Repeat for every row.
 		for(int i = (board.getMaxRowIndex() / 2) + 1; i <= board.getMaxRowIndex(); i++) {
 			// Repeat for every column.
@@ -115,6 +118,10 @@ public class SnapshotImpl implements Snapshot {
 		board.moveUnitsIn(Player.FIRST);
 
 		numberOfPlacedUnits = 0;
+
+		if(getHero(Player.SECOND).getHeroType() == HeroImpl.HeroType.OFFENSIVE){
+			numberOfPlacedUnits -= 5;
+		}
 		// Repeat for every row.
 		for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
 			// Repeat for every column.
