@@ -145,6 +145,7 @@ public class GameCompositor extends Compositor {
         receiveButton.addListener(new ReceiveModifierListener(modifierSelectBox, eventHandler));
         table.add(modifierSelectBox);
         addMediumVerticalSpace(table);
+        addMediumVerticalSpace(table);
         table.add(receiveButton).height(50);
         return table;
     }

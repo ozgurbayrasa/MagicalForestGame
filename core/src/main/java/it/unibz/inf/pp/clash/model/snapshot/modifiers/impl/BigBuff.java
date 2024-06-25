@@ -13,15 +13,15 @@ public class BigBuff implements Buff {
         this.rarity = rarity;
         switch (rarity) {
             case COMMON -> {
-                countdown = 2;
+                countdown = 1;
                 health = 2;
             }
             case RARE -> {
-                countdown = 3;
+                countdown = 2;
                 health = 3;
             }
             case EPIC -> {
-                countdown = 5;
+                countdown = 3;
                 health = 5;
             }
         }

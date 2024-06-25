@@ -593,21 +593,27 @@ public class EventHandlerImpl implements EventHandler {
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
+
+		// Start an ongoing move.
 		s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
+
 		// Check if the selected tile is within the board limits.
 		if (!board.areValidCoordinates(rowIndex, columnIndex)) {
 			return;
 		}
+
 		// Check if the tile is on the active player's board.
 		if (tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
 			return;
 		}
+
 		// Check if the tile is empty.
 		if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
 			displayErrorMessage("Error: Selected tile is empty.");
 			return;
 		}
+
 		// Check if modifier mode is on and switch it off is so.
 		if(modifierMode) {
 			switchModifierMode();
@@ -622,59 +628,81 @@ public class EventHandlerImpl implements EventHandler {
 		// Get unit.
 		Unit unit = board.getUnit(rowIndex, columnIndex).get();
 
+		// List of strings with modifiers for the select box.
 		List<String> modifiers = new ArrayList<>();
+
+		// Check if the heroes are defensive...
 		if(s.getHero(activePlayer).getName().equals("Alice") || s.getHero(activePlayer).getName().equals("Carol")) {
+			// If the unit to be sacrificed is a fairy formation, add a common big buff to the list.
 			if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
-				modifiers.add("Common big buff");
+				modifiers.add("Big buff(-1 CD, +2 HP)");
+			// If the unit to be sacrificed is a unicorn formation, add a rare big buff and a common big trap to the list.
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
-				modifiers.add("Common big trap");
-				modifiers.add("Rare big buff");
+				modifiers.add("Big buff(-2 CD, +3 HP)");
+				modifiers.add("Big trap(+1 CD, -2 HP)");
+			// If the unit to be sacrificed is a butterfly formation, add an epic big buff and a rare big trap to the list.
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
-				modifiers.add("Rare big trap");
-				modifiers.add("Epic big buff");
+				modifiers.add("Big buff(-3 CD, +5 HP)");
+				modifiers.add("Big trap(+2 CD, -3 HP)");
+			// If the unit to be sacrificed is a small fairy, add a common small buff to the list.
 			} else if(unit instanceof Fairy) {
-				modifiers.add("Common small buff");
+				modifiers.add("Small buff(+2 HP)");
+			// If the unit to be sacrificed is a small unicorn, add a rare small buff and a common small trap to the list.
 			} else if (unit instanceof Unicorn) {
-				modifiers.add("Common small trap");
-				modifiers.add("Rare small buff");
+				modifiers.add("Small buff(+3 HP)");
+				modifiers.add("Small trap(-2 HP)");
+			// If the unit to be sacrificed is a small butterfly, add an epic small buff and a rare small trap to the list.
 			} else if(unit instanceof Butterfly) {
-				modifiers.add("Rare small trap");
-				modifiers.add("Epic small buff");
+				modifiers.add("Small buff(+5 HP)");
+				modifiers.add("Small trap(-3 HP)");
+			// If the unit to be sacrificed is a wall, add a wall buff to the list.
 			} else if(unit.getClass().equals(Wall.class)) {
 				modifiers.add("Wall buff");
 			}
+		// ...or offensive.
 		} else {
+			// If the unit to be sacrificed is a fairy formation, add a common big trap to the list.
 			if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
-				modifiers.add("Common big trap");
+				modifiers.add("Big trap(+1 CD, -2 HP)");
+			// If the unit to be sacrificed is a unicorn formation, add a common big buff and a rare big trap to the list.
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
-				modifiers.add("Rare big trap");
-				modifiers.add("Common big buff");
+				modifiers.add("Big buff(-1 CD, +2 HP)");
+				modifiers.add("Big trap(+2 CD, -3 HP)");
+			// If the unit to be sacrificed is a butterfly formation, add a rare big buff and an epic big trap to the list.
 			} else if(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
-				modifiers.add("Epic big trap");
-				modifiers.add("Rare big buff");
+				modifiers.add("Big buff(-2 CD, +3 HP)");
+				modifiers.add("Big trap(+3 CD, -5 HP)");
+			// If the unit to be sacrificed is a small fairy, add a common small trap to the list.
 			} else if(unit instanceof Fairy) {
-				modifiers.add("Common small trap");
+				modifiers.add("Small trap(-2 HP)");
+			// If the unit to be sacrificed is a small unicorn, add a common small buff and a rare small trap to the list.
 			} else if (unit instanceof Unicorn) {
-				modifiers.add("Rare small trap");
-				modifiers.add("Common small buff");
+				modifiers.add("Small buff(+2 HP)");
+				modifiers.add("Small trap(-3 HP)");
+			// If the unit to be sacrificed is a small butterfly, add a rare small buff and an epic small trap to the list.
 			} else if(unit instanceof Butterfly) {
-				modifiers.add("Epic small trap");
-				modifiers.add("Rare small buff");
+				modifiers.add("Small buff(+3 HP)");
+				modifiers.add("Small trap(-5 HP)");
+			// If the unit to be sacrificed is a wall, add a wall trap to the list.
 			} else if(unit.getClass().equals(Wall.class)) {
 				modifiers.add("Wall trap");
 			}
 		}
 
+		// Save the unit to be sacrificed.
 		unitToSacrifice = unit;
 
-		// Set the list of modifiers
+		// Make an array out of the list.
 		String[] modifiersArray = modifiers.toArray(new String[0]);
+
+		// Set the select box array.
 		GameCompositor.setListOfModifiers(modifiersArray);
 
 		// Show the modifier select box.
 		GameCompositor.showModifierSelectBox(true);
 
-		displayManager.drawSnapshot(s, "Player " + activePlayer + " sacrificed a unit!");
+		// Draw the snapshot.
+		displayManager.drawSnapshot(s, "Player " + activePlayer + " sacrificed a unit at tile (" + rowIndex + ", " + columnIndex +")!");
 	}
 
 	// This method removes the unit or formation from the board and adds a corresponding modifier (trap or buff) to the modifier list.
