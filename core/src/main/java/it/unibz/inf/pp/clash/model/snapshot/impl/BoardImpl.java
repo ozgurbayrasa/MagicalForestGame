@@ -89,7 +89,7 @@ public class BoardImpl implements Board {
     }
 
     // A set is used to count different units on the board.
-    // For instance, a big unit which takes 3 squares on the
+    // For instance, a formation which takes 3 squares on the
     // board will be counted as 1 since it is the same unit.
 
     // If it is the first player, we take the lowest part of the
@@ -173,11 +173,11 @@ public class BoardImpl implements Board {
 
     @Override
     public AbstractMobileUnit create3x1Formation(int centerRowIndex, int columnIndex) {
-        // Create a "big unit" out of one of the three small units.
+        // Create a formation out of one of the three small units.
         return (AbstractMobileUnit) getUnit(centerRowIndex, columnIndex).orElse(null);
     }
 
-    // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
+    // This method takes care of replacing the three small units with the same instance of a formation unit and moving it as close to the border as possible.
     @Override
     public void move3x1In(AbstractMobileUnit formation, int centerRowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
@@ -187,13 +187,13 @@ public class BoardImpl implements Board {
         removeUnit(centerRowIndex - 1, columnIndex);
         removeUnit(centerRowIndex, columnIndex);
         removeUnit(centerRowIndex + 1, columnIndex);
-        // Check which half the big unit is in.
+        // Check which half the formation is in.
         if(centerRowIndex > halfBoard) {
             // Put the entry into the corresponding map.
             formationToSmallUnitsFIRST.put(formation, smallUnits);
             // Move all other units in the column as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.FIRST);
-            // Add the "big unit" to the board, as close to the border as possible, depending on the walls.
+            // Add the formation to the board, as close to the border as possible, depending on the walls.
             int rowOffset = halfBoard;
             while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
                 rowOffset++;
@@ -208,7 +208,7 @@ public class BoardImpl implements Board {
             formationToSmallUnitsSECOND.put(formation, smallUnits);
             // Move all other units in the column as far away from the middle border as possible.
             moveColumnOut(columnIndex, Player.SECOND);
-            // Add the "big unit" to the board, as close to the border as possible, depending on the walls.
+            // Add the formation to the board, as close to the border as possible, depending on the walls.
             int rowOffset = halfBoard - 1;
             while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
                 rowOffset--;
@@ -221,7 +221,7 @@ public class BoardImpl implements Board {
         }
     }
 
-    // This method takes care of replacing the three small units with the same instance of a "big unit" and moving it as close to the border as possible.
+    // This method takes care of replacing small units with walls and moving them as close to the border as possible.
     @Override
     public void moveWallUnitsIn(Wall wall, int rowIndex, int columnIndex) {
         int halfBoard = (getMaxRowIndex() / 2) + 1;
@@ -229,7 +229,7 @@ public class BoardImpl implements Board {
         AbstractMobileUnit unit = (AbstractMobileUnit) getUnit(rowIndex, columnIndex).orElse(null);
         // Remove the small unit from the board.
         removeUnit(rowIndex, columnIndex);
-        // Check which half the big unit is in.
+        // Check which half the formation is in.
         if(rowIndex >= halfBoard) {
             // Put the entry into the map.
             wallToUnitFIRST.put(wall, unit);
@@ -254,7 +254,7 @@ public class BoardImpl implements Board {
             while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
                 rowOffset--;
             }
-            // Add the "big unit" to the board.
+            // Add the formation to the board.
             addUnit(rowOffset, columnIndex, wall);
             // Move the units back in.
             moveUnitsIn(Player.SECOND);

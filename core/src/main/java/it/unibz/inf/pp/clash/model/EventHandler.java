@@ -61,7 +61,14 @@ public interface EventHandler {
      */
     void selectTile(int rowIndex, int columnIndex) throws NoGameOnScreenException;
 
-    // Helper method simply returns if the tile is on the player's board.
+    /**
+     * Helper method simply returns if the tile is on the player's board.
+     *
+     * @param player
+     * @param board
+     * @param rowIndex
+     * @return
+     */
     boolean tileIsOnPlayerBoard(Player player, Board board, int rowIndex);
 
     /**
@@ -98,7 +105,11 @@ public interface EventHandler {
      */
     void encounter(Board board, AbstractMobileUnit attackingUnit, Player opponent, int col);
 
-    // This method removes the unit or formation from the board and adds a corresponding modifier (trap or buff) to the modifier list.
+    /**
+     * This method adds the selected modifier to the modifier list and removes the unit or formation from the board.
+     *
+     * @param modifier
+     */
     void awardModifier(String modifier);
 
     /**
