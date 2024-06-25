@@ -23,7 +23,12 @@ public class HeroImpl implements Hero {
 
     public HeroImpl(String name, int health) {
         this.name = name;
-        this.health = health;
+        if(name.equalsIgnoreCase("Alice") || name.equalsIgnoreCase("Carol")){
+            this.health = health + 5;
+        }
+        else{
+            this.health = health;
+        }
     }
 
     @Override
