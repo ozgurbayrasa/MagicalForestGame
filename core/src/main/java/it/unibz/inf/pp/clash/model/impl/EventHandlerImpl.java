@@ -940,7 +940,7 @@ public class EventHandlerImpl implements EventHandler {
 		// Activate a wall trap.
 		} else if(modifier instanceof WallTrap) {
 			// Turn the unit into a wall with corresponding health.
-			wallTrapActivation(unit);
+			wallTrapActivation(rowIndex, columnIndex, unit);
 		// Activate a small buff.
 		} else if(modifier instanceof SmallBuff) {
 			// Increase the health of the unit.
@@ -956,8 +956,11 @@ public class EventHandlerImpl implements EventHandler {
 			} else {
 				((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() + modifier.getCountdown());
 			}
+		// Activate a wall buff.
+		} else if(modifier instanceof WallBuff) {
+			// Switch the color of a single unit to form a formation.
+			wallBuffActivation(rowIndex, columnIndex);
 		}
-		// TODO activation of wall buff.
 	}
 
 	// Helper method for big modifiers.
@@ -1032,25 +1035,17 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	// Helper method for wall traps.
-	private void wallTrapActivation(Unit unit) {
+	private void wallTrapActivation(int rowIndex, int columnIndex, Unit unit) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
-		loop:
-		// Iterate over rows.
-		for(int i = 0; i < board.getMaxRowIndex() + 1; i++) {
-			// Iterate over columns.
-			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				// Check if the unit is present and equals the target unit.
-				if (board.getUnit(i, j).isPresent() && board.getUnit(i, j).get().equals(unit)) {
-					// Replace the unit with a wall (with the same health) and move the wall up to the border.
-					Wall wall = new Wall();
-					wall.setHealth(unit.getHealth());
-					board.moveWallUnitsIn(wall, i, j);
-					break loop;
-				}
-			}
-		}
+		/*assert board.getUnit(rowIndex, columnIndex).isPresent;*/
+
+		// Replace the unit with a wall (with the same health) and move the wall up to the border.
+		Wall wall = new Wall();
+		wall.setHealth(unit.getHealth());
+		board.moveWallUnitsIn(wall, rowIndex, columnIndex);
+
 		// If the small unit replaced by a wall is a part of a formation, only that small unit is replaced, and the remaining formation is split into small units.
 		// Index of unit in formation list.
 		int index = 0;
@@ -1077,38 +1072,112 @@ public class EventHandlerImpl implements EventHandler {
 		board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 	}
 
+	private void WallBuffActivation(int rowIndex, int columnIndex) {
+		if (s.getHero(s.getActivePlayer()).getHeroType() == DEFENSIVE) {
+			return wallBuffActivation1x3(rowIndex, columnIndex) || wallBuffActivation3x1(rowIndex, columnIndex);
+		} else {
+			return wallBuffActivation3x1(rowIndex, columnIndex) || wallBuffActivation1x3(rowIndex, columnIndex);
+		}
+	}
+
+	// Helper method for activating wall buffs on 1x3 formations.
 	private void wallBuffActivation1x3(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
-		if(board.getUnit(rowIndex, columnIndex).isPresent()) {
-			if(board.areValidCoordinates(rowIndex - 2, columnIndex) && board.areValidCoordinates(rowIndex - 1, columnIndex) &&
-				board.getUnit(rowIndex - 2, columnIndex).isPresent() && board.getUnit(rowIndex - 1, columnIndex).isPresent() &&
-				board.getUnit(rowIndex - 2, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit right) {
-				if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
-					left.getColor().equals(center.getColor()) && !center.getColor().equals(right.getColor())) {
-					right.setColor(left.getColor());
-				}
-			} else if(board.areValidCoordinates(rowIndex - 1, columnIndex) && board.areValidCoordinates(rowIndex + 1, columnIndex) &&
-					board.getUnit(rowIndex - 1, columnIndex).isPresent() && board.getUnit(rowIndex + 1, columnIndex).isPresent() &&
-					board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex + 1, columnIndex).get() instanceof AbstractMobileUnit right) {
-				if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
-					left.getColor().equals(right.getColor()) && !center.getColor().equals(left.getColor())) {
-					center.setColor(left.getColor());
-				}
-			} else if(board.areValidCoordinates(rowIndex + 1, columnIndex) && board.areValidCoordinates(rowIndex + 2, columnIndex) &&
-					board.getUnit(rowIndex + 1, columnIndex).isPresent() && board.getUnit(rowIndex + 2, columnIndex).isPresent() &&
-					board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex + 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex + 2, columnIndex).get() instanceof AbstractMobileUnit right) {
-				if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
-						center.getColor().equals(right.getColor()) && !left.getColor().equals(center.getColor())) {
-					left.setColor(center.getColor());
-				}
+		Player activePlayer = s.getActivePlayer();
+		/*assert board.getUnit(rowIndex, columnIndex).isPresent;*/
+
+		// Check if the two cells to the right have valid coordinates. 
+		if(board.areValidCoordinates(rowIndex, columnIndex + 1) && board.areValidCoordinates(rowIndex, columnIndex + 2) &&
+			// Check if the two units to the right are present. 
+			board.getUnit(rowIndex, columnIndex  + 1).isPresent() && board.getUnit(rowIndex, columnIndex  + 2).isPresent() &&
+			// Check if the three units are instances of AbstractMobileUnit.
+			board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex + 1).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex + 2).get() instanceof AbstractMobileUnit right) {
+			// Check if the three units are of the same type but the left one has different color.
+			if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
+				center.getColor().equals(right.getColor()) && !left.getColor().equals(center.getColor()) &&
+				// Check if the unit to the left is a part of a formation.
+				!board.getFormationToSmallUnitsMap(activePlayer).containsKey(left)) {
+				// Match the color of the left unit to the others.
+				left.setColor(center.getColor());
+			}
+		// Check if the cells to the left and right have valid coordinates. 
+		} else if(board.areValidCoordinates(rowIndex, columnIndex - 1) && board.areValidCoordinates(rowIndex, columnIndex + 1) &&
+			// Check if the units to the left and right are present. 
+			board.getUnit(rowIndex, columnIndex - 1).isPresent() && board.getUnit(rowIndex, columnIndex + 1).isPresent() &&
+			// Check if the three units are instances of AbstractMobileUnit.
+			board.getUnit(rowIndex, columnIndex - 1).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex + 1).get() instanceof AbstractMobileUnit right) {
+			// Check if the three units are of the same type but the center one has different color.
+			if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
+				left.getColor().equals(right.getColor()) && !center.getColor().equals(left.getColor()) &&
+				// Check if the center unit is a part of a formation.
+				!board.getFormationToSmallUnitsMap(activePlayer).containsKey(center)) {
+				// Match the color of the center unit to the others.
+				center.setColor(left.getColor());
+			}
+		// Check if the two cells to the left have valid coordinates. 
+		} else if(board.areValidCoordinates(rowIndex, columnIndex - 2) && board.areValidCoordinates(rowIndex, columnIndex - 1) &&
+			// Check if the two units to the left are present. 
+			board.getUnit(rowIndex, columnIndex - 2).isPresent() && board.getUnit(rowIndex, columnIndex - 1).isPresent() &&
+			// Check if the three units are instances of AbstractMobileUnit.
+			board.getUnit(rowIndex, columnIndex - 2).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex - 1).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit right) {
+			// Check if the three units are of the same type but the right one has different color.
+			if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
+				left.getColor().equals(center.getColor()) && !right.getColor().equals(left.getColor()) &&
+				// Check if the unit to the right is a part of a formation.
+				!board.getFormationToSmallUnitsMap(activePlayer).containsKey(right)) {
+				// Match the color of the right unit to the others.
+				right.setColor(left.getColor());
 			}
 		}
 	}
 
+	// Helper method for activating wall buffs on 3x1 formations.
 	private void wallBuffActivation3x1(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
-		if(board.getUnit(rowIndex, columnIndex).isPresent()) {
-			// TODO
+		/*assert board.getUnit(rowIndex, columnIndex).isPresent;*/
+
+		// Check if the two cells above have valid coordinates. 
+		if(board.areValidCoordinates(rowIndex + 1, columnIndex) && board.areValidCoordinates(rowIndex + 2, columnIndex) &&
+			// Check if the two units above are present. 
+			board.getUnit(rowIndex + 1, columnIndex).isPresent() && board.getUnit(rowIndex + 2, columnIndex).isPresent() &&
+			// Check if the three units are instances of AbstractMobileUnit.
+			board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit below && board.getUnit(rowIndex + 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex + 2, columnIndex).get() instanceof AbstractMobileUnit above) {
+			// Check if the three units are of the same type but the one below has different color.
+			if (below.getClass().equals(center.getClass()) && center.getClass().equals(top.getClass()) &&
+				center.getColor().equals(above.getColor()) && !below.getColor().equals(center.getColor()) &&
+				// Check if the unit below is a part of a formation.
+				!board.getFormationToSmallUnitsMap(activePlayer).containsKey(below)) {
+				// Match the color of the unit below to the others.
+				below.setColor(center.getColor());
+			}
+		// Check if the cells below and above have valid coordinates. 
+		} else if(board.areValidCoordinates(rowIndex - 1, columnIndex) && board.areValidCoordinates(rowIndex + 1, columnIndex) &&
+			// Check if the units below and above are present. 
+			board.getUnit(rowIndex - 1, columnIndex).isPresent() && board.getUnit(rowIndex + 1, columnIndex).isPresent() &&
+			// Check if the three units are instances of AbstractMobileUnit.
+			board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex + 1, columnIndex).get() instanceof AbstractMobileUnit right) {
+			// Check if the three units are of the same type but the center one has different color.
+			if (below.getClass().equals(center.getClass()) && center.getClass().equals(above.getClass()) &&
+				below.getColor().equals(above.getColor()) && !center.getColor().equals(below.getColor()) &&
+				// Check if the center unit is a part of a formation.
+				!board.getFormationToSmallUnitsMap(activePlayer).containsKey(center)) {
+				// Match the color of the center unit to the others.
+				center.setColor(below.getColor());
+			}
+		// Check if the two cells below have valid coordinates. 
+		} else if(board.areValidCoordinates(rowIndex - 2, columnIndex) && board.areValidCoordinates(rowIndex - 1, columnIndex) &&
+			// Check if the two units below are present. 
+			board.getUnit(rowIndex - 2, columnIndex).isPresent() && board.getUnit(rowIndex - 1, columnIndex).isPresent() &&
+			// Check if the three units are instances of AbstractMobileUnit.
+			board.getUnit(rowIndex - 2, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit right) {
+			// Check if the three units are of the same type but one above has different color.
+			if (below.getClass().equals(center.getClass()) && center.getClass().equals(above.getClass()) &&
+				below.getColor().equals(center.getColor()) && !above.getColor().equals(center.getColor()) &&
+				// Check if the unit above is a part of a formation.
+				!board.getFormationToSmallUnitsMap(activePlayer).containsKey(above)) {
+				// Match the color of the unit above to the others.
+				above.setColor(left.getColor());
+			}
 		}
 	}
 
