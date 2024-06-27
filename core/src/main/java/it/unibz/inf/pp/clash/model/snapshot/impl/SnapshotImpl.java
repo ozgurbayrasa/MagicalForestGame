@@ -22,7 +22,7 @@ public class SnapshotImpl implements Snapshot {
 	private final Hero firstHero;
 	private final Hero secondHero;
 
-	private Player activeplayer;
+	private Player activePlayer;
 	private int actionsRemaining;
 	// example value
 	public final int defaultActionsRemaining = 3;
@@ -38,7 +38,7 @@ public class SnapshotImpl implements Snapshot {
 		firstHero = new HeroImpl(firstHeroName, 20);
 		secondHero = new HeroImpl(secondHeroName, 20);
 		board = BoardImpl.createEmptyBoard(11, 7);
-		activeplayer = Player.values()[current().nextInt(Player.values().length)];
+		activePlayer = Player.values()[current().nextInt(Player.values().length)];
 		actionsRemaining = defaultActionsRemaining;
 		ongoingMove = null;
 		populateTiles();
@@ -58,12 +58,12 @@ public class SnapshotImpl implements Snapshot {
 
 	@Override
 	public Player getActivePlayer() {
-		return activeplayer;
+		return activePlayer;
 	}
 
 	@Override
 	public void setActivePlayer(Player nextPlayer) {
-		this.activeplayer = nextPlayer;
+		this.activePlayer = nextPlayer;
 	}
 
 	@Override
@@ -199,6 +199,19 @@ public class SnapshotImpl implements Snapshot {
 	@Override
 	public int getSizeOfReinforcement(Player player) {
 		return getReinforcementSet(player).size();
+	}
+
+	@Override
+	public void resetHealthofReinforcements(Player player) {
+		for(Unit unit : getReinforcementSet(player)) {
+			if(unit instanceof Fairy) {
+				unit.setHealth(2);
+			} else if(unit instanceof Unicorn) {
+				unit.setHealth(3);
+			} else if(unit instanceof Butterfly) {
+				unit.setHealth(5);
+			}
+		}
 	}
 
 	@Override

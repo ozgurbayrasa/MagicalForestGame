@@ -180,6 +180,8 @@ public class BoardImpl implements Board {
     // This method takes care of replacing the three small units with the same instance of a formation unit and moving it as close to the border as possible.
     @Override
     public void move3x1In(AbstractMobileUnit formation, int centerRowIndex, int columnIndex) {
+        // Already checked.
+        assert getUnit(centerRowIndex - 1, columnIndex).isPresent() && getUnit(centerRowIndex + 1, columnIndex).isPresent();
         int halfBoard = (getMaxRowIndex() / 2) + 1;
         // Create an array out of the three small units.
         Set<AbstractMobileUnit> smallUnits = Set.of((AbstractMobileUnit) getUnit(centerRowIndex - 1, columnIndex).get(), (AbstractMobileUnit) getUnit(centerRowIndex + 1, columnIndex).get());

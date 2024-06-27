@@ -73,6 +73,13 @@ public interface Snapshot extends Serializable{
     int getSizeOfReinforcement(Player player);
 
     /**
+     * Resets the health of reinforcement units to their original health when they are returned to the board.
+     *
+     * @param player
+     */
+    void resetHealthofReinforcements(Player player);
+
+    /**
      *
      * @param player
      * @return set of reinforcements for the specified player
