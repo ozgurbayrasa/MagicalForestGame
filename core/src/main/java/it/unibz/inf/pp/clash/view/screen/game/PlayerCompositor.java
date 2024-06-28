@@ -46,7 +46,7 @@ public class PlayerCompositor extends Compositor {
                 if (!eventHandler.modifierModeIsOn()) {
                     addModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
                 } else {
-                    addReverseModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
+                    addInvertedModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
                 }
                 addLargeVerticalSpace(playerTable);
                 addSkipTurnButton(playerTable, firstPlayerActive);
@@ -76,7 +76,7 @@ public class PlayerCompositor extends Compositor {
                 if (!eventHandler.modifierModeIsOn()) {
                     addModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
                 } else {
-                    addReverseModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
+                    addInvertedModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
                 }
             }
         }
@@ -177,7 +177,7 @@ public class PlayerCompositor extends Compositor {
         playerTable.row();
     }
 
-    private void addReverseModifierButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player,
+    private void addInvertedModifierButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player,
                                    Table playerTable, boolean activePlayer) {
 
         int numOfModifiers = newSnapshot.getSizeOfModifierList(player);
