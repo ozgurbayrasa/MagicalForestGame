@@ -106,7 +106,7 @@ public class SnapshotImpl implements Snapshot {
 			for(int i = halfBoard; i < board.getMaxRowIndex() + 1; i++) {
 				// Repeat for every column.
 				for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-					// Check if there aren't any more units in the list and if the tile is empty.
+					// Check if there are more units in the list and if the tile is empty.
 					if (!unitsFIRST.isEmpty() && board.getUnit(i, j).isEmpty() && random.nextBoolean()) {
 						// Select random (possibly null) unit, add it to the board and remove it from the list.
 						int unitIndex = random.nextInt(unitsFIRST.size());
@@ -126,7 +126,7 @@ public class SnapshotImpl implements Snapshot {
 			for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
 				// Repeat for every column.
 				for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-					// Check if there aren't any more units in the list and if the tile is empty.
+					// Check if there are more units in the list and if the tile is empty.
 					if (!unitsSECOND.isEmpty() && board.getUnit(i, j).isEmpty() && random.nextBoolean()) {
 						// Select random (possibly null) unit, add it to the board and remove it from the list.
 						int unitIndex = random.nextInt(unitsSECOND.size());
