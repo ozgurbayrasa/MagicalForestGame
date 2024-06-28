@@ -93,53 +93,92 @@ public class SnapshotImpl implements Snapshot {
 
 	@Override
 	public void populateTiles() {
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		Random random = new Random();
-		int numberOfPlacedUnits = 0;
-		if(getHero(Player.FIRST).getHeroType() == HeroImpl.HeroType.OFFENSIVE){
-			numberOfPlacedUnits -= 5;
-		}
-		// Repeat for every row.
-		for(int i = (board.getMaxRowIndex() / 2) + 1; i <= board.getMaxRowIndex(); i++) {
-			// Repeat for every column.
-			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				if(numberOfPlacedUnits < board.getAllowedUnits()) {
-					if(random.nextBoolean()) {
-						int randomUnitClass = random.nextInt(3);
-						int randomUnitColor = random.nextInt(3);
-						// Select random (possibly null) unit and add it to the board.
-						Unit unit = createInstance(randomUnitClass, randomUnitColor);
+
+		// Lists of units to be placed on the board.
+		List<Unit> unitsFIRST = createListOfUnits(Player.FIRST);
+		List<Unit> unitsSECOND = createListOfUnits(Player.SECOND);
+
+		// Repeat while there are units in the list.
+		while(!unitsFIRST.isEmpty()) {
+			// Repeat for every row.
+			for(int i = halfBoard; i < board.getMaxRowIndex() + 1; i++) {
+				// Repeat for every column.
+				for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+					// Check if there aren't any more units in the list and if the tile is empty.
+					if (!unitsFIRST.isEmpty() && board.getUnit(i, j).isEmpty() && random.nextBoolean()) {
+						// Select random (possibly null) unit, add it to the board and remove it from the list.
+						int unitIndex = random.nextInt(unitsFIRST.size());
+						Unit unit = unitsFIRST.get(unitIndex);
 						board.addUnit(i, j, unit);
-						numberOfPlacedUnits++;
+						unitsFIRST.remove(unit);
 					}
 				}
 			}
 		}
-		// Move the units in.
+		// Move the mandatoryUnits in.
 		board.moveUnitsIn(Player.FIRST);
 
-		numberOfPlacedUnits = 0;
-
-		if(getHero(Player.SECOND).getHeroType() == HeroImpl.HeroType.OFFENSIVE){
-			numberOfPlacedUnits -= 5;
-		}
-		// Repeat for every row.
-		for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
-			// Repeat for every column.
-			for(int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				if(numberOfPlacedUnits < board.getAllowedUnits()) {
-					if(random.nextBoolean()) {
-						int randomUnitClass = random.nextInt(3);
-						int randomUnitColor = random.nextInt(3);
-						// Select random (possibly null) unit and add it to the board.
-						Unit unit = createInstance(randomUnitClass, randomUnitColor);
+		// Repeat while there are units in the list.
+		while(!unitsSECOND.isEmpty()) {
+			// Repeat for every row.
+			for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
+				// Repeat for every column.
+				for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+					// Check if there aren't any more units in the list and if the tile is empty.
+					if (!unitsSECOND.isEmpty() && board.getUnit(i, j).isEmpty() && random.nextBoolean()) {
+						// Select random (possibly null) unit, add it to the board and remove it from the list.
+						int unitIndex = random.nextInt(unitsSECOND.size());
+						Unit unit = unitsSECOND.get(unitIndex);
 						board.addUnit(i, j, unit);
-						numberOfPlacedUnits++;
+						unitsSECOND.remove(unit);
 					}
 				}
 			}
 		}
-		// Move the units in.
+		// Move the mandatoryUnits in.
 		board.moveUnitsIn(Player.SECOND);
+	}
+
+	// Helper method to create a list of units.
+	private List<Unit> createListOfUnits(Player player) {
+		Random random = new Random();
+		List<Unit> unitsToBePlaced = new ArrayList<>();
+
+		// Get the number of allowed units per player, depending on the hero style.
+		int allowedNumberOfUnits = getHero(player).getHeroType() == HeroImpl.HeroType.OFFENSIVE ? board.getAllowedUnits() + 5 : board.getAllowedUnits();
+		// Number of units to be placed.
+		int numberOfUnits = 0;
+
+		// Pick a number between 2 and 4, which decides how many determined combinations will be added.
+		int numOfCombinations = 2 + random.nextInt(3);
+
+		// Add the determined combinations.
+		// Repeat until the determined number of combinations are added.
+		for(int i = 0; i < numOfCombinations; i++) {
+			// Pick a random unit (class and color).
+			int randomUnitClass = random.nextInt(3);
+			int randomUnitColor = random.nextInt(3);
+			// Add three new instances of that unit to the list and update the number of units.
+			unitsToBePlaced.add(createInstance(randomUnitClass, randomUnitColor));
+			unitsToBePlaced.add(createInstance(randomUnitClass, randomUnitColor));
+			unitsToBePlaced.add(createInstance(randomUnitClass, randomUnitColor));
+			numberOfUnits = unitsToBePlaced.size();
+		}
+
+		// Add the remaining random units.
+		// Repeat until the number reaches the max allowed number of units.
+		while(numberOfUnits < allowedNumberOfUnits) {
+			// Pick a random unit (class and color).
+			int randomUnitClass = random.nextInt(3);
+			int randomUnitColor = random.nextInt(3);
+			// Add it to the list and update the number of units.
+			unitsToBePlaced.add(createInstance(randomUnitClass, randomUnitColor));
+			numberOfUnits = unitsToBePlaced.size();
+		}
+
+		return unitsToBePlaced;
 	}
 
 	// Helper method to create new random instances.
@@ -193,7 +232,7 @@ public class SnapshotImpl implements Snapshot {
 		} catch (IOException | ClassNotFoundException e ) {
 			  throw new RuntimeException(e);
 		}
-		return deserializedSnapshot;
+				return deserializedSnapshot;
 	}
 
 	@Override
@@ -202,7 +241,7 @@ public class SnapshotImpl implements Snapshot {
 	}
 
 	@Override
-	public void resetHealthofReinforcements(Player player) {
+	public void resetHealthOfReinforcements(Player player) {
 		for(Unit unit : getReinforcementSet(player)) {
 			if(unit instanceof Fairy) {
 				unit.setHealth(2);

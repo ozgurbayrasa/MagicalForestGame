@@ -77,7 +77,7 @@ public interface Snapshot extends Serializable{
      *
      * @param player
      */
-    void resetHealthofReinforcements(Player player);
+    void resetHealthOfReinforcements(Player player);
 
     /**
      *

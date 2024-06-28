@@ -120,7 +120,7 @@ public class EventHandlerImpl implements EventHandler {
 			}
 		}
 		// Reset the health of reinforcements.
-		s.resetHealthofReinforcements(activePlayer);
+		s.resetHealthOfReinforcements(activePlayer);
 		switch(activePlayer) {
 			case FIRST -> {
 				// Repeat until reinforcements are depleted.
@@ -451,7 +451,7 @@ public class EventHandlerImpl implements EventHandler {
 						formation.setHealth(Math.round((float) (above.getHealth() + center.getHealth() + below.getHealth()) / 3));
 						// Move it next to the border.
 						board.move3x1In(formation, rowIndex, columnIndex);
-						((AbstractMobileUnit) above).setAttackCountdown(3); 
+						((AbstractMobileUnit) above).setAttackCountdown(3);
 						((AbstractMobileUnit) center).setAttackCountdown(3);
 						((AbstractMobileUnit) below).setAttackCountdown(3);
 						return true;
