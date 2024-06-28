@@ -8,15 +8,9 @@ public class SmallBuff extends AbstractBuff {
         this.rarity = rarity;
 
         switch (rarity) {
-            case COMMON -> {
-                this.health = 2;
-            }
-            case RARE -> {
-                this.health = 3;
-            }
-            case EPIC -> {
-                this.health = 5;
-            }
+            case COMMON -> this.health = 2;
+            case RARE -> this.health = 3;
+            case EPIC -> this.health = 5;
         }
     }
 }

@@ -43,7 +43,11 @@ public class PlayerCompositor extends Compositor {
         switch (player) {
             case FIRST -> {
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
-                addModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
+                if (!eventHandler.modifierModeIsOn()) {
+                    addModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
+                } else {
+                    addReverseModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
+                }
                 addLargeVerticalSpace(playerTable);
                 addSkipTurnButton(playerTable, firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
@@ -69,7 +73,11 @@ public class PlayerCompositor extends Compositor {
                 addSkipTurnButton(playerTable, !firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
-                addModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
+                if (!eventHandler.modifierModeIsOn()) {
+                    addModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
+                } else {
+                    addReverseModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
+                }
             }
         }
         return playerTable;
@@ -130,11 +138,11 @@ public class PlayerCompositor extends Compositor {
     }
 
     private void addModifierButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player,
-                               Table playerTable, boolean activePlayer) {
+                                   Table playerTable, boolean activePlayer) {
+
         int numOfModifiers = newSnapshot.getSizeOfModifierList(player);
         boolean animation = previousSnapshot != null && numOfModifiers != previousSnapshot.getSizeOfModifierList(player);
-
-        if(activePlayer) {
+        if (activePlayer) {
             ImageButton button = getImageButton(
                     MODIFIER,
                     LARGE,
@@ -168,6 +176,47 @@ public class PlayerCompositor extends Compositor {
 
         playerTable.row();
     }
+
+    private void addReverseModifierButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player,
+                                   Table playerTable, boolean activePlayer) {
+
+        int numOfModifiers = newSnapshot.getSizeOfModifierList(player);
+        boolean animation = previousSnapshot != null && numOfModifiers != previousSnapshot.getSizeOfModifierList(player);
+        if (activePlayer) {
+            ImageButton button = getInvertedImageButton(
+                    MODIFIER,
+                    LARGE,
+                    animation
+            );
+
+            button.addListener(
+                    new ModifierButtonListener(eventHandler)
+            );
+
+            addSquareImageButton(
+                    playerTable,
+                    button,
+                    Dimensions.instance().getLargeSquareIconLength()
+            );
+        } else {
+
+            addSquareIcon(
+                    playerTable,
+                    createIcon(MODIFIER, LARGE, animation),
+                    Dimensions.instance().getLargeSquareIconLength()
+            );
+        }
+
+        playerTable.add(
+                createLabel(
+                        numOfModifiers,
+                        GuiColor.EMPTY_CELL,
+                        animation
+                )).padLeft(30).padRight(40);
+
+        playerTable.row();
+    }
+
 
     private void addHealth(Hero previousHero, Hero newHero, Table playerTable) {
         boolean animation = previousHero != null && previousHero.getHealth() != newHero.getHealth();
@@ -230,6 +279,14 @@ public class PlayerCompositor extends Compositor {
 
     private ImageButton getImageButton(Icon icon, IconSize iconSize, boolean animation) {
         ImageButton button = ImageManager.instance().getIconButton(icon, iconSize);
+        if(animation) {
+            addFadeInAnimation(button);
+        }
+        return button;
+    }
+
+    private ImageButton getInvertedImageButton(Icon icon, IconSize iconSize, boolean animation) {
+        ImageButton button = ImageManager.instance().getInvertedIconButton(icon, iconSize);
         if(animation) {
             addFadeInAnimation(button);
         }

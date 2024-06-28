@@ -20,7 +20,6 @@ import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 import it.unibz.inf.pp.clash.view.screen.game.GameCompositor;
-
 import static it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl.HeroType.DEFENSIVE;
 
 public class EventHandlerImpl implements EventHandler {
@@ -1298,24 +1297,12 @@ public class EventHandlerImpl implements EventHandler {
 		// Update the message depending on the new value.
 		if(modifierMode) {
 			if(s.getModifierList(activePlayer).get(0) instanceof AbstractTrap) {
-				try {
-					displayManager.updateMessage("Trap picked.");
-				} catch (NoGameOnScreenException e) {
-					throw new RuntimeException(e);
-				}
+				displayManager.drawSnapshot(s, "Trap picked");
 			} else {
-				try {
-					displayManager.updateMessage("Buff picked.");
-				} catch (NoGameOnScreenException e) {
-					throw new RuntimeException(e);
-				}
+				displayManager.drawSnapshot(s, "Buff picked");
 			}
         } else {
-            try {
-                displayManager.updateMessage("Modifier mode switched off.");
-            } catch (NoGameOnScreenException e) {
-                throw new RuntimeException(e);
-            }
+                displayManager.drawSnapshot(s, "Modifier mode switched off.");
         }
 	}
 }

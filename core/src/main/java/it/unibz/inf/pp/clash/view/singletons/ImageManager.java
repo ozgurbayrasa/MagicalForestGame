@@ -119,6 +119,20 @@ public class ImageManager {
         );
     }
 
+    public ImageButton getInvertedIconButton(Icon icon, IconSize size) {
+        String pathPrefix = iconFolder + sizeToSubfolder.get(size);
+        String filename = iconToFile.get(icon);
+
+        return getImageButton(
+                staticUnits,
+                new MultiKey<>(icon, size, DEFAULT),
+                pathPrefix+"inverted/"+filename,
+                new MultiKey<>(icon, size, SELECTED),
+                pathPrefix+filename,
+                false
+        );
+    }
+
     public ImageButton getStaticUnitButton(Unit unit, boolean inverted) {
         String pathPrefix = unitFolder;
         Class<? extends Unit> type = unit.getClass();
