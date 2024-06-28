@@ -20,7 +20,6 @@ import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 import it.unibz.inf.pp.clash.view.screen.game.GameCompositor;
-import it.unibz.inf.pp.clash.view.screen.game.GameScreen;
 
 import static it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl.HeroType.DEFENSIVE;
 
@@ -30,6 +29,8 @@ public class EventHandlerImpl implements EventHandler {
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
     private Snapshot s;
 	private Unit unitToSacrifice;
+	private int numberOfSacrificesFIRST,
+				numberOfSacrificesSECOND;
 
 	// A boolean which is true while the modifier button is pressed and allows players to place modifiers.
 	public static boolean modifierMode = false;
@@ -40,6 +41,8 @@ public class EventHandlerImpl implements EventHandler {
 
 	@Override
 	public void newGame(String firstHero, String secondHero) {
+		numberOfSacrificesFIRST = 0;
+		numberOfSacrificesSECOND = 0;
 		s = new SnapshotImpl(firstHero, secondHero);
 //		Snapshot dummy1 = new DummySnapshot(firstHero, secondHero);
 //		Snapshot dummy2 = new AnotherDummySnapshot(firstHero, secondHero);
@@ -380,23 +383,24 @@ public class EventHandlerImpl implements EventHandler {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 
-		// Iterate through each cell in the board
+		// Iterate through each cell in the board.
 		for (int i = 0; i < board.getMaxRowIndex() + 1; i++) {
 			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				// Check if the coordinates to the left and right of the cell are valid
+				// Check if the coordinates to the left and right of the cell are valid.
 				if (board.areValidCoordinates(i, j - 1) && board.areValidCoordinates(i, j + 1)
 						&& board.getUnit(i, j - 1).isPresent() && board.getUnit(i, j).isPresent() && board.getUnit(i, j + 1).isPresent()) {
-					// Get the three units
+					// Get the three units.
 					Unit left = board.getUnit(i, j - 1).get();
 					Unit center = board.getUnit(i, j).get();
 					Unit right = board.getUnit(i, j + 1).get();
-					// Check if the three units have the same class
+					// Check if the three units have the same class.
 					if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass())) {
-						// Check if this class is a subclass of AbstractMobileUnit
-						if (center instanceof AbstractMobileUnit) {
-							// Check if the unit is already a part of a wall unit and if the colors of the units match
-							if (!board.getFormationToSmallUnitsMap(activePlayer).containsKey(center) && ((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
-								// Create wall units and move them next to the border
+						// Check if this class is a subclass of AbstractMobileUnit.
+						if (left instanceof AbstractMobileUnit && center instanceof AbstractMobileUnit && right instanceof AbstractMobileUnit) {
+							// Check if the units are already a part of a formation and if their colors match.
+							if (!board.getFormationToSmallUnitsMap(activePlayer).containsKey(left) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(center) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(right) &&
+									((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
+								// Create wall units and move them next to the border.
 								Wall leftWall = new Wall();
 								Wall centerWall = new Wall();
 								Wall rightWall = new Wall();
@@ -417,18 +421,18 @@ public class EventHandlerImpl implements EventHandler {
 	// It returns true if a new formation has been detected.
 	private boolean detect3x1Formation() {
 		Board board = s.getBoard();
-		Player activePlayer = s.getActivePlayer();
 		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
+
 		for (int i = halfBoard; i < board.getMaxRowIndex() + 1; i++) {
 			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				if (detect3x1FormationAuxiliary(board, activePlayer, halfBoard, i, j)) {
+				if (i >= (halfBoard + 1) && detect3x1FormationAuxiliary(board, Player.FIRST, i, j)) {
 					return true;
 				}
 			}
 		}
 		for (int i = halfBoard - 1; i > 0; i--) {
 			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-				if (detect3x1FormationAuxiliary(board, activePlayer, halfBoard, i, j)) {
+				if (i < (halfBoard - 1) && detect3x1FormationAuxiliary(board, Player.SECOND, i, j)) {
 					return true;
 				}
 			}
@@ -436,12 +440,10 @@ public class EventHandlerImpl implements EventHandler {
 		return false;
 	}
 
-	private boolean detect3x1FormationAuxiliary(Board board, Player activePlayer, int halfBoard, int rowIndex, int columnIndex) {
-		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
+	private boolean detect3x1FormationAuxiliary(Board board, Player player, int rowIndex, int columnIndex) {
 		// Check if the coordinates above and below the cell are valid.
 		if (board.areValidCoordinates(rowIndex - 1, columnIndex) && board.areValidCoordinates(rowIndex + 1, columnIndex)
-				&& board.getUnit(rowIndex - 1, columnIndex).isPresent() && board.getUnit(rowIndex, columnIndex).isPresent() && board.getUnit(rowIndex + 1, columnIndex).isPresent()
-				&& (rowIndex < halfBoard - 1 || rowIndex >= halfBoard + 1)) {
+				&& board.getUnit(rowIndex - 1, columnIndex).isPresent() && board.getUnit(rowIndex, columnIndex).isPresent() && board.getUnit(rowIndex + 1, columnIndex).isPresent()) {
 			// Get the three units.
 			Unit above = board.getUnit(rowIndex - 1, columnIndex).get();
 			Unit center = board.getUnit(rowIndex, columnIndex).get();
@@ -449,9 +451,10 @@ public class EventHandlerImpl implements EventHandler {
 			// Check if the three units have the same class.
 			if (above.getClass().equals(center.getClass()) && center.getClass().equals(below.getClass())) {
 				// Check if this class is a subclass of AbstractMobileUnit.
-				if (center instanceof AbstractMobileUnit) {
-					// Check if the unit is already a part of a formation and if the colors of the units match.
-					if (!((board.getFormationToSmallUnitsMap(activePlayer).containsKey(center)) || (board.getFormationToSmallUnitsMap(opponentPlayer).containsKey(center))) && ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
+				if (above instanceof AbstractMobileUnit && center instanceof AbstractMobileUnit && below instanceof AbstractMobileUnit) {
+					// Check if the units are already a part of a formation and if their colors match.
+					if (!board.getFormationToSmallUnitsMap(player).containsKey(above) && !board.getFormationToSmallUnitsMap(player).containsKey(center) && !board.getFormationToSmallUnitsMap(player).containsKey(below)
+							&& ((AbstractMobileUnit) above).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) below).getColor())) {
 						// Create a formation.
 						AbstractMobileUnit formation = board.create3x1Formation(rowIndex, columnIndex);
 						// Set the formation health to the average health of the three units.
@@ -675,9 +678,23 @@ public class EventHandlerImpl implements EventHandler {
 	@Override
 	public void sacrificeUnit(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = (activePlayer == Player.FIRST) ? Player.SECOND : Player.FIRST;
 		Optional<Board.TileCoordinates> ongoingMove = s.getOngoingMove();
+
+		// Check if the player has sacrifices left.
+		if(rowIndex >= halfBoard) {
+			if(numberOfSacrificesFIRST == 3) {
+				displayErrorMessage("No sacrifices left.");
+				return;
+			}
+		} else {
+			if(numberOfSacrificesSECOND == 3) {
+				displayErrorMessage("No sacrifices left.");
+				return;
+			}
+		}
 
 		// Check if the selected tile is within the board limits.
 		if (!board.areValidCoordinates(rowIndex, columnIndex)) {
@@ -698,6 +715,16 @@ public class EventHandlerImpl implements EventHandler {
 
 		// Check if there is an ongoing move.
 		if (ongoingMove.isPresent()) {
+			// Check if a unit is being sacrificed.
+			if(GameCompositor.modifierSelectBoxIsShown()) {
+				// If the same tile is selected cancel the sacrifice.
+				if(ongoingMove.get().rowIndex() == rowIndex && ongoingMove.get().columnIndex() == columnIndex) {
+					s.setOngoingMove(null);
+					GameCompositor.showModifierSelectBox(false);
+					displayManager.drawSnapshot(s, "Sacrifice canceled!");
+					return;
+				}
+			}
 			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
 			return;
 		}
@@ -825,11 +852,22 @@ public class EventHandlerImpl implements EventHandler {
 		if(detectFormations() == 0) {
 			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
 		}
+		// Increment the number of sacrifices and disable them for the player if they are over 3.
+		incrementNumberOfSacrifices(activePlayer);
 		// End the turn if the actions are depleted.
 		endTurnIfNoActionsRemaining();
 		// Draw the snapshot.
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " received a modifier!");
 	}
+
+	// Helper method for incrementing the number of sacrifices of a player.
+	private void incrementNumberOfSacrifices(Player activePlayer) {
+		switch (activePlayer) {
+			case FIRST -> numberOfSacrificesFIRST++;
+			case SECOND -> numberOfSacrificesSECOND++;
+		}
+	}
+
 
 	// Helper method which removes the sacrificed unit from the board (and corresponding map if needed).
 	private void removeSacrificedUnit(Unit unit, Board board, Player activePlayer) {
