@@ -155,6 +155,10 @@ public class GameCompositor extends Compositor {
         showModifierSelectBox = show;
     }
 
+    public static boolean modifierSelectBoxIsShown() {
+        return showModifierSelectBox;
+    }
+
     public static void setListOfModifiers(String[] modifiers) {
         listOfModifiers = modifiers;
     }

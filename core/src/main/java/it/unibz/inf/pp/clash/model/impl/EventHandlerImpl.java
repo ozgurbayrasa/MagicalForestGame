@@ -20,6 +20,7 @@ import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 import it.unibz.inf.pp.clash.view.screen.game.GameCompositor;
+import it.unibz.inf.pp.clash.view.screen.game.GameScreen;
 
 import static it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl.HeroType.DEFENSIVE;
 
@@ -238,6 +239,12 @@ public class EventHandlerImpl implements EventHandler {
 		// Check if the tile is on the active player's board
 		if (tileIsOnPlayerBoard(opponentPlayer, board, rowIndex)) {
 			displayErrorMessage("Error: Selected tile is not on the active player's board.");
+			return;
+		}
+
+		// Check if a unit is being sacrificed.
+		if(GameCompositor.modifierSelectBoxIsShown()) {
+			displayErrorMessage("Error: Units cannot be moved while sacrificing a unit.");
 			return;
 		}
 
@@ -689,18 +696,18 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		}
 
+		// Check if there is an ongoing move.
+		if (ongoingMove.isPresent()) {
+			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
+			return;
+		}
+
 		// Start an ongoing move.
 		s.setOngoingMove(new Board.TileCoordinates(rowIndex, columnIndex));
 
 		// Check if modifier mode is on and switch it off is so.
 		if(modifierMode) {
 			switchModifierMode();
-		}
-
-		// Check if there is an ongoing move.
-		if (ongoingMove.isPresent()) {
-			displayErrorMessage("Error: Cannot sacrifice unit during an ongoing move.");
-			return;
 		}
 
 		// Get unit.
