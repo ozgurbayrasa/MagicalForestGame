@@ -3,7 +3,6 @@ package it.unibz.inf.pp.clash.model.impl;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
@@ -470,7 +469,6 @@ public class EventHandlerImpl implements EventHandler {
 		}
 		return false;
 	}
-
 
 	// This method handles the detection of formations based on the hero type.
 	// It prioritizes wall detection for defensive heroes and formation detection for offensive heroes.

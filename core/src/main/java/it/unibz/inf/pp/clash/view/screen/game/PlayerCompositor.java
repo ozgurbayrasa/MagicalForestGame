@@ -43,11 +43,7 @@ public class PlayerCompositor extends Compositor {
         switch (player) {
             case FIRST -> {
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
-                if (!eventHandler.modifierModeIsOn()) {
-                    addModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
-                } else {
-                    addInvertedModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
-                }
+                addModifierButton(previousSnapshot, newSnapshot, player, playerTable, firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
                 addSkipTurnButton(playerTable, firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
@@ -73,11 +69,7 @@ public class PlayerCompositor extends Compositor {
                 addSkipTurnButton(playerTable, !firstPlayerActive);
                 addLargeVerticalSpace(playerTable);
                 addReinforcementButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
-                if (!eventHandler.modifierModeIsOn()) {
-                    addModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
-                } else {
-                    addInvertedModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
-                }
+                addModifierButton(previousSnapshot, newSnapshot, player, playerTable, !firstPlayerActive);
             }
         }
         return playerTable;
@@ -143,11 +135,20 @@ public class PlayerCompositor extends Compositor {
         int numOfModifiers = newSnapshot.getSizeOfModifierList(player);
         boolean animation = previousSnapshot != null && numOfModifiers != previousSnapshot.getSizeOfModifierList(player);
         if (activePlayer) {
-            ImageButton button = getImageButton(
-                    MODIFIER,
-                    LARGE,
-                    animation
-            );
+            ImageButton button = null;
+            if(!eventHandler.modifierModeIsOn()) {
+                button = getImageButton(
+                        MODIFIER,
+                        LARGE,
+                        animation
+                );
+            } else {
+                button = getInvertedImageButton(
+                        MODIFIER,
+                        LARGE,
+                        animation
+                );
+            }
 
             button.addListener(
                     new ModifierButtonListener(eventHandler)
@@ -176,47 +177,6 @@ public class PlayerCompositor extends Compositor {
 
         playerTable.row();
     }
-
-    private void addInvertedModifierButton(Snapshot previousSnapshot, Snapshot newSnapshot, Player player,
-                                   Table playerTable, boolean activePlayer) {
-
-        int numOfModifiers = newSnapshot.getSizeOfModifierList(player);
-        boolean animation = previousSnapshot != null && numOfModifiers != previousSnapshot.getSizeOfModifierList(player);
-        if (activePlayer) {
-            ImageButton button = getInvertedImageButton(
-                    MODIFIER,
-                    LARGE,
-                    animation
-            );
-
-            button.addListener(
-                    new ModifierButtonListener(eventHandler)
-            );
-
-            addSquareImageButton(
-                    playerTable,
-                    button,
-                    Dimensions.instance().getLargeSquareIconLength()
-            );
-        } else {
-
-            addSquareIcon(
-                    playerTable,
-                    createIcon(MODIFIER, LARGE, animation),
-                    Dimensions.instance().getLargeSquareIconLength()
-            );
-        }
-
-        playerTable.add(
-                createLabel(
-                        numOfModifiers,
-                        GuiColor.EMPTY_CELL,
-                        animation
-                )).padLeft(30).padRight(40);
-
-        playerTable.row();
-    }
-
 
     private void addHealth(Hero previousHero, Hero newHero, Table playerTable) {
         boolean animation = previousHero != null && previousHero.getHealth() != newHero.getHealth();
