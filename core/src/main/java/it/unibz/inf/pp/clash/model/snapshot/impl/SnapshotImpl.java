@@ -151,8 +151,8 @@ public class SnapshotImpl implements Snapshot {
 		// Number of units to be placed.
 		int numberOfUnits = 0;
 
-		// Pick a number between 2 and 4, which decides how many determined combinations will be added.
-		int numOfCombinations = 2 + random.nextInt(3);
+		// Pick a number between 3 and 5, which decides how many determined combinations will be added.
+		int numOfCombinations = 3 + random.nextInt(3);
 
 		// Add the determined combinations.
 		// Repeat until the determined number of combinations are added.
