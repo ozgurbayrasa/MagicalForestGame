@@ -13,6 +13,7 @@ public class TutorialView {
     private final Label tutorialLabel;
     private final Image tutorialImage;
     private final TextButton nextButton;
+    private final TextButton previousButton;
     private final TextButton exitButton;
     private final Table contentTable;
 
@@ -31,8 +32,9 @@ public class TutorialView {
         tutorialImage.setScaling(Scaling.fit); // Scale the image to fit
         tutorialImage.setSize(1200, 800); // Set a fixed size for the image
 
-        // Create buttons for "Next" and "Exit"
+        // Create buttons for "Next", "Previous", and "Exit"
         nextButton = new TextButton("Next", skin);
+        previousButton = new TextButton("Previous", skin);
         exitButton = new TextButton("Exit", skin);
 
         // Create a table to organize the content
@@ -46,7 +48,8 @@ public class TutorialView {
 
         // Create a sub-table for buttons
         Table buttonTable = new Table();
-        buttonTable.add(nextButton).padRight(10); // Add padding between buttons
+        buttonTable.add(previousButton).padRight(10); // Add padding between buttons
+        buttonTable.add(nextButton).padRight(10);
         buttonTable.add(exitButton);
 
         // Add the button table to the main content table
@@ -62,6 +65,11 @@ public class TutorialView {
     // Method to add a click listener to the "Next" button
     public void addNextButtonListener(ClickListener listener) {
         nextButton.addListener(listener);
+    }
+
+    // Method to add a click listener to the "Previous" button
+    public void addPreviousButtonListener(ClickListener listener) {
+        previousButton.addListener(listener);
     }
 
     // Method to add a click listener to the "Exit" button
@@ -94,6 +102,7 @@ public class TutorialView {
 
         // Re-add buttons to the table
         Table buttonTable = new Table();
+        buttonTable.add(previousButton).padRight(10); // Add padding between buttons
         buttonTable.add(nextButton).padRight(10);
         buttonTable.add(exitButton);
         contentTable.add(buttonTable).padTop(20).center();
@@ -102,6 +111,11 @@ public class TutorialView {
     // Method to set the text of the "Next" button
     public void setNextButtonText(String text) {
         nextButton.setText(text);
+    }
+
+    // Method to show or hide the "Previous" button
+    public void showPreviousButton(boolean show) {
+        previousButton.setVisible(show);
     }
 
     // Method to show or hide the "Exit" button

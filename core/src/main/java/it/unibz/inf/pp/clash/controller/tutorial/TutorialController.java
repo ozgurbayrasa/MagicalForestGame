@@ -21,6 +21,14 @@ public class TutorialController {
             }
         });
 
+        // Add click listener to the "Previous" button
+        view.addPreviousButtonListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                handlePreviousButtonClicked();
+            }
+        });
+
         // Add click listener to the "Exit" button
         view.addExitButtonListener(new ClickListener() {
             @Override
@@ -43,10 +51,19 @@ public class TutorialController {
         }
     }
 
+    // Handle the "Previous" button click
+    private void handlePreviousButtonClicked() {
+        if (!model.isAtBeginning()) {
+            model.previousStep();
+            updateView();
+        }
+    }
+
     // Update the tutorial view
     private void updateView() {
         view.setTutorialText(model.getCurrentText());
         view.setTutorialImage(model.getCurrentImage());
+        view.showPreviousButton(!model.isAtBeginning()); // Show/hide "Previous" button
         if (model.isFinished()) {
             view.setNextButtonText("End");
             view.showExitButton(false); // Hide the "Exit" button

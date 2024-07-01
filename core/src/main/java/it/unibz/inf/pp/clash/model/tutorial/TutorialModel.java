@@ -34,8 +34,20 @@ public class TutorialModel {
         }
     }
 
+    // Method to move to the previous tutorial step
+    public void previousStep() {
+        if (currentIndex > 0) {
+            currentIndex--; // Decrement the index if not at the first step
+        }
+    }
+
     // Method to check if the tutorial is finished
     public boolean isFinished() {
         return currentIndex >= tutorialTexts.length - 1; // Return true if at the last step
+    }
+
+    // Method to check if the tutorial is at the beginning
+    public boolean isAtBeginning() {
+        return currentIndex == 0; // Return true if at the first step
     }
 }
