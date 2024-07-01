@@ -1,25 +1,25 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.1'
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_16
 }
 
-plugins {
-    id 'java'
-    id 'application'
-}
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
-repositories {
-    mavenCentral()
+
+eclipse.project.name = appName + "-core"
+
+
+sourceSets {
+    test.java.srcDirs = ['src/test/java']
+    main.java.srcDirs = ['src/main/java']
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-}
+    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.4'
 
-application {
-    mainClassName = 'com.example.Main'
+
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: '5.10.2'
+    testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.10.2'
+}
+test {
+    useJUnitPlatform()
 }
