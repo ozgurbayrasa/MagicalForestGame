@@ -6,8 +6,8 @@ import it.unibz.inf.pp.clash.model.tutorial.TutorialModel;
 import it.unibz.inf.pp.clash.view.screen.tutorial.TutorialView;
 
 public class TutorialController {
-    private TutorialModel model;
-    private TutorialView view;
+    private final TutorialModel model;
+    private final TutorialView view;
 
     public TutorialController(TutorialModel model, TutorialView view) {
         this.model = model;
@@ -34,10 +34,10 @@ public class TutorialController {
 
     private void updateView() {
         view.setTutorialText(model.getCurrentText());
+        view.setTutorialImage(model.getCurrentImage());
         if (model.isFinished()) {
             view.setNextButtonText("End");
-        }
-        else {
+        } else {
             view.setNextButtonText("Next");
         }
     }

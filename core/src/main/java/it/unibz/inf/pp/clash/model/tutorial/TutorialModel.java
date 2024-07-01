@@ -1,38 +1,31 @@
 package it.unibz.inf.pp.clash.model.tutorial;
 
 public class TutorialModel {
-    private String[] tutorialTexts;
-    private int currentStep;
+    private final String[] tutorialTexts;
+    private final String[] tutorialImages;
+    private int currentIndex;
 
-    public TutorialModel(String[] tutorialTexts) {
+    public TutorialModel(String[] tutorialTexts, String[] tutorialImages) {
         this.tutorialTexts = tutorialTexts;
-        this.currentStep = 0;
+        this.tutorialImages = tutorialImages;
+        this.currentIndex = 0;
     }
 
     public String getCurrentText() {
-        if (currentStep < tutorialTexts.length) {
-            return tutorialTexts[currentStep];
-        }
-        return null;
+        return tutorialTexts[currentIndex];
+    }
+
+    public String getCurrentImage() {
+        return tutorialImages[currentIndex];
     }
 
     public void nextStep() {
-        if (currentStep < tutorialTexts.length - 1) {
-            currentStep++;
-        } else {
-            currentStep++;
+        if (currentIndex < tutorialTexts.length - 1) {
+            currentIndex++;
         }
     }
+
     public boolean isFinished() {
-        return currentStep == getTotalSteps() - 1;
-    }
-
-    public int getCurrentStep() {
-        return currentStep;
-    }
-
-    public int getTotalSteps() {
-        return tutorialTexts.length;
+        return currentIndex >= tutorialTexts.length - 1;
     }
 }
-
