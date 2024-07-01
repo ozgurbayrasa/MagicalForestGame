@@ -23,11 +23,12 @@ public class HeroImpl implements Hero {
 
     public HeroImpl(String name, int health) {
         this.name = name;
-        if(name.equalsIgnoreCase("Alice") || name.equalsIgnoreCase("Carol")){
+        if(name.equalsIgnoreCase("Alice(SD)")){
             this.health = health + 5;
-        }
-        else{
+        } else if(name.equalsIgnoreCase("Carol(MD)") || name.equalsIgnoreCase("Bob(MO)")) {
             this.health = health;
+        } else { // Dan
+            this.health = health - 5;
         }
     }
 
@@ -48,7 +49,7 @@ public class HeroImpl implements Hero {
 
     @Override
     public HeroType getHeroType() {
-        if(name.equalsIgnoreCase("Alice") || name.equalsIgnoreCase("Carol")){
+        if(name.equalsIgnoreCase("Alice(SD)") || name.equalsIgnoreCase("Carol(MD)")){
             return HeroType.DEFENSIVE;
         }
         else{

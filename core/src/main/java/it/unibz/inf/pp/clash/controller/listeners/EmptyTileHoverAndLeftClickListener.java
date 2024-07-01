@@ -20,7 +20,6 @@ public class EmptyTileHoverAndLeftClickListener extends TileHoverListener {
                         rowIndex,
                         columnIndex
                 );
-                eventHandler.requestInformation(rowIndex, columnIndex);
             }
     }
 

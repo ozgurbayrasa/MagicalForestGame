@@ -6,6 +6,6 @@ public interface Modifier {
 
     int getCountdown();
 
-    enum Rarity {COMMON, RARE, EPIC};
+    enum Rarity {COMMON, UNCOMMON, RARE, EPIC, LEGENDARY};
 
 }

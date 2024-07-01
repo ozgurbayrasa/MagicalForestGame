@@ -47,8 +47,8 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	@Override
-	public void continueGame() {
-		// Check if there is a snapshot file in the provided directory and initialize if it so.
+	public void continueGame(String firstHero, String secondHero) {
+		// If there is a snapshot file in the provided directory, initialize it.
 		if (new File(path).exists()) {
 			try {
 				s = SnapshotImpl.deserializeSnapshot(path);
@@ -57,6 +57,9 @@ public class EventHandlerImpl implements EventHandler {
 			}
 			// Draw the snapshot on screen.
 			displayManager.drawSnapshot(s, "The game has been continued!");
+		// If not, start a new game.
+		} else {
+			newGame(firstHero, secondHero);
 		}
 	}
 
@@ -170,35 +173,6 @@ public class EventHandlerImpl implements EventHandler {
 			}
 		}
 		return null;
-	}
-
-	@Override
-	public void requestInformation(int rowIndex, int columnIndex) {
-//		Board board = s.getBoard();
-//		try {
-//			if (board.areValidCoordinates(rowIndex, columnIndex)) {
-//				Optional<Unit> unit = board.getUnit(rowIndex, columnIndex);
-//				if (unit.isPresent()) {
-//					Unit currentUnit = unit.get();
-//					displayManager.updateMessage(
-//							String.format(
-//									"Tile (%d,%d)\n\nUnit: %s",
-//									rowIndex,
-//									columnIndex,
-//									currentUnit.getClass().getSimpleName()
-//							));
-//				} else {
-//					displayManager.updateMessage(
-//							String.format(
-//									"Tile (%d,%d)\n\nEmpty tile",
-//									rowIndex,
-//									columnIndex
-//							));
-//				}
-//			}
-//		} catch (NoGameOnScreenException e) {
-//			throw new RuntimeException(e);
-//		}
 	}
 
 	@Override
@@ -724,59 +698,123 @@ public class EventHandlerImpl implements EventHandler {
 		// List of strings with modifiers for the select box.
 		List<String> modifiers = new ArrayList<>();
 
-		// Check if the heroes are defensive...
-		if (s.getHero(activePlayer).getName().equals("Alice") || s.getHero(activePlayer).getName().equals("Carol")) {
-			// If the unit to be sacrificed is a fairy formation, add a common big buff to the list.
+		// Unit distribution for Alice:
+		// fairy -> rare buff, common trap,
+		// unicorn -> epic buff, uncommon trap,
+		// butterfly -> legendary buff, rare trap,
+		// wall -> wall buff.
+		if (s.getHero(activePlayer).getName().equals("Alice(SD)")) {
+			// formations
 			if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
-				modifiers.add("Big buff(-1 CD, +2 HP)");
-				// If the unit to be sacrificed is a unicorn formation, add a rare big buff and a common big trap to the list.
+				modifiers.add("Rare buff(-2 CD, +3 HP)");
+				modifiers.add("Common trap(+1 CD, -2 HP");
 			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
-				modifiers.add("Big buff(-2 CD, +3 HP)");
-				modifiers.add("Big trap(+1 CD, -2 HP)");
-				// If the unit to be sacrificed is a butterfly formation, add an epic big buff and a rare big trap to the list.
+				modifiers.add("Epic buff(-2 CD, +4 HP)");
+				modifiers.add("Uncommon trap(+2 CD, -2 HP)");
 			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
-				modifiers.add("Big buff(-3 CD, +5 HP)");
-				modifiers.add("Big trap(+2 CD, -3 HP)");
-				// If the unit to be sacrificed is a small fairy, add a common small buff to the list.
+				modifiers.add("Legendary buff(-3 CD, +5 HP)");
+				modifiers.add("Rare trap(+2 CD, -3 HP)");
+			// small units
 			} else if (unit instanceof Fairy) {
-				modifiers.add("Small buff(+2 HP)");
-				// If the unit to be sacrificed is a small unicorn, add a rare small buff and a common small trap to the list.
+				modifiers.add("Rare buff(+3 HP)");
+				modifiers.add("Common trap(-1 HP");
+			// If the unit to be sacrificed is a small unicorn...
 			} else if (unit instanceof Unicorn) {
-				modifiers.add("Small buff(+3 HP)");
-				modifiers.add("Small trap(-2 HP)");
-				// If the unit to be sacrificed is a small butterfly, add an epic small buff and a rare small trap to the list.
+				modifiers.add("Epic buff(+4 HP)");
+				modifiers.add("Uncommon trap(-2 HP)");
+			// If the unit to be sacrificed is a small butterfly...
 			} else if (unit instanceof Butterfly) {
-				modifiers.add("Small buff(+5 HP)");
-				modifiers.add("Small trap(-3 HP)");
-				// If the unit to be sacrificed is a wall, add a wall buff to the list.
+				modifiers.add("Legendary buff(+5 HP)");
+				modifiers.add("Rare trap(-3 HP)");
 			} else if (unit.getClass().equals(Wall.class)) {
 				modifiers.add("Wall buff");
 			}
-			// ...or offensive.
-		} else {
-			// If the unit to be sacrificed is a fairy formation, add a common big trap to the list.
+		// Unit distribution for Carol:
+		// fairy -> uncommon buff, common trap,
+		// unicorn -> rare buff, uncommon trap,
+		// butterfly -> epic buff, rare trap,
+		// wall -> wall buff.
+		} else if(s.getHero(activePlayer).getName().equals("Carol(MD)")) {
+			// formations
 			if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
-				modifiers.add("Big trap(+1 CD, -2 HP)");
-				// If the unit to be sacrificed is a unicorn formation, add a common big buff and a rare big trap to the list.
+				modifiers.add("Uncommon buff(-2 CD, +2 HP)");
+				modifiers.add("Common trap(+1 CD, -2 HP)");
 			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
-				modifiers.add("Big buff(-1 CD, +2 HP)");
-				modifiers.add("Big trap(+2 CD, -3 HP)");
-				// If the unit to be sacrificed is a butterfly formation, add a rare big buff and an epic big trap to the list.
+				modifiers.add("Rare buff(-2 CD, +3 HP)");
+				modifiers.add("Uncommon trap(+2 CD, -2 HP)");
 			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
-				modifiers.add("Big buff(-2 CD, +3 HP)");
-				modifiers.add("Big trap(+3 CD, -5 HP)");
-				// If the unit to be sacrificed is a small fairy, add a common small trap to the list.
+				modifiers.add("Epic buff(-2 CD, +4 HP)");
+				modifiers.add("Rare trap(+2 CD, -3 HP)");
+			// small units
 			} else if (unit instanceof Fairy) {
-				modifiers.add("Small trap(-2 HP)");
-				// If the unit to be sacrificed is a small unicorn, add a common small buff and a rare small trap to the list.
+				modifiers.add("Uncommon buff(+2 HP)");
+				modifiers.add("Common trap(-1 HP)");
 			} else if (unit instanceof Unicorn) {
-				modifiers.add("Small buff(+2 HP)");
-				modifiers.add("Small trap(-3 HP)");
-				// If the unit to be sacrificed is a small butterfly, add a rare small buff and an epic small trap to the list.
+				modifiers.add("Rare buff(+3 HP)");
+				modifiers.add("Uncommon trap(-2 HP)");
 			} else if (unit instanceof Butterfly) {
-				modifiers.add("Small buff(+3 HP)");
-				modifiers.add("Small trap(-5 HP)");
-				// If the unit to be sacrificed is a wall, add a wall trap to the list.
+				modifiers.add("Epic buff(+4 HP)");
+				modifiers.add("Rare trap(-3 HP)");
+			} else if (unit.getClass().equals(Wall.class)) {
+				modifiers.add("Wall buff");
+			}
+		// Unit distribution for Bob:
+		// fairy -> common buff, uncommon trap,
+		// unicorn -> uncommon buff, rare trap,
+		// butterfly -> rare buff, epic trap,
+		// wall -> wall trap.
+		} else if(s.getHero(activePlayer).getName().equals("Bob(MO)")) {
+			// formations
+			if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
+				modifiers.add("Common buff(-1 CD, +2 HP)");
+				modifiers.add("Uncommon trap(+2 CD, -2 HP)");
+			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
+				modifiers.add("Uncommon buff(-2 CD, +2 HP)");
+				modifiers.add("Rare trap(+2 CD, -3 HP)");
+			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
+				modifiers.add("Rare buff(-2 CD, +3 HP)");
+				modifiers.add("Epic trap(+2 CD, -4 HP)");
+				// small units
+			} else if (unit instanceof Fairy) {
+				modifiers.add("Common buff(+1 HP)");
+				modifiers.add("Uncommon trap(-2 HP)");
+			} else if (unit instanceof Unicorn) {
+				modifiers.add("Uncommon buff(+2 HP)");
+				modifiers.add("Rare trap(-3 HP)");
+			} else if (unit instanceof Butterfly) {
+				modifiers.add("Rare buff(+3 HP)");
+				modifiers.add("Epic trap(-4 HP)");
+			} else if (unit.getClass().equals(Wall.class)) {
+				modifiers.add("Wall trap");
+			}
+		// Unit distribution for Dan:
+		// fairy -> common buff, rare trap,
+		// unicorn -> uncommon buff, epic trap,
+		// butterfly -> rare buff, legendary trap,
+		// wall -> wall trap.
+		} else {
+			// formations
+			if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
+				modifiers.add("Common buff(-1 CD, +2 HP)");
+				modifiers.add("Rare trap(+2 CD, -3 HP");
+			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Unicorn) {
+				modifiers.add("Uncommon buff(-2 CD, +2 HP)");
+				modifiers.add("Epic trap(+2 CD, -4 HP)");
+			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
+				modifiers.add("Rare buff(-2 CD, +3 HP)");
+				modifiers.add("Legendary trap(+3 CD, -5 HP)");
+				// small units
+			} else if (unit instanceof Fairy) {
+				modifiers.add("Common buff(+1 HP)");
+				modifiers.add("Rare trap(-3 HP");
+				// If the unit to be sacrificed is a small unicorn...
+			} else if (unit instanceof Unicorn) {
+				modifiers.add("Uncommon buff(+2 HP)");
+				modifiers.add("Epic trap(-4 HP)");
+				// If the unit to be sacrificed is a small butterfly...
+			} else if (unit instanceof Butterfly) {
+				modifiers.add("Rare buff(+3 HP)");
+				modifiers.add("Legendary trap(-5 HP)");
 			} else if (unit.getClass().equals(Wall.class)) {
 				modifiers.add("Wall trap");
 			}
@@ -808,18 +846,26 @@ public class EventHandlerImpl implements EventHandler {
 
 		// Add the corresponding modifier to the list.
 		switch (modifier) {
-			case "Big buff(-1 CD, +2 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
-			case "Big trap(+1 CD, -2 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
-			case "Big buff(-2 CD, +3 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
-			case "Big trap(+2 CD, -3 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
-			case "Big buff(-3 CD, +5 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
-			case "Big trap(+3 CD, -5 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
-			case "Small buff(+2 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.COMMON));
-			case "Small trap(-2 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.COMMON));
-			case "Small buff(+3 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.RARE));
-			case "Small trap(-3 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.RARE));
-			case "Small buff(+5 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.EPIC));
-			case "Small trap(-5 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.EPIC));
+			case "Common buff(-1 CD, +2 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
+			case "Common trap(+1 CD, -2 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
+			case "Uncommon buff(-2 CD, +2 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.UNCOMMON));
+			case "Uncommon trap(+2 CD, -2 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.UNCOMMON));
+			case "Rare buff(-2 CD, +3 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
+			case "Rare trap(+2 CD, -3 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
+			case "Epic buff(-2 CD, +4 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
+			case "Epic trap(+2 CD, -4 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
+			case "Legendary buff(-3 CD, +5 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.LEGENDARY));
+			case "Legendary trap(+3 CD, -5 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.LEGENDARY));
+			case "Common buff(+1 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.COMMON));
+			case "Common trap(-1 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.COMMON));
+			case "Uncommon buff(+2 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.UNCOMMON));
+			case "Uncommon trap(-2 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.UNCOMMON));
+			case "Rare buff(+3 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.RARE));
+			case "Rare trap(-3 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.RARE));
+			case "Epic buff(+4 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.EPIC));
+			case "Epic trap(-4 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.EPIC));
+			case "Legendary buff(+5 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.LEGENDARY));
+			case "Legendary trap(-5 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.LEGENDARY));
 			case "Wall buff" -> s.addModifierToList(activePlayer, new WallBuff());
 			case "Wall trap" -> s.addModifierToList(activePlayer, new WallTrap());
 		}

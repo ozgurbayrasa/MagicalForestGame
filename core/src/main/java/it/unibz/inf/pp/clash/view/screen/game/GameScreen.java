@@ -62,10 +62,10 @@ public class GameScreen extends AbstractScreen implements Screen {
     }
 
     private void drawVerticalLine() {
-        Gdx.gl.glLineWidth(5); // Set line width to 3 pixels
+        Gdx.gl.glLineWidth(6);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(186 / 255.0f, 171 / 255.0f, 114 / 255.0f, 1); // Set color to white (you can change this if needed)
-        shapeRenderer.line(1.5f, 0, 1.5f, Gdx.graphics.getHeight()); // Draw the vertical line.
+        shapeRenderer.setColor(186 / 255.0f, 171 / 255.0f, 114 / 255.0f, 1);
+        shapeRenderer.line(1.5f, 0, 1.5f, Gdx.graphics.getHeight());
         shapeRenderer.end();
     }
 

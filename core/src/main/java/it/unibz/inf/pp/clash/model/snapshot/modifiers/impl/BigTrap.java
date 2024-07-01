@@ -11,11 +11,19 @@ public class BigTrap extends AbstractTrap {
                 this.countdown = 1;
                 this.health = -2;
             }
+            case UNCOMMON -> {
+                this.countdown = 2;
+                this.health = -2;
+            }
             case RARE -> {
                 this.countdown = 2;
                 this.health = -3;
             }
             case EPIC -> {
+                this.countdown = 2;
+                this.health = -4;
+            }
+            case LEGENDARY -> {
                 this.countdown = 3;
                 this.health = -5;
             }

@@ -104,17 +104,7 @@ public class SnapshotImpl implements Snapshot {
 		while(!unitsFIRST.isEmpty()) {
 			// Repeat for every row.
 			for(int i = halfBoard; i < board.getMaxRowIndex() + 1; i++) {
-				// Repeat for every column.
-				for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-					// Check if there are more units in the list and if the tile is empty.
-					if (!unitsFIRST.isEmpty() && board.getUnit(i, j).isEmpty() && random.nextBoolean()) {
-						// Select random (possibly null) unit, add it to the board and remove it from the list.
-						int unitIndex = random.nextInt(unitsFIRST.size());
-						Unit unit = unitsFIRST.get(unitIndex);
-						board.addUnit(i, j, unit);
-						unitsFIRST.remove(unit);
-					}
-				}
+				populateTilesAuxiliary(i, unitsFIRST, random);
 			}
 		}
 		// Move the mandatoryUnits in.
@@ -124,21 +114,26 @@ public class SnapshotImpl implements Snapshot {
 		while(!unitsSECOND.isEmpty()) {
 			// Repeat for every row.
 			for(int i = (board.getMaxRowIndex() / 2); i >= 0; i--) {
-				// Repeat for every column.
-				for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
-					// Check if there are more units in the list and if the tile is empty.
-					if (!unitsSECOND.isEmpty() && board.getUnit(i, j).isEmpty() && random.nextBoolean()) {
-						// Select random (possibly null) unit, add it to the board and remove it from the list.
-						int unitIndex = random.nextInt(unitsSECOND.size());
-						Unit unit = unitsSECOND.get(unitIndex);
-						board.addUnit(i, j, unit);
-						unitsSECOND.remove(unit);
-					}
-				}
+				populateTilesAuxiliary(i, unitsSECOND, random);
 			}
 		}
 		// Move the mandatoryUnits in.
 		board.moveUnitsIn(Player.SECOND);
+	}
+
+	// Helper method for populating tiles.
+	private void populateTilesAuxiliary(int i, List<Unit> units, Random random) {
+		// Repeat for every column.
+		for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+			// Check if there are more units in the list and if the tile is empty.
+			if (!units.isEmpty() && board.getUnit(i, j).isEmpty() && random.nextBoolean()) {
+				// Select random (possibly null) unit, add it to the board and remove it from the list.
+				int unitIndex = random.nextInt(units.size());
+				Unit unit = units.get(unitIndex);
+				board.addUnit(i, j, unit);
+				units.remove(unit);
+			}
+		}
 	}
 
 	// Helper method to create a list of units.
@@ -232,7 +227,7 @@ public class SnapshotImpl implements Snapshot {
 		} catch (IOException | ClassNotFoundException e ) {
 			  throw new RuntimeException(e);
 		}
-				return deserializedSnapshot;
+		return deserializedSnapshot;
 	}
 
 	@Override

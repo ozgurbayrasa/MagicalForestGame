@@ -44,12 +44,6 @@ public interface EventHandler {
     void callReinforcement();
 
     /**
-     * This method is called if the user asks for information about the tile ({@code rowIndex}, {@code columnIndex}),
-     * or the unit standing on it.
-     */
-    void requestInformation(int rowIndex, int columnIndex);
-
-    /**
      * This method is called if the user selects the tile with coordinates ({@code rowIndex}, {@code columnIndex}).
      * This tile may for instance be the arrival tile of the ongoing move (if any), or the initial tile of a new move.
      * <p>
@@ -93,8 +87,12 @@ public interface EventHandler {
 
     /**
      * Continues the game when the user clicks the appropriate button, given that there is a serialized snapshot at the path specified.
+     * If there is no snapshot file, a new game is started.
+     *
+     * @param firstHero
+     * @param secondHero
      */
-	void continueGame();
+	void continueGame(String firstHero, String secondHero);
 
     /**
      * This method is called to handle the encounter between two units.
