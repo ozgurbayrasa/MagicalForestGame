@@ -25,10 +25,11 @@ public class EventHandlerImpl implements EventHandler {
 
     private final DisplayManager displayManager;
     private final String path = "../core/src/test/java/serialized/snapshot.ser";
-    private Snapshot s;
+    public Snapshot s;
 	private Unit unitToSacrifice;
 	private int numberOfSacrificesFIRST,
 				numberOfSacrificesSECOND;
+	public Object reinforcementsFIRST;
 
 	// A boolean which is true while the modifier button is pressed and allows players to place modifiers.
 	public static boolean modifierMode = false;

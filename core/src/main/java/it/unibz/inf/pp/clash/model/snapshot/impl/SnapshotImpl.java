@@ -44,6 +44,13 @@ public class SnapshotImpl implements Snapshot {
 		populateTiles();
 	}
 
+    public SnapshotImpl(HeroImpl heroImpl, HeroImpl heroImpl2, Board board2, Player first, int i,
+			List<Unit> reinforcements) {
+				this.board = null;
+				this.firstHero = null;
+				this.secondHero = null;
+	}
+
 	public Board getBoard() {
 		return board;
 	}

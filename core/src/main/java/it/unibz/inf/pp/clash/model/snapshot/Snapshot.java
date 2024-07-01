@@ -17,6 +17,8 @@ public interface Snapshot extends Serializable{
 
     enum Player {FIRST, SECOND}
 
+    Object reinforcementsFIRST = null;
+
     /**
      * @return the current state of the board
      */
