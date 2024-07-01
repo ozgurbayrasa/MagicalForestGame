@@ -61,6 +61,13 @@ public class TutorialListener extends ClickListener {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null
         };
 
