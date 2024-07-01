@@ -13,6 +13,7 @@ public class TutorialView {
     private final Label tutorialLabel;
     private final Image tutorialImage;
     private final TextButton nextButton;
+    private final TextButton exitButton;
     private final Table contentTable;
 
     public TutorialView(Stage stage, Skin skin) {
@@ -28,6 +29,7 @@ public class TutorialView {
         tutorialImage.setSize(1200, 800);
 
         nextButton = new TextButton("Next", skin);
+        exitButton = new TextButton("Exit", skin);
 
         contentTable = new Table();
         contentTable.setFillParent(true);
@@ -35,7 +37,13 @@ public class TutorialView {
 
         contentTable.add(tutorialLabel).width(1800).padBottom(20).row();
         contentTable.add(tutorialImage).size(1200, 800).padBottom(20).row();
-        contentTable.add(nextButton).padTop(20).center();
+
+        // Next ve Exit butonlarını yan yana ekleyin
+        Table buttonTable = new Table();
+        buttonTable.add(nextButton).padRight(10);
+        buttonTable.add(exitButton);
+
+        contentTable.add(buttonTable).padTop(20).center();
 
         window.add(contentTable).expand().fill();
         window.pack();
@@ -45,6 +53,10 @@ public class TutorialView {
 
     public void addNextButtonListener(ClickListener listener) {
         nextButton.addListener(listener);
+    }
+
+    public void addExitButtonListener(ClickListener listener) {
+        exitButton.addListener(listener);
     }
 
     public void setTutorialText(String text) {
@@ -68,7 +80,10 @@ public class TutorialView {
             }
         }
 
-        contentTable.add(nextButton).padTop(20).center();
+        Table buttonTable = new Table();
+        buttonTable.add(nextButton).padRight(10);
+        buttonTable.add(exitButton);
+        contentTable.add(buttonTable).padTop(20).center();
     }
 
     public void setNextButtonText(String text) {

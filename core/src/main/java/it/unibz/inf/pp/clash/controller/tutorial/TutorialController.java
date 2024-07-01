@@ -20,6 +20,13 @@ public class TutorialController {
             }
         });
 
+        view.addExitButtonListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                view.removeWindow();
+            }
+        });
+
         updateView();
     }
 
