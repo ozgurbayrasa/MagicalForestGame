@@ -13,6 +13,7 @@ public class TutorialController {
         this.model = model;
         this.view = view;
 
+        // Add click listener to the "Next" button
         view.addNextButtonListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -20,9 +21,19 @@ public class TutorialController {
             }
         });
 
+        // Add click listener to the "Exit" button
+        view.addExitButtonListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                view.removeWindow();
+            }
+        });
+
+        // Update the view with initial data
         updateView();
     }
 
+    // Handle the "Next" button click
     private void handleNextButtonClicked() {
         if (model.isFinished()) {
             view.removeWindow();
@@ -32,13 +43,16 @@ public class TutorialController {
         }
     }
 
+    // Update the tutorial view
     private void updateView() {
         view.setTutorialText(model.getCurrentText());
         view.setTutorialImage(model.getCurrentImage());
         if (model.isFinished()) {
             view.setNextButtonText("End");
+            view.showExitButton(false); // Hide the "Exit" button
         } else {
             view.setNextButtonText("Next");
+            view.showExitButton(true); // Show the "Exit" button
         }
     }
 }

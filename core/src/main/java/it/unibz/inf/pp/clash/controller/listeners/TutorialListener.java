@@ -13,6 +13,7 @@ public class TutorialListener extends ClickListener {
     private final Stage stage;
     private final Skin skin;
 
+    // Constructor: Initializes the stage and skin for the tutorial view
     public TutorialListener(Stage stage, Skin skin) {
         this.stage = stage;
         this.skin = skin;
@@ -20,6 +21,7 @@ public class TutorialListener extends ClickListener {
 
     @Override
     public void clicked(InputEvent event, float x, float y) {
+        // Array of tutorial text for each step in the tutorial
         String[] tutorialTexts = {
                 "Welcome to the tutorial! This tutorial will help you learn the basic mechanics and controls of the game.",
                 "In this game, two players face off, each controlling their own hero and units.",
@@ -44,6 +46,7 @@ public class TutorialListener extends ClickListener {
                 "Now that you have learned the basic rules and mechanics of the game, use your strategies to defeat your opponent. Good luck!",
         };
 
+        // Array of image paths corresponding to each tutorial step
         String[] tutorialImages = {
                 "images/png/tutorial_images/tutorial1.png",
                 null,
@@ -61,8 +64,13 @@ public class TutorialListener extends ClickListener {
                 null
         };
 
+        // Create a TutorialModel with the provided texts and images
         TutorialModel model = new TutorialModel(tutorialTexts, tutorialImages);
+
+        // Create a TutorialView and pass the stage and skin to it
         TutorialView view = new TutorialView(stage, skin);
+
+        // Create a TutorialController with the model and view
         new TutorialController(model, view);
     }
 }
