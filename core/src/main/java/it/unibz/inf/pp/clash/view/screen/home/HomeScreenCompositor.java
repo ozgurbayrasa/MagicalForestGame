@@ -39,7 +39,7 @@ public class HomeScreenCompositor extends Compositor {
         addLargeVerticalSpace(mainTable);
         addNewGameButton(mainTable, firstHeroSelectBox, secondHeroSelectBox, skin);
         addLargeVerticalSpace(mainTable);
-        addContinueGameButton(mainTable, skin);
+        addContinueGameButton(mainTable, firstHeroSelectBox, secondHeroSelectBox, skin);
         addLargeVerticalSpace(mainTable);
         addTutorialButton(mainTable, stage, skin);
         addLargeVerticalSpace(mainTable);
@@ -99,9 +99,10 @@ public class HomeScreenCompositor extends Compositor {
         mainTable.row();
     }
 
-    private void addContinueGameButton(Table mainTable, Skin skin) {
+    private void addContinueGameButton(Table mainTable, SelectBox<String> firstHeroSelectBox,
+                                       SelectBox<String> secondHeroSelectBox, Skin skin) {
         TextButton continueButton = new TextButton("Continue game", skin);
-        continueButton.addListener(new ContinueGameListener(eventHandler));
+        continueButton.addListener(new ContinueGameListener(firstHeroSelectBox, secondHeroSelectBox, eventHandler));
         mainTable.add(continueButton).colspan(2).fillX().uniformX();
         mainTable.row();
     }

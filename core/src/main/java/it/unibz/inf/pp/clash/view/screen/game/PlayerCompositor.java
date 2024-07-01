@@ -35,6 +35,8 @@ public class PlayerCompositor extends Compositor {
         Table playerTable = new Table();
         playerTable.setDebug(debug);
 
+        playerTable.padLeft(20);
+
         Hero previousHero = previousSnapshot != null? previousSnapshot.getHero(player):null;
         Hero newHero = newSnapshot.getHero(player);
 
@@ -171,7 +173,7 @@ public class PlayerCompositor extends Compositor {
         playerTable.add(
                 createLabel(
                         numOfModifiers,
-                        GuiColor.EMPTY_CELL,
+                        GuiColor.REINFORCEMENT,
                         animation
                 )).padLeft(30).padRight(40);
 

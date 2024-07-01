@@ -1,6 +1,9 @@
 package it.unibz.inf.pp.clash.view.screen.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import it.unibz.inf.pp.clash.model.EventHandler;
@@ -16,6 +19,7 @@ public class GameScreen extends AbstractScreen implements Screen {
     private final GameCompositor gameCompositor;
     private final AnimationCounter animationCounter;
     private final LinkedBlockingQueue<Instruction> queue = new LinkedBlockingQueue<>();
+    private ShapeRenderer shapeRenderer;
 
     // This is the Libgdx "actor" that contains the message displayed on the game screen (right of the board).
     // With this reference, the message can be updated without redrawing the whole board.
@@ -25,6 +29,7 @@ public class GameScreen extends AbstractScreen implements Screen {
         super(debug);
         this.animationCounter = new AnimationCounter(animationDuration);
         this.gameCompositor = new GameCompositor(eventHandler, animationCounter, debug);
+        this.shapeRenderer = new ShapeRenderer();
     }
 
     public void updateMessage(String message) {
@@ -39,10 +44,13 @@ public class GameScreen extends AbstractScreen implements Screen {
     public void render(float delta) {
         // if there is something to draw in the queue and no ongoing animation
         if (!queue.isEmpty() && animationCounter.isZero()) {
-                executeNextInstruction();
+            executeNextInstruction();
         } else {
             renderCurrentSnapshot(delta);
         }
+
+        // Draw the vertical line on the leftmost part of the screen
+        drawVerticalLine();
     }
 
     private void renderCurrentSnapshot(float delta) {
@@ -53,28 +61,42 @@ public class GameScreen extends AbstractScreen implements Screen {
         super.render(delta);
     }
 
+    private void drawVerticalLine() {
+        Gdx.gl.glLineWidth(6);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(186 / 255.0f, 171 / 255.0f, 114 / 255.0f, 1);
+        shapeRenderer.line(1.5f, 0, 1.5f, Gdx.graphics.getHeight());
+        shapeRenderer.end();
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        shapeRenderer.dispose();
+    }
+
     // This method should only be called if there is an instruction in the queue and no ongoing animation.
     private void executeNextInstruction() {
-            Instruction instruction = dequeue();
-            enableContinuousRendering();
-            // If the instruction only updates the displayed message
-            if (instruction.snapshot() == null) {
-                displayedMessage.setText(instruction.message());
+        Instruction instruction = dequeue();
+        enableContinuousRendering();
+        // If the instruction only updates the displayed message
+        if (instruction.snapshot() == null) {
+            displayedMessage.setText(instruction.message());
             // If a new snapshot should be drawn
-            } else {
-                Snapshot newSnapshot = instruction.snapshot;
-                stage.clear();
-                Table mainTable = gameCompositor.createMainTable();
-                stage.addActor(mainTable);
-                displayedMessage = gameCompositor.drawGame(
-                        currentSnapshot,
-                        newSnapshot,
-                        instruction.message,
-                        mainTable
-                );
-                currentSnapshot = newSnapshot;
-            }
+        } else {
+            Snapshot newSnapshot = instruction.snapshot;
+            stage.clear();
+            Table mainTable = gameCompositor.createMainTable();
+            stage.addActor(mainTable);
+            displayedMessage = gameCompositor.drawGame(
+                    currentSnapshot,
+                    newSnapshot,
+                    instruction.message,
+                    mainTable
+            );
+            currentSnapshot = newSnapshot;
         }
+    }
 
     private Instruction dequeue() {
         try {
@@ -85,7 +107,6 @@ public class GameScreen extends AbstractScreen implements Screen {
     }
 
     private void enqueue(Snapshot snapshot, String message) {
-
         try {
             queue.put(new Instruction(snapshot, message));
         } catch (InterruptedException e) {
@@ -97,5 +118,6 @@ public class GameScreen extends AbstractScreen implements Screen {
         enqueue(null, message);
     }
 
-    private record Instruction (Snapshot snapshot, String message) {}
+    private record Instruction(Snapshot snapshot, String message) {
+    }
 }

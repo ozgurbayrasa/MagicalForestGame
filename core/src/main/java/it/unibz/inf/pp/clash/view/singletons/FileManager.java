@@ -102,11 +102,12 @@ public class FileManager {
     }
 
     public String[] getHeroNames() {
-        return loadPropertyFile(portraitsConfigFile)
-                .map(Map.Entry::getKey)
-                .map(s -> (String) s)
-                .sorted()
-                .toArray(String[]::new);
+        return new String[]{"Alice(SD)", "Carol(MD)", "Bob(MO)", "Dan(SO)"};
+//        return loadPropertyFile(portraitsConfigFile)
+//                .map(Map.Entry::getKey)
+//                .map(s -> (String) s)
+//                .sorted()
+//                .toArray(String[]::new);
     }
 
     public Resolution parseResolution(Resolution defaultResolution) {

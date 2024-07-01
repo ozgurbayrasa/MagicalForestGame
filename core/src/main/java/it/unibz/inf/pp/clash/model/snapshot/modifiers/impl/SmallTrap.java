@@ -8,9 +8,11 @@ public class SmallTrap extends AbstractTrap {
         this.rarity = rarity;
 
         switch (rarity) {
-            case COMMON -> this.health = -2;
+            case COMMON -> this.health = -1;
+            case UNCOMMON -> this.health = -2;
             case RARE ->  this.health = -3;
-            case EPIC -> this.health = -5;
+            case EPIC -> this.health = -4;
+            case LEGENDARY -> this.health = -5;
         }
     }
 }

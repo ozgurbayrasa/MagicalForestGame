@@ -6,13 +6,14 @@ import it.unibz.inf.pp.clash.model.tutorial.TutorialModel;
 import it.unibz.inf.pp.clash.view.screen.tutorial.TutorialView;
 
 public class TutorialController {
-    private TutorialModel model;
-    private TutorialView view;
+    private final TutorialModel model;
+    private final TutorialView view;
 
     public TutorialController(TutorialModel model, TutorialView view) {
         this.model = model;
         this.view = view;
 
+        // Add click listener to the "Next" button
         view.addNextButtonListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -20,9 +21,27 @@ public class TutorialController {
             }
         });
 
+        // Add click listener to the "Previous" button
+        view.addPreviousButtonListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                handlePreviousButtonClicked();
+            }
+        });
+
+        // Add click listener to the "Exit" button
+        view.addExitButtonListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                view.removeWindow();
+            }
+        });
+
+        // Update the view with initial data
         updateView();
     }
 
+    // Handle the "Next" button click
     private void handleNextButtonClicked() {
         if (model.isFinished()) {
             view.removeWindow();
@@ -32,13 +51,25 @@ public class TutorialController {
         }
     }
 
+    // Handle the "Previous" button click
+    private void handlePreviousButtonClicked() {
+        if (!model.isAtBeginning()) {
+            model.previousStep();
+            updateView();
+        }
+    }
+
+    // Update the tutorial view
     private void updateView() {
         view.setTutorialText(model.getCurrentText());
+        view.setTutorialImage(model.getCurrentImage());
+        view.showPreviousButton(!model.isAtBeginning()); // Show/hide "Previous" button
         if (model.isFinished()) {
             view.setNextButtonText("End");
-        }
-        else {
+            view.showExitButton(false); // Hide the "Exit" button
+        } else {
             view.setNextButtonText("Next");
+            view.showExitButton(true); // Show the "Exit" button
         }
     }
 }

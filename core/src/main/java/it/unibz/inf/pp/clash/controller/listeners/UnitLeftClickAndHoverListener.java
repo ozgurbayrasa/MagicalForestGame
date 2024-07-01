@@ -21,7 +21,6 @@ public class UnitLeftClickAndHoverListener extends TileHoverListener {
                     rowIndex,
                     columnIndex
             );
-            eventHandler.requestInformation(rowIndex, columnIndex);
         }
     }
 
