@@ -4,7 +4,7 @@ import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import it.unibz.inf.pp.clash.model.EventHandler;
-import it.unibz.inf.pp.clash.model.impl.DummyEventHandler;
+// import it.unibz.inf.pp.clash.model.impl.DummyEventHandler;
 import it.unibz.inf.pp.clash.model.impl.EventHandlerImpl;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.impl.DisplayManagerImpl;

@@ -4,9 +4,13 @@ import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.exceptions.OccupiedTileException;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Board for an ongoing game.
@@ -22,6 +26,14 @@ import java.util.Optional;
  * A same unit may stand on multiple (adjacent) tiles.
  */
 public interface Board extends Serializable{
+
+    Map<AbstractMobileUnit, Set<AbstractMobileUnit>> getFormationToSmallUnitsMap(Player player);
+
+    void removeFormationFromMap(Player player, AbstractMobileUnit formation);
+
+    Map<Wall, AbstractMobileUnit> getWallToUnitMap(Player player);
+
+    void removeWallFromMap(Player player, Wall wall);
 
     /**
      * A pair of coordinates for a tile.
@@ -76,12 +88,38 @@ public interface Board extends Serializable{
     void moveUnit(int inputRowIndex, int inputColumnIndex, int outputRowIndex, int outputColumnIndex);
 
     /**
-     * Moves in the units as close to the border as possible.
+     * Moves in all units as close to the middle border as possible.
      * 
      * @param player
      */
     void moveUnitsIn(Player player);
-    
+
+    /**
+     * Creates a big vertical unit out of the small units.
+     * @param centerRowIndex
+     * @param columnIndex
+     * @return
+     */
+    AbstractMobileUnit create3x1Formation(int centerRowIndex, int columnIndex);
+
+    /**
+     * Moves the specified big vertical unit next to the middle border.
+     * @param formation
+     * @param centerRowIndex
+     * @param columnIndex
+     */
+    void move3x1In(AbstractMobileUnit formation, int centerRowIndex, int columnIndex);
+
+    /**
+     * Moves the specified big horizontal unit next to the middle border.
+     * @param wall
+     * @param centerRowIndex
+     * @param columnIndex
+     */
+    void moveWallUnitsIn(Wall wall, int centerRowIndex, int columnIndex);
+
+    void removeUnit(Unit unit);
+
     /**
      *
      *

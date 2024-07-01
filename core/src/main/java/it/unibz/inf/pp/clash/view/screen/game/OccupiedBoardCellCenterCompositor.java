@@ -3,6 +3,7 @@ package it.unibz.inf.pp.clash.view.screen.game;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import it.unibz.inf.pp.clash.controller.listeners.UnitLeftClickAndHoverListener;
+import it.unibz.inf.pp.clash.controller.listeners.UnitMiddleClickListener;
 import it.unibz.inf.pp.clash.controller.listeners.UnitRightClickListener;
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit;
@@ -36,12 +37,12 @@ public class OccupiedBoardCellCenterCompositor extends Compositor {
         super(eventHandler, animationCounter, debug);
     }
 
-    public Table drawCellCenter(int rowindex, int columnIndex, Unit previousUnit, Unit newUnit, boolean isSelectedTile) {
+    public Table drawCellCenter(int rowIndex, int columnIndex, Unit previousUnit, Unit newUnit, boolean isSelectedTile) {
 
         Highlights highlights = compareUnits(previousUnit, newUnit);
         Table table = new Table();
         table.setDebug(debug);
-        addUnitIcon(rowindex, columnIndex, newUnit, highlights, isSelectedTile, table);
+        addUnitIcon(rowIndex, columnIndex, newUnit, highlights, isSelectedTile, table);
         table.row();
         addStats(newUnit, highlights, table);
         return table;
@@ -160,6 +161,12 @@ public class OccupiedBoardCellCenterCompositor extends Compositor {
                 ));
         button.addListener(
                 new UnitRightClickListener(
+                        rowIndex,
+                        columnIndex,
+                        eventHandler
+                ));
+        button.addListener(
+                new UnitMiddleClickListener(
                         rowIndex,
                         columnIndex,
                         eventHandler

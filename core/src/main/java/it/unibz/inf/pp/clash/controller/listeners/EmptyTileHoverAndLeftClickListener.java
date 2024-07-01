@@ -4,6 +4,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import it.unibz.inf.pp.clash.model.EventHandler;
+import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
 
 public class EmptyTileHoverAndLeftClickListener extends TileHoverListener {
 
@@ -30,6 +31,14 @@ public class EmptyTileHoverAndLeftClickListener extends TileHoverListener {
                 rowIndex,
                 columnIndex
         );
-        eventHandler.selectTile(rowIndex, columnIndex);
+        try {
+            if(eventHandler.modifierModeIsOn()) {
+                eventHandler.placeModifier(rowIndex, columnIndex);
+            } else {
+                eventHandler.selectTile(rowIndex, columnIndex);
+            }
+        } catch (NoGameOnScreenException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

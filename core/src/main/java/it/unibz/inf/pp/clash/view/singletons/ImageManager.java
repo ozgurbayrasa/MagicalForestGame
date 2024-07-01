@@ -35,7 +35,7 @@ import static it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
  */
 public class ImageManager {
 
-    public enum Icon{HEART, COUNTDOWN, SWORDS, REINFORCEMENT, SKIP, EXIT}
+    public enum Icon{HEART, COUNTDOWN, MODIFIER, SWORDS, REINFORCEMENT, SKIP, EXIT}
 
     public enum IconSize{SMALL, MEDIUM, LARGE}
 
@@ -106,6 +106,14 @@ public class ImageManager {
     }
 
     public ImageButton getIconButton(Icon icon, IconSize size) {
+        return getIconButton(icon, size, false);
+    }
+
+    public ImageButton getInvertedIconButton(Icon icon, IconSize size) {
+        return getIconButton(icon, size, true);
+    }
+
+    private ImageButton getIconButton(Icon icon, IconSize size, boolean inverted) {
         String pathPrefix = iconFolder + sizeToSubfolder.get(size);
         String filename = iconToFile.get(icon);
 
@@ -115,7 +123,7 @@ public class ImageManager {
                 pathPrefix+filename,
                 new MultiKey<>(icon, size, SELECTED),
                 pathPrefix+"inverted/"+filename,
-                false
+                inverted
         );
     }
 

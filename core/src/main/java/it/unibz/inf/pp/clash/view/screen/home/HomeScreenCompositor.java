@@ -1,11 +1,13 @@
 package it.unibz.inf.pp.clash.view.screen.home;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import it.unibz.inf.pp.clash.controller.listeners.CloseApplicationListener;
 import it.unibz.inf.pp.clash.controller.listeners.ContinueGameListener;
 import it.unibz.inf.pp.clash.controller.listeners.NewGameListener;
 import it.unibz.inf.pp.clash.controller.listeners.ResolutionChangeListener;
+import it.unibz.inf.pp.clash.controller.listeners.TutorialListener;
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.view.screen.Compositor;
 import it.unibz.inf.pp.clash.view.singletons.Dimensions;
@@ -15,14 +17,15 @@ import it.unibz.inf.pp.clash.view.singletons.SkinManager;
 import java.util.stream.Stream;
 
 public class HomeScreenCompositor extends Compositor {
-    public HomeScreenCompositor(EventHandler eventHandler, boolean debug) {
+    private final Stage stage;
+
+    public HomeScreenCompositor(EventHandler eventHandler, boolean debug, Stage stage) {
         super(eventHandler, debug);
+        this.stage = stage;
     }
 
     public Table drawHomeScreen(Game game) {
-
         Table mainTable = createMainTable();
-
         Skin skin = SkinManager.instance().getDefaultSkin();
 
         SelectBox<String> firstHeroSelectBox = createHeroSelectBox(skin);
@@ -37,6 +40,8 @@ public class HomeScreenCompositor extends Compositor {
         addNewGameButton(mainTable, firstHeroSelectBox, secondHeroSelectBox, skin);
         addLargeVerticalSpace(mainTable);
         addContinueGameButton(mainTable, skin);
+        addLargeVerticalSpace(mainTable);
+        addTutorialButton(mainTable, stage, skin);
         addLargeVerticalSpace(mainTable);
         addExitButton(mainTable, game, skin);
 
@@ -93,12 +98,19 @@ public class HomeScreenCompositor extends Compositor {
         mainTable.add(newGameButton).colspan(2).fillX().uniformX();
         mainTable.row();
     }
-    
+
     private void addContinueGameButton(Table mainTable, Skin skin) {
-    	TextButton continueButton = new TextButton("Continue game", skin);
-    	continueButton.addListener(new ContinueGameListener(eventHandler));
-    	mainTable.add(continueButton).colspan(2).fillX().uniformX();
-    	mainTable.row();
+        TextButton continueButton = new TextButton("Continue game", skin);
+        continueButton.addListener(new ContinueGameListener(eventHandler));
+        mainTable.add(continueButton).colspan(2).fillX().uniformX();
+        mainTable.row();
+    }
+
+    private void addTutorialButton(Table mainTable, Stage stage, Skin skin) {
+        TextButton tutorialButton = new TextButton("Tutorial", skin);
+        tutorialButton.addListener(new TutorialListener(stage, skin));
+        mainTable.add(tutorialButton).colspan(2).fillX().uniformX();
+        mainTable.row();
     }
 
 }

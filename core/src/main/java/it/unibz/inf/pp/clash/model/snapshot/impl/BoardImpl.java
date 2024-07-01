@@ -3,26 +3,26 @@ package it.unibz.inf.pp.clash.model.snapshot.impl;
 import it.unibz.inf.pp.clash.model.exceptions.OccupiedTileException;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
-import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
-import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.Wall;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.io.Serial;
+import java.util.*;
 
 public class BoardImpl implements Board {
 
     /**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	@Serial
+    private static final long serialVersionUID = 1L;
 	final Unit[][] grid;
+    private final Map<AbstractMobileUnit, Set<AbstractMobileUnit>> formationToSmallUnitsFIRST = new HashMap<>(),
+                                                                   formationToSmallUnitsSECOND = new HashMap<>();
+    private final Map<Wall, AbstractMobileUnit> wallToUnitFIRST = new HashMap<>(),
+                                                wallToUnitSECOND = new HashMap<>();
 
     public static Board createEmptyBoard(int maxRowIndex, int maxColumnIndex) {
         Unit[][] grid = new Unit[maxRowIndex + 1][maxColumnIndex + 1];
@@ -69,16 +69,27 @@ public class BoardImpl implements Board {
         grid[rowIndex][columnIndex] = null;
     }
 
+    @Override
+    public void removeUnit(Unit unit) {
+        for(int i = 0; i < getMaxRowIndex() + 1; i++) {
+            for(int j = 0; j < getMaxColumnIndex() + 1; j++) {
+                if(getUnit(i, j).isPresent() && getUnit(i, j).get().equals(unit)) {
+                    grid[i][j] = null;
+                }
+            }
+        }
+    }
+
     // It simply returns 12, we may change this method
     // so player can decide it before the game, or
     // it can stay like fixed number such as 12.
     @Override
     public int getAllowedUnits() {
-        return 12;
+        return 20;
     }
 
     // A set is used to count different units on the board.
-    // For instance, a big unit which takes 3 squares on the
+    // For instance, a formation which takes 3 squares on the
     // board will be counted as 1 since it is the same unit.
 
     // If it is the first player, we take the lowest part of the
@@ -130,10 +141,13 @@ public class BoardImpl implements Board {
 	public void moveUnitsIn(Player player) {
 		switch(player) {
 			case FIRST -> {
-				for(int n = 0; n < ((getMaxRowIndex() + 1) / 2); n ++) {
+                // Repeat until all units are moved in.
+				for(int n = 0; n < ((getMaxRowIndex() / 2) + 1); n ++) {
+                    // Repeat for every row.
 					for(int i = ((getMaxRowIndex() / 2) + 2); i <= getMaxRowIndex(); i++) {
+                        // Repeat for every column.
 			            for(int j = 0; j < getMaxColumnIndex() + 1; j++) {
-			            	if(getUnit(i - 1, j).isEmpty() && areValidCoordinates(i - 1, j)) {
+			            	if(areValidCoordinates(i - 1, j) && getUnit(i - 1, j).isEmpty()) {
 								moveUnit(i, j, i - 1, j);
 							}
 			            }
@@ -141,10 +155,13 @@ public class BoardImpl implements Board {
 				}
 			}
 			case SECOND -> {
-				for(int n = 0; n < ((getMaxRowIndex() + 1) / 2); n ++) {
+                // Repeat until all units are moved in.
+				for(int n = 0; n < ((getMaxRowIndex() / 2) + 1); n ++) {
+                    // Repeat for every row.
 					for(int i = 0; i < ((getMaxRowIndex() / 2)); i++) {
+                        // Repeat for column.
 			            for(int j = 0; j < getMaxColumnIndex() + 1; j++) {
-			            	if(getUnit(i + 1, j).isEmpty() && areValidCoordinates(i + 1, j)) {
+			            	if(areValidCoordinates(i + 1, j) && getUnit(i + 1, j).isEmpty()) {
 								moveUnit(i, j, i + 1, j);
 							}
 			            }
@@ -153,6 +170,162 @@ public class BoardImpl implements Board {
 			}
 		}
 	}
-	
+
+    @Override
+    public AbstractMobileUnit create3x1Formation(int centerRowIndex, int columnIndex) {
+        // Create a formation out of one of the three small units.
+        return (AbstractMobileUnit) getUnit(centerRowIndex, columnIndex).orElse(null);
+    }
+
+    // This method takes care of replacing the three small units with the same instance of a formation unit and moving it as close to the border as possible.
+    @Override
+    public void move3x1In(AbstractMobileUnit formation, int centerRowIndex, int columnIndex) {
+        // Already checked.
+        assert getUnit(centerRowIndex - 1, columnIndex).isPresent() && getUnit(centerRowIndex + 1, columnIndex).isPresent();
+        int halfBoard = (getMaxRowIndex() / 2) + 1;
+        // Create an array out of the three small units.
+        Set<AbstractMobileUnit> smallUnits = Set.of((AbstractMobileUnit) getUnit(centerRowIndex - 1, columnIndex).get(), (AbstractMobileUnit) getUnit(centerRowIndex + 1, columnIndex).get());
+        // Remove the three small units from the board.
+        removeUnit(centerRowIndex - 1, columnIndex);
+        removeUnit(centerRowIndex, columnIndex);
+        removeUnit(centerRowIndex + 1, columnIndex);
+        // Check which half the formation is in.
+        if(centerRowIndex > halfBoard) {
+            // Put the entry into the corresponding map.
+            formationToSmallUnitsFIRST.put(formation, smallUnits);
+            // Move all other units in the column as far away from the middle border as possible.
+            moveColumnOut(columnIndex, Player.FIRST);
+            // Add the formation to the board, as close to the border as possible, depending on the walls.
+            int rowOffset = halfBoard;
+            while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
+                rowOffset++;
+            }
+            addUnit(rowOffset, columnIndex, formation);
+            addUnit(rowOffset + 1, columnIndex, formation);
+            addUnit(rowOffset + 2, columnIndex, formation);
+            // Move the units back in.
+            moveUnitsIn(Player.FIRST);
+        } else {
+            // Put the entry into the corresponding map.
+            formationToSmallUnitsSECOND.put(formation, smallUnits);
+            // Move all other units in the column as far away from the middle border as possible.
+            moveColumnOut(columnIndex, Player.SECOND);
+            // Add the formation to the board, as close to the border as possible, depending on the walls.
+            int rowOffset = halfBoard - 1;
+            while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
+                rowOffset--;
+            }
+            addUnit(rowOffset, columnIndex, formation);
+            addUnit(rowOffset - 1, columnIndex, formation);
+            addUnit(rowOffset - 2, columnIndex, formation);
+            // Move the units back in.
+            moveUnitsIn(Player.SECOND);
+        }
+    }
+
+    // This method takes care of replacing small units with walls and moving them as close to the border as possible.
+    @Override
+    public void moveWallUnitsIn(Wall wall, int rowIndex, int columnIndex) {
+        int halfBoard = (getMaxRowIndex() / 2) + 1;
+        // Get the mobile unit.
+        AbstractMobileUnit unit = (AbstractMobileUnit) getUnit(rowIndex, columnIndex).orElse(null);
+        // Remove the small unit from the board.
+        removeUnit(rowIndex, columnIndex);
+        // Check which half the formation is in.
+        if(rowIndex >= halfBoard) {
+            // Put the entry into the map.
+            wallToUnitFIRST.put(wall, unit);
+            // Move all other units in the columns as far away from the middle border as possible.
+            moveColumnOut(columnIndex, Player.FIRST);
+            // Add the wall to the board, as close to the border as possible, depending on the other walls.
+            int rowOffset = halfBoard;
+            while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
+                rowOffset++;
+            }
+            // Add the wall to the board.
+            addUnit(rowOffset, columnIndex, wall);
+            // Move the units back in.
+            moveUnitsIn(Player.FIRST);
+        } else {
+            // Put the entry into the map.
+            wallToUnitSECOND.put(wall, unit);
+            // Move all other units in the columns as far away from the middle border as possible.
+            moveColumnOut(columnIndex, Player.SECOND);
+            // Add the wall to the board, as close to the border as possible, depending on the other walls.
+            int rowOffset = halfBoard - 1;
+            while(getUnit(rowOffset, columnIndex).isPresent() && getUnit(rowOffset, columnIndex).get() instanceof Wall) {
+                rowOffset--;
+            }
+            // Add the formation to the board.
+            addUnit(rowOffset, columnIndex, wall);
+            // Move the units back in.
+            moveUnitsIn(Player.SECOND);
+        }
+    }
+
+    // Helper method which moves all units of a column as far away from the middle border as possible.
+    private void moveColumnOut(int columnIndex, Player player) {
+        int halfBoard = (getMaxColumnIndex() / 2) + 1;
+        switch(player) {
+            case FIRST -> {
+                // Repeat until all units are moved out.
+                for(int n = 0; n < halfBoard; n ++) {
+                    // Repeat for every row.
+                    for(int i = getMaxRowIndex(); i >= (getMaxRowIndex() / 2) + 1; i--) {
+                        // Don't move out walls.
+                        if(getUnit(i, columnIndex).isPresent() && getUnit(i, columnIndex).get() instanceof Wall) {
+                            continue;
+                        }
+                        // Move one cell closer if the next cell is empty.
+                        if(areValidCoordinates(i + 1, columnIndex) && getUnit(i + 1, columnIndex).isEmpty()) {
+                            moveUnit(i, columnIndex, i + 1, columnIndex);
+                        }
+                    }
+                }
+            }
+            case SECOND -> {
+                // Repeat until all units are moved out.
+                for(int n = 0; n < ((getMaxRowIndex() / 2) + 1); n ++) {
+                    // Repeat for every row.
+                    for(int i = 0; i < ((getMaxRowIndex() / 2) + 1); i++) {
+                        // Don't move out walls.
+                        if(getUnit(i, columnIndex).isPresent() && getUnit(i, columnIndex).get() instanceof Wall) {
+                            continue;
+                        }
+                        // Move one cell closer if the next cell is empty.
+                        if(areValidCoordinates(i - 1, columnIndex) && getUnit(i - 1, columnIndex).isEmpty()) {
+                            moveUnit(i, columnIndex, i - 1, columnIndex);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public Map<AbstractMobileUnit, Set<AbstractMobileUnit>> getFormationToSmallUnitsMap(Player player) {
+        return switch(player) {
+            case FIRST -> formationToSmallUnitsFIRST;
+            case SECOND -> formationToSmallUnitsSECOND;
+        };
+    }
+
+    @Override
+    public void removeFormationFromMap(Player player, AbstractMobileUnit formation) {
+        getFormationToSmallUnitsMap(player).remove(formation);
+    }
+
+    @Override
+    public Map<Wall, AbstractMobileUnit> getWallToUnitMap(Player player) {
+        return switch(player) {
+            case FIRST -> wallToUnitFIRST;
+            case SECOND -> wallToUnitSECOND;
+        };
+    }
+
+    @Override
+    public void removeWallFromMap(Player player, Wall wall) {
+        getWallToUnitMap(player).remove(wall);
+    }
 }
 

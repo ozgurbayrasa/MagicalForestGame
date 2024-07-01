@@ -1,8 +1,9 @@
 package it.unibz.inf.pp.clash.view.screen.home;
 
 import com.badlogic.gdx.Game;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.Gdx;
 import it.unibz.inf.pp.clash.model.EventHandler;
 import it.unibz.inf.pp.clash.view.screen.AbstractScreen;
 
@@ -12,7 +13,7 @@ public class HomeScreen extends AbstractScreen implements Screen {
         super(debug);
         // disables automatic calls to the render() method (30-50-80 times per second)
         Gdx.graphics.setContinuousRendering(false);
-        HomeScreenCompositor compositor = new HomeScreenCompositor(eventHandler, debug);
+        HomeScreenCompositor compositor = new HomeScreenCompositor(eventHandler, debug, stage);
         stage.addActor(
                 compositor.drawHomeScreen(game)
         );

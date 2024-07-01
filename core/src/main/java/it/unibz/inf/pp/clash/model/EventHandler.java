@@ -1,5 +1,12 @@
 package it.unibz.inf.pp.clash.model;
 
+import it.unibz.inf.pp.clash.model.snapshot.Board;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
+import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
+import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.AbstractMobileUnit;
+import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
+
 public interface EventHandler {
 
     /**
@@ -14,6 +21,11 @@ public interface EventHandler {
      * This method is called if there is an ongoing game and the user interrupts it.
      */
     void exitGame();
+
+    /**
+     * @return the current Snapshot
+     */
+    Snapshot getSnapshot();
 
     /**
      * This method is called if the active player decides to skip his/her turn.
@@ -47,7 +59,17 @@ public interface EventHandler {
      * - if there is no ongoing move and the tile is empty,
      * - etc.
      */
-    void selectTile(int rowIndex, int columnIndex);
+    void selectTile(int rowIndex, int columnIndex) throws NoGameOnScreenException;
+
+    /**
+     * Helper method simply returns if the tile is on the player's board.
+     *
+     * @param player
+     * @param board
+     * @param rowIndex
+     * @return
+     */
+    boolean tileIsOnPlayerBoard(Player player, Board board, int rowIndex);
 
     /**
      * This method is called if the user tries to delete the unit standing on the tile with coordinates
@@ -63,8 +85,48 @@ public interface EventHandler {
     void deleteUnit(int rowIndex, int columnIndex);
 
     /**
+     * Deletes the unit from the board without adding it to reinforcements in exchange for a modifier or buff.
+     * @param rowIndex
+     * @param columnIndex
+     */
+    void sacrificeUnit(int rowIndex, int columnIndex);
+
+    /**
      * Continues the game when the user clicks the appropriate button, given that there is a serialized snapshot at the path specified.
      */
 	void continueGame();
 
+    /**
+     * This method is called to handle the encounter between two units.
+     * It checks the status of the units, applies the attack value of the attacking unit to the defending unit,
+     * and updates the health of both units accordingly.
+     *
+     *
+     */
+    void encounter(Board board, AbstractMobileUnit attackingUnit, Player opponent, int col);
+
+    /**
+     * This method adds the selected modifier to the modifier list and removes the unit or formation from the board.
+     *
+     * @param modifier
+     */
+    void awardModifier(String modifier);
+
+    /**
+     * This method handles the placement of modifiers on the opponent player's board.
+     *
+     * @param rowIndex
+     * @param columnIndex
+     */
+    void placeModifier(int rowIndex, int columnIndex);
+
+    /**
+     * This method switches the modifierTime boolean value between true and false.
+     */
+    void switchModifierMode();
+
+    /**
+     * @return the boolean value of modifierMode.
+     */
+    boolean modifierModeIsOn();
 }

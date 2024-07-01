@@ -2,30 +2,24 @@ package it.unibz.inf.pp.clash.model.impl;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-
+import java.util.*;
 import it.unibz.inf.pp.clash.model.EventHandler;
+import it.unibz.inf.pp.clash.model.exceptions.CoordinatesOutOfBoardException;
 import it.unibz.inf.pp.clash.model.snapshot.Board;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot;
 import it.unibz.inf.pp.clash.model.snapshot.Snapshot.Player;
-import it.unibz.inf.pp.clash.model.snapshot.impl.BoardImpl;
-import it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl;
 import it.unibz.inf.pp.clash.model.snapshot.impl.SnapshotImpl;
-import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.DummySnapshot;
+//import it.unibz.inf.pp.clash.model.snapshot.impl.dummy.*;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.AbstractBuff;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.Modifier;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.AbstractTrap;
+import it.unibz.inf.pp.clash.model.snapshot.modifiers.impl.*;
 import it.unibz.inf.pp.clash.model.snapshot.units.Unit;
-import it.unibz.inf.pp.clash.model.snapshot.units.MobileUnit.UnitColor;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Butterfly;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Fairy;
-import it.unibz.inf.pp.clash.model.snapshot.units.impl.Unicorn;
+import it.unibz.inf.pp.clash.model.snapshot.units.impl.*;
 import it.unibz.inf.pp.clash.view.DisplayManager;
 import it.unibz.inf.pp.clash.view.exceptions.NoGameOnScreenException;
+import it.unibz.inf.pp.clash.view.screen.game.GameCompositor;
+import static it.unibz.inf.pp.clash.model.snapshot.impl.HeroImpl.HeroType.DEFENSIVE;
 
 public class EventHandlerImpl implements EventHandler {
 
@@ -56,26 +50,30 @@ public class EventHandlerImpl implements EventHandler {
 		if (new File(path).exists()) {
 			try {
 				s = SnapshotImpl.deserializeSnapshot(path);
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
+			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
-			displayManager.drawSnapshot(s, "The game has been continued!");
+            displayManager.drawSnapshot(s, "The game has been continued!");
 		}
 	}
 
 	@Override
 	public void exitGame() {
-		Snapshot toSerialize = s;
+		// Serialize the last snapshot
 		try {
-			toSerialize.serializeSnapshot(path);
+			s.serializeSnapshot(path);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		displayManager.drawHomeScreen();
 	}
 
+	@Override
+	public Snapshot getSnapshot() {
+		return s;
+	}
+
+	// Skip the current turn.
 	@Override
 	public void skipTurn() {
 		// Get the current active player
@@ -107,14 +105,14 @@ public class EventHandlerImpl implements EventHandler {
 	public void callReinforcement() {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
-		int reinforcementSize = s.getSizeOfReinforcement(activePlayer);
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		Random random = new Random();
 		if (reinforcementSize <= 0) {
 			try {
-				displayManager.updateMessage("No available reinforcements!");
+				displayManager.updateMessage("No reinforcements available!");
 				return;
 			} catch (NoGameOnScreenException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		switch (activePlayer) {
@@ -135,7 +133,6 @@ public class EventHandlerImpl implements EventHandler {
 						}
 					}
 				}
-				board.moveUnitsIn(activePlayer);
 			}
 			case SECOND -> {
 				loop: while (reinforcementSize > 0) {
@@ -154,9 +151,14 @@ public class EventHandlerImpl implements EventHandler {
 						}
 					}
 				}
-				board.moveUnitsIn(activePlayer);
 			}
 		}
+		board.moveUnitsIn(activePlayer);
+		// Check if a formation is detected, and if so, do not decrement the number of remaining actions.
+		if(detectFormations() == 0) {
+			s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+		}
+		endTurnIfNoActionsRemaining();
 		displayManager.drawSnapshot(s, "Player " + activePlayer + " called reinforcements!");
 	}
 
@@ -174,6 +176,7 @@ public class EventHandlerImpl implements EventHandler {
 		}
 	}
 
+	// This method simply allows user to select a unit from their board and put it somewhere in their board.
 	@Override
 	public void selectTile(int rowIndex, int columnIndex) {
 		// TODO Auto-generated method stub
@@ -216,12 +219,50 @@ public class EventHandlerImpl implements EventHandler {
 				}
 			}
 			board.moveUnitsIn(activePlayer);
-		} else {
-			try {
-				displayManager.updateMessage("Cannot remove unit!");
-				return;
-			} catch (NoGameOnScreenException e) {
-				e.printStackTrace();
+			// Check if a formation is detected, and if so, do not decrement the number of remaining actions.
+			if(detectFormations() == 0) {
+				s.setNumberOfRemainingActions(s.getNumberOfRemainingActions() - 1);
+			}
+			endTurnIfNoActionsRemaining();
+			displayManager.drawSnapshot(s, "Player " + activePlayer + " deleted unit at Tile (" + rowIndex + ", " + columnIndex + ")!");
+		}
+	}
+
+	// This method handles the detection and moving of wall units (1x3).
+	// It returns true if a new wall unit has been detected.
+	private boolean detect1x3Formation() {
+		Board board = s.getBoard();
+		Player activePlayer = s.getActivePlayer();
+
+		// Iterate through each cell in the board.
+		for (int i = 0; i < board.getMaxRowIndex() + 1; i++) {
+			for (int j = 0; j < board.getMaxColumnIndex() + 1; j++) {
+				// Check if the coordinates to the left and right of the cell are valid.
+				if (board.areValidCoordinates(i, j - 1) && board.areValidCoordinates(i, j + 1)
+						&& board.getUnit(i, j - 1).isPresent() && board.getUnit(i, j).isPresent() && board.getUnit(i, j + 1).isPresent()) {
+					// Get the three units.
+					Unit left = board.getUnit(i, j - 1).get();
+					Unit center = board.getUnit(i, j).get();
+					Unit right = board.getUnit(i, j + 1).get();
+					// Check if the three units have the same class.
+					if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass())) {
+						// Check if this class is a subclass of AbstractMobileUnit.
+						if (left instanceof AbstractMobileUnit && center instanceof AbstractMobileUnit && right instanceof AbstractMobileUnit) {
+							// Check if the units are already a part of a formation and if their colors match.
+							if (!board.getFormationToSmallUnitsMap(activePlayer).containsKey(left) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(center) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(right) &&
+									((AbstractMobileUnit) left).getColor().equals(((AbstractMobileUnit) center).getColor()) && ((AbstractMobileUnit) center).getColor().equals(((AbstractMobileUnit) right).getColor())) {
+								// Create wall units and move them next to the border.
+								Wall leftWall = new Wall();
+								Wall centerWall = new Wall();
+								Wall rightWall = new Wall();
+								board.moveWallUnitsIn(leftWall, i, j - 1);
+								board.moveWallUnitsIn(centerWall, i, j);
+								board.moveWallUnitsIn(rightWall, i, j + 1);
+								return true;
+							}
+						}
+					}
+				}
 			}
 		}
 		displayManager.drawSnapshot(s,
