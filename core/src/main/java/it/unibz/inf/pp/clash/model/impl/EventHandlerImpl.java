@@ -144,6 +144,7 @@ public class EventHandlerImpl implements EventHandler {
 	// Helper method which populates the board with all reinforcements in the player's set.
 	private void placeReinforcements(Board board, Player activePlayer, int startRow, int endRow, Random random) {
 		// Repeat until reinforcements are depleted.
+		loop:
 		while (s.getSizeOfReinforcement(activePlayer) > 0) {
 			// Iterate through each row.
 			for (int i = startRow; i <= endRow; i++) {
@@ -156,7 +157,7 @@ public class EventHandlerImpl implements EventHandler {
 							// Add unit to board and remove from list.
 							board.addUnit(i, j, unit);
 							s.removeReinforcementFromSet(activePlayer, unit);
-							return;
+							continue loop;
 						}
 					}
 				}
@@ -1229,7 +1230,7 @@ public class EventHandlerImpl implements EventHandler {
 			return true;
 		}
 		// Check the two cells below.
-        return wallBuffActivationOn3x1Auxiliary(board, activePlayer, rowIndex, rowIndex - 1, rowIndex + 2, columnIndex);
+        return wallBuffActivationOn3x1Auxiliary(board, activePlayer, rowIndex, rowIndex - 1, rowIndex - 2, columnIndex);
     }
 
 	// Helper method for wall buff activation on 1x3 formations.
@@ -1313,7 +1314,7 @@ public class EventHandlerImpl implements EventHandler {
 		} else if (modifier instanceof SmallBuff || modifier instanceof SmallTrap) {
 			return "(" + plusSignHP + modifier.getHealth() + "HP)";
 		} else {
-			return null;
+			return "(Wall)";
 		}
 	}
 
