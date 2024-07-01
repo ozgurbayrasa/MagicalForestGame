@@ -57,7 +57,7 @@ public class EventHandlerImpl implements EventHandler {
 			}
 			// Draw the snapshot on screen.
 			displayManager.drawSnapshot(s, "The game has been continued!");
-		// If not, start a new game.
+			// If not, start a new game.
 		} else {
 			newGame(firstHero, secondHero);
 		}
@@ -218,7 +218,7 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		}
 
-		// Check if the selected tile is present when there is an ongoing move
+		// Check if the selected tile is present when there is an ongoing move.
 		if (board.getUnit(rowIndex, columnIndex).isPresent() && ongoingMove.isPresent()) {
 			updateMessage("Error: Selected tile must be empty when there is ongoing move.");
 			return;
@@ -284,7 +284,7 @@ public class EventHandlerImpl implements EventHandler {
 		return ongoingMove.rowIndex() == rowIndex && ongoingMove.columnIndex() == columnIndex || (
 				activeplayer == Player.FIRST && (ongoingMove.rowIndex() == board.getMaxRowIndex() || board.getUnit(ongoingMove.rowIndex() + 1, ongoingMove.columnIndex()).isEmpty())
 						|| (activeplayer == Player.SECOND && (ongoingMove.rowIndex() == 0 || board.getUnit(ongoingMove.rowIndex() - 1, ongoingMove.columnIndex()).isEmpty())))
-						&& ongoingMove.columnIndex() == columnIndex;
+				&& ongoingMove.columnIndex() == columnIndex;
 	}
 
 	@Override
@@ -305,10 +305,21 @@ public class EventHandlerImpl implements EventHandler {
 			return;
 		}
 
+		// Check if a unit is being sacrificed.
+		if (GameCompositor.modifierSelectBoxIsShown()) {
+			updateMessage("Error: Units cannot be deleted while sacrificing a unit.");
+			return;
+		}
+
 		// Check if the tile is empty.
 		if (board.getUnit(rowIndex, columnIndex).isEmpty()) {
 			updateMessage("Error: Selected tile is empty.");
 			return;
+		}
+
+		// Check if modifier mode is on and switch it off is so.
+		if (modifierMode) {
+			switchModifierMode();
 		}
 
 		// Get the unit.
@@ -317,7 +328,7 @@ public class EventHandlerImpl implements EventHandler {
 		// Check if there is an ongoing move.
 		if (ongoingMove.isPresent()) {
 			updateMessage("Error: Cannot delete unit during an ongoing move.");
-		// Check if the unit is a formation (since formations cannot be removed).
+			// Check if the unit is a formation (since formations cannot be removed).
 		} else if (!(unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit))) {
 			// Add the unit to the reinforcement list and remove it from the board.
 			s.addReinforcementToSet(activePlayer, board.getUnit(rowIndex, columnIndex).orElse(null));
@@ -343,7 +354,7 @@ public class EventHandlerImpl implements EventHandler {
 		for (int i = 0; i <= board.getMaxRowIndex(); i++) {
 			for (int j = 0; j <= board.getMaxColumnIndex(); j++) {
 				// Check if the coordinates to the left and right of the cell are valid.
-				if (isValidFormation(board, i, j - 1, i, j, i, j + 1, activePlayer)) {
+				if (unitsArePresent(board, i, j - 1, i, j, i, j + 1) && unitsMatch(board, i, j - 1, i, j, i, j + 1, activePlayer)) {
 					createWallUnits(board, i, j - 1, j, j + 1);
 					return true;
 				}
@@ -352,14 +363,15 @@ public class EventHandlerImpl implements EventHandler {
 		return false;
 	}
 
-	// Helper method, which checks if the coordinates of the adjacent tiles are valid and if the units make a formation.
-	private boolean isValidFormation(Board board, int row1, int col1, int row2, int col2, int row3, int col3, Player activePlayer) {
+	// Helper method, which checks if the coordinates of the adjacent tiles are valid and if the units make a formation on one player's side.
+	private boolean unitsArePresent(Board board, int row1, int col1, int row2, int col2, int row3, int col3) {
+		int halfBoard = (board.getMaxRowIndex() / 2) + 1;
 		return board.areValidCoordinates(row1, col1) && board.areValidCoordinates(row2, col2) && board.areValidCoordinates(row3, col3)
 				&& board.getUnit(row1, col1).isPresent() && board.getUnit(row2, col2).isPresent() && board.getUnit(row3, col3).isPresent()
-				&& unitsMatch(board, row1, col1, row2, col2, row3, col3, activePlayer);
+				&& ((row1 >= halfBoard && row2 >= halfBoard && row3 >= halfBoard) || (row1 <= halfBoard && row2 <= halfBoard && row3 <= halfBoard));
 	}
 
-	// Helper method which checks if the classes and colors of the units match.
+	// Helper method which checks if the classes and colors of the units match and if they are a part of a formation.
 	private boolean unitsMatch(Board board, int row1, int col1, int row2, int col2, int row3, int col3, Player activePlayer) {
 		// Already checked.
 		assert board.getUnit(row1, col1).isPresent() && board.getUnit(row2, col2).isPresent() && board.getUnit(row3, col3).isPresent();
@@ -370,7 +382,7 @@ public class EventHandlerImpl implements EventHandler {
 
 		return first.getClass().equals(second.getClass()) && second.getClass().equals(third.getClass())
 				&& first instanceof AbstractMobileUnit && second instanceof AbstractMobileUnit && third instanceof AbstractMobileUnit
-				&& !board.getFormationToSmallUnitsMap(activePlayer).containsKey(first)
+				&& !board.getFormationToSmallUnitsMap(activePlayer).containsKey(first) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(second) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(third)
 				&& ((AbstractMobileUnit) first).getColor().equals(((AbstractMobileUnit) second).getColor())
 				&& ((AbstractMobileUnit) second).getColor().equals(((AbstractMobileUnit) third).getColor());
 	}
@@ -391,7 +403,7 @@ public class EventHandlerImpl implements EventHandler {
 		// Check the first player's board, starting from the middle.
 		for (int i = halfBoard; i <= board.getMaxRowIndex(); i++) {
 			for (int j = 0; j <= board.getMaxColumnIndex(); j++) {
-				if (i >= (halfBoard + 1) && isValidFormation(board, i - 1, j, i, j, i + 1, j, Player.FIRST)) {
+				if (i >= (halfBoard + 1) && unitsArePresent(board, i - 1, j, i, j, i + 1, j) && unitsMatch(board, i - 1, j, i, j, i + 1, j, Player.FIRST)) {
 					createVerticalFormation(board, i - 1, i, i + 1, j);
 					return true;
 				}
@@ -400,7 +412,7 @@ public class EventHandlerImpl implements EventHandler {
 		// Check the second player's board, starting from the middle.
 		for (int i = halfBoard - 1; i > 0; i--) {
 			for (int j = 0; j <= board.getMaxColumnIndex(); j++) {
-				if (i < (halfBoard - 1) && isValidFormation(board, i - 1, j, i, j, i + 1, j, Player.SECOND)) {
+				if (i < (halfBoard - 1) && unitsArePresent(board, i - 1, j, i, j, i + 1, j) && unitsMatch(board, i - 1, j, i, j, i + 1, j, Player.SECOND)) {
 					createVerticalFormation(board, i - 1, i, i + 1, j);
 					return true;
 				}
@@ -714,27 +726,27 @@ public class EventHandlerImpl implements EventHandler {
 			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
 				modifiers.add("Legendary buff(-3 CD, +5 HP)");
 				modifiers.add("Rare trap(+2 CD, -3 HP)");
-			// small units
+				// small units
 			} else if (unit instanceof Fairy) {
 				modifiers.add("Rare buff(+3 HP)");
 				modifiers.add("Common trap(-1 HP");
-			// If the unit to be sacrificed is a small unicorn...
+				// If the unit to be sacrificed is a small unicorn...
 			} else if (unit instanceof Unicorn) {
 				modifiers.add("Epic buff(+4 HP)");
 				modifiers.add("Uncommon trap(-2 HP)");
-			// If the unit to be sacrificed is a small butterfly...
+				// If the unit to be sacrificed is a small butterfly...
 			} else if (unit instanceof Butterfly) {
 				modifiers.add("Legendary buff(+5 HP)");
 				modifiers.add("Rare trap(-3 HP)");
 			} else if (unit.getClass().equals(Wall.class)) {
 				modifiers.add("Wall buff");
 			}
-		// Unit distribution for Carol:
-		// fairy -> uncommon buff, common trap,
-		// unicorn -> rare buff, uncommon trap,
-		// butterfly -> epic buff, rare trap,
-		// wall -> wall buff.
-		} else if(s.getHero(activePlayer).getName().equals("Carol(MD)")) {
+			// Unit distribution for Carol:
+			// fairy -> uncommon buff, common trap,
+			// unicorn -> rare buff, uncommon trap,
+			// butterfly -> epic buff, rare trap,
+			// wall -> wall buff.
+		} else if (s.getHero(activePlayer).getName().equals("Carol(MD)")) {
 			// formations
 			if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
 				modifiers.add("Uncommon buff(-2 CD, +2 HP)");
@@ -745,7 +757,7 @@ public class EventHandlerImpl implements EventHandler {
 			} else if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Butterfly) {
 				modifiers.add("Epic buff(-2 CD, +4 HP)");
 				modifiers.add("Rare trap(+2 CD, -3 HP)");
-			// small units
+				// small units
 			} else if (unit instanceof Fairy) {
 				modifiers.add("Uncommon buff(+2 HP)");
 				modifiers.add("Common trap(-1 HP)");
@@ -758,12 +770,12 @@ public class EventHandlerImpl implements EventHandler {
 			} else if (unit.getClass().equals(Wall.class)) {
 				modifiers.add("Wall buff");
 			}
-		// Unit distribution for Bob:
-		// fairy -> common buff, uncommon trap,
-		// unicorn -> uncommon buff, rare trap,
-		// butterfly -> rare buff, epic trap,
-		// wall -> wall trap.
-		} else if(s.getHero(activePlayer).getName().equals("Bob(MO)")) {
+			// Unit distribution for Bob:
+			// fairy -> common buff, uncommon trap,
+			// unicorn -> uncommon buff, rare trap,
+			// butterfly -> rare buff, epic trap,
+			// wall -> wall trap.
+		} else if (s.getHero(activePlayer).getName().equals("Bob(MO)")) {
 			// formations
 			if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
 				modifiers.add("Common buff(-1 CD, +2 HP)");
@@ -787,11 +799,11 @@ public class EventHandlerImpl implements EventHandler {
 			} else if (unit.getClass().equals(Wall.class)) {
 				modifiers.add("Wall trap");
 			}
-		// Unit distribution for Dan:
-		// fairy -> common buff, rare trap,
-		// unicorn -> uncommon buff, epic trap,
-		// butterfly -> rare buff, legendary trap,
-		// wall -> wall trap.
+			// Unit distribution for Dan:
+			// fairy -> common buff, rare trap,
+			// unicorn -> uncommon buff, epic trap,
+			// butterfly -> rare buff, legendary trap,
+			// wall -> wall trap.
 		} else {
 			// formations
 			if (unit instanceof AbstractMobileUnit && board.getFormationToSmallUnitsMap(activePlayer).containsKey(unit) && unit instanceof Fairy) {
@@ -848,14 +860,18 @@ public class EventHandlerImpl implements EventHandler {
 		switch (modifier) {
 			case "Common buff(-1 CD, +2 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.COMMON));
 			case "Common trap(+1 CD, -2 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.COMMON));
-			case "Uncommon buff(-2 CD, +2 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.UNCOMMON));
-			case "Uncommon trap(+2 CD, -2 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.UNCOMMON));
+			case "Uncommon buff(-2 CD, +2 HP)" ->
+					s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.UNCOMMON));
+			case "Uncommon trap(+2 CD, -2 HP)" ->
+					s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.UNCOMMON));
 			case "Rare buff(-2 CD, +3 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.RARE));
 			case "Rare trap(+2 CD, -3 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.RARE));
 			case "Epic buff(-2 CD, +4 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.EPIC));
 			case "Epic trap(+2 CD, -4 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.EPIC));
-			case "Legendary buff(-3 CD, +5 HP)" -> s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.LEGENDARY));
-			case "Legendary trap(+3 CD, -5 HP)" -> s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.LEGENDARY));
+			case "Legendary buff(-3 CD, +5 HP)" ->
+					s.addModifierToList(activePlayer, new BigBuff(Modifier.Rarity.LEGENDARY));
+			case "Legendary trap(+3 CD, -5 HP)" ->
+					s.addModifierToList(activePlayer, new BigTrap(Modifier.Rarity.LEGENDARY));
 			case "Common buff(+1 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.COMMON));
 			case "Common trap(-1 HP)" -> s.addModifierToList(activePlayer, new SmallTrap(Modifier.Rarity.COMMON));
 			case "Uncommon buff(+2 HP)" -> s.addModifierToList(activePlayer, new SmallBuff(Modifier.Rarity.UNCOMMON));
@@ -997,7 +1013,10 @@ public class EventHandlerImpl implements EventHandler {
 		}
 
 		// Activate the modifier.
-		activateModifier(modifier, rowIndex, columnIndex);
+		if(!activateModifier(modifier, rowIndex, columnIndex)) {
+			updateMessage("Unable to place modifier.");
+			return;
+		}
 		// Switch off modifier mode.
 		switchModifierMode();
 		// Remove the modifier from the list.
@@ -1013,7 +1032,8 @@ public class EventHandlerImpl implements EventHandler {
 	}
 
 	// Helper method that activates the modifier upon placement.
-	private void activateModifier(Modifier modifier, int rowIndex, int columnIndex) {
+	// Returns true if a modifier is successfully activated.
+	private boolean activateModifier(Modifier modifier, int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 
 		// Assert that the unit is present, since the placeModifier() method has already checked it.
@@ -1029,32 +1049,32 @@ public class EventHandlerImpl implements EventHandler {
 			if (unit.getHealth() <= 0) {
 				board.removeUnit(rowIndex, columnIndex);
 			}
-			return;
+			return true;
 		}
 		// Activate a big trap.
 		if (modifier instanceof BigTrap) {
 			// Decrease the health of the side units.
-			modifySideHealth(unit, modifier);
+			modifySideUnitHealth(unit, modifier);
 			// Increase the countdown of the unit.
 			((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() + modifier.getCountdown());
-			return;
+			return true;
 		}
 		// Activate a wall trap.
 		if (modifier instanceof WallTrap) {
 			// Turn the unit into a wall with corresponding health.
 			wallTrapActivation(rowIndex, columnIndex, unit);
-			return;
+			return true;
 		}
 		// Activate a small buff.
 		if (modifier instanceof SmallBuff) {
 			// Increase the health of the unit.
 			unit.setHealth(unit.getHealth() + modifier.getHealth());
-			return;
+			return true;
 		}
 		// Activate a big buff.
 		if (modifier instanceof BigBuff) {
 			// Increase the health of the side units.
-			modifySideHealth(unit, modifier);
+			modifySideUnitHealth(unit, modifier);
 			// Decrease the countdown of the unit and deploy it if needed.
 			if (((AbstractMobileUnit) unit).getAttackCountdown() + modifier.getCountdown() <= 0) {
 				((AbstractMobileUnit) unit).setAttackCountdown(1);
@@ -1062,17 +1082,18 @@ public class EventHandlerImpl implements EventHandler {
 			} else {
 				((AbstractMobileUnit) unit).setAttackCountdown(((AbstractMobileUnit) unit).getAttackCountdown() + modifier.getCountdown());
 			}
-			return;
+			return true;
 		}
 		// Activate a wall buff.
 		if (modifier instanceof WallBuff) {
-			// Switch the color of a single unit to form a formation.
-			wallBuffActivation(rowIndex, columnIndex);
+			// Switch the color of a single unit to create a formation.
+			return wallBuffActivation(rowIndex, columnIndex);
 		}
+		return false;
 	}
 
 	// Helper method for big modifiers.
-	private void modifySideHealth(Unit unit, Modifier modifier) {
+	private void modifySideUnitHealth(Unit unit, Modifier modifier) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
 		Player opponentPlayer = activePlayer == Player.FIRST ? Player.SECOND : Player.FIRST;
@@ -1179,111 +1200,84 @@ public class EventHandlerImpl implements EventHandler {
 		board.removeFormationFromMap(opponentPlayer, (AbstractMobileUnit) unit);
 	}
 
-	// Helper method for activating wall buffs on 1x3 formations.
-	private void wallBuffActivation(int rowIndex, int columnIndex) {
+	// Helper method for activating wall buffs.
+	private boolean wallBuffActivation(int rowIndex, int columnIndex) {
 		Board board = s.getBoard();
 		Player activePlayer = s.getActivePlayer();
-		// Already checked.
-		assert board.getUnit(rowIndex, columnIndex).isPresent();
 
 		// Check for 1x3 formations.
-		// Check if the two cells to the right have valid coordinates.
-		if (board.areValidCoordinates(rowIndex, columnIndex + 1) && board.areValidCoordinates(rowIndex, columnIndex + 2) &&
-				// Check if the two units to the right are present.
-				board.getUnit(rowIndex, columnIndex + 1).isPresent() && board.getUnit(rowIndex, columnIndex + 2).isPresent() &&
-				// Check if the three units are instances of AbstractMobileUnit.
-				board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex + 1).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex + 2).get() instanceof AbstractMobileUnit right) {
-			// Check if the three units are of the same type but the left one has different color.
-			if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
-					center.getColor().equals(right.getColor()) && !left.getColor().equals(center.getColor()) &&
-					// Check if the unit to the left is a part of a formation.
-					!board.getFormationToSmallUnitsMap(activePlayer).containsKey(left)) {
-				// Match the color of the left unit to the others.
-				left.setColor(center.getColor());
-				return;
-			}
+		// Check the two cells to the right.
+		if(wallBuffActivationOn1x3Auxiliary(board, activePlayer, rowIndex, columnIndex, columnIndex + 1, columnIndex + 2)) {
+			return true;
 		}
-		// Check if the cells to the left and right have valid coordinates.
-		if (board.areValidCoordinates(rowIndex, columnIndex - 1) && board.areValidCoordinates(rowIndex, columnIndex + 1) &&
-				// Check if the units to the left and right are present.
-				board.getUnit(rowIndex, columnIndex - 1).isPresent() && board.getUnit(rowIndex, columnIndex + 1).isPresent() &&
-				// Check if the three units are instances of AbstractMobileUnit.
-				board.getUnit(rowIndex, columnIndex - 1).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex + 1).get() instanceof AbstractMobileUnit right) {
-			// Check if the three units are of the same type but the center one has different color.
-			if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
-					left.getColor().equals(right.getColor()) && !center.getColor().equals(left.getColor()) &&
-					// Check if the center unit is a part of a formation.
-					!board.getFormationToSmallUnitsMap(activePlayer).containsKey(center)) {
-				// Match the color of the center unit to the others.
-				center.setColor(left.getColor());
-				return;
-			}
+		// Check the cells to the left and right.
+		if(wallBuffActivationOn1x3Auxiliary(board, activePlayer, rowIndex, columnIndex, columnIndex - 1, columnIndex + 1)) {
+			return true;
 		}
-		// Check if the two cells to the left have valid coordinates.
-		if (board.areValidCoordinates(rowIndex, columnIndex - 2) && board.areValidCoordinates(rowIndex, columnIndex - 1) &&
-				// Check if the two units to the left are present.
-				board.getUnit(rowIndex, columnIndex - 2).isPresent() && board.getUnit(rowIndex, columnIndex - 1).isPresent() &&
-				// Check if the three units are instances of AbstractMobileUnit.
-				board.getUnit(rowIndex, columnIndex - 2).get() instanceof AbstractMobileUnit left && board.getUnit(rowIndex, columnIndex - 1).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit right) {
-			// Check if the three units are of the same type but the right one has different color.
-			if (left.getClass().equals(center.getClass()) && center.getClass().equals(right.getClass()) &&
-					left.getColor().equals(center.getColor()) && !right.getColor().equals(left.getColor()) &&
-					// Check if the unit to the right is a part of a formation.
-					!board.getFormationToSmallUnitsMap(activePlayer).containsKey(right)) {
-				// Match the color of the right unit to the others.
-				right.setColor(left.getColor());
-				return;
-			}
+		// Check the two cells to the left.
+		if(wallBuffActivationOn1x3Auxiliary(board, activePlayer, rowIndex, columnIndex, columnIndex - 1, columnIndex - 2)) {
+			return true;
 		}
 
 		// Check for 3x1 formations.
-		// Check if the two cells above have valid coordinates.
-		if (board.areValidCoordinates(rowIndex + 1, columnIndex) && board.areValidCoordinates(rowIndex + 2, columnIndex) &&
-				// Check if the two units above are present.
-				board.getUnit(rowIndex + 1, columnIndex).isPresent() && board.getUnit(rowIndex + 2, columnIndex).isPresent() &&
-				// Check if the three units are instances of AbstractMobileUnit.
-				board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit below && board.getUnit(rowIndex + 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex + 2, columnIndex).get() instanceof AbstractMobileUnit above) {
-			// Check if the three units are of the same type but the one below has different color.
-			if (below.getClass().equals(center.getClass()) && center.getClass().equals(above.getClass()) &&
-					center.getColor().equals(above.getColor()) && !below.getColor().equals(center.getColor()) &&
-					// Check if the unit below is a part of a formation.
-					!board.getFormationToSmallUnitsMap(activePlayer).containsKey(below)) {
-				// Match the color of the unit below to the others.
-				below.setColor(center.getColor());
-				return;
+		// Check the two cells above.
+		if(wallBuffActivationOn3x1Auxiliary(board, activePlayer, rowIndex, rowIndex + 1, rowIndex + 2, columnIndex)) {
+			return true;
+		}
+		// Check the cells below and above.
+		if(wallBuffActivationOn3x1Auxiliary(board, activePlayer, rowIndex, rowIndex - 1, rowIndex + 1, columnIndex)) {
+			return true;
+		}
+		// Check the two cells below.
+        return wallBuffActivationOn3x1Auxiliary(board, activePlayer, rowIndex, rowIndex - 1, rowIndex + 2, columnIndex);
+    }
+
+	// Helper method for wall buff activation on 1x3 formations.
+	// Returns true if a 1x3 formation has been created.
+	private boolean wallBuffActivationOn1x3Auxiliary(Board board, Player activePlayer, int row, int col1, int col2, int col3) {
+		// Check if the cells have valid coordinates.
+		if (unitsArePresent(board, row, col1, row, col2, row, col3)) {
+			// Already checked.
+			assert board.getUnit(row, col1).isPresent() && board.getUnit(row, col2).isPresent() && board.getUnit(row, col3).isPresent();
+			// Check if the three units are instances of AbstractMobileUnit.
+			if(board.getUnit(row, col1).get() instanceof AbstractMobileUnit first && board.getUnit(row, col2).get() instanceof AbstractMobileUnit second && board.getUnit(row, col3).get() instanceof AbstractMobileUnit third) {
+				// Check if the three units are of the same type but the first one has different color.
+				if (first.getClass().equals(second.getClass()) && second.getClass().equals(third.getClass())
+						&& second.getColor().equals(third.getColor()) && !first.getColor().equals(second.getColor())
+						// Check if the units are a part of a formation.
+						&& !board.getFormationToSmallUnitsMap(activePlayer).containsKey(first) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(second) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(third)) {
+					// Match the color of the first unit to the others.
+					first.setColor(second.getColor());
+					return true;
+				}
 			}
 		}
-		// Check if the cells below and above have valid coordinates.
-		if (board.areValidCoordinates(rowIndex - 1, columnIndex) && board.areValidCoordinates(rowIndex + 1, columnIndex) &&
-				// Check if the units below and above are present.
-				board.getUnit(rowIndex - 1, columnIndex).isPresent() && board.getUnit(rowIndex + 1, columnIndex).isPresent() &&
-				// Check if the three units are instances of AbstractMobileUnit.
-				board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit below && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex + 1, columnIndex).get() instanceof AbstractMobileUnit above) {
-			// Check if the three units are of the same type but the center one has different color.
-			if (below.getClass().equals(center.getClass()) && center.getClass().equals(above.getClass()) &&
-					below.getColor().equals(above.getColor()) && !center.getColor().equals(below.getColor()) &&
-					// Check if the center unit is a part of a formation.
-					!board.getFormationToSmallUnitsMap(activePlayer).containsKey(center)) {
-				// Match the color of the center unit to the others.
-				center.setColor(below.getColor());
-				return;
+		updateMessage("Unable to apply wall buff.");
+		return false;
+	}
+
+	// Helper method for wall buff activation on 3x1 formations.
+	// Returns true if a 3x1 formation has been created.
+	private boolean wallBuffActivationOn3x1Auxiliary(Board board, Player activePlayer, int row1, int row2, int row3, int col) {
+		// Check if the cells have valid coordinates.
+		if (unitsArePresent(board, row1, col, row2, col, row3, col)) {
+			// Already checked.
+			assert board.getUnit(row1, col).isPresent() && board.getUnit(row2, col).isPresent() && board.getUnit(row3, col).isPresent();
+			// Check if the three units are instances of AbstractMobileUnit.
+			if (board.getUnit(row1, col).get() instanceof AbstractMobileUnit first && board.getUnit(row2, col).get() instanceof AbstractMobileUnit second && board.getUnit(row3, col).get() instanceof AbstractMobileUnit third) {
+				// Check if the three units are of the same type but the first one has different color.
+				if (first.getClass().equals(second.getClass()) && second.getClass().equals(third.getClass())
+						&& second.getColor().equals(third.getColor()) && !first.getColor().equals(second.getColor())
+						// Check if the units are a part of a formation.
+						&& !board.getFormationToSmallUnitsMap(activePlayer).containsKey(first) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(second) && !board.getFormationToSmallUnitsMap(activePlayer).containsKey(third)) {
+					// Match the color of the first unit to the others.
+					first.setColor(second.getColor());
+					return true;
+				}
 			}
 		}
-		// Check if the two cells below have valid coordinates.
-		if (board.areValidCoordinates(rowIndex - 2, columnIndex) && board.areValidCoordinates(rowIndex - 1, columnIndex) &&
-				// Check if the two units below are present.
-				board.getUnit(rowIndex - 2, columnIndex).isPresent() && board.getUnit(rowIndex - 1, columnIndex).isPresent() &&
-				// Check if the three units are instances of AbstractMobileUnit.
-				board.getUnit(rowIndex - 2, columnIndex).get() instanceof AbstractMobileUnit below && board.getUnit(rowIndex - 1, columnIndex).get() instanceof AbstractMobileUnit center && board.getUnit(rowIndex, columnIndex).get() instanceof AbstractMobileUnit above) {
-			// Check if the three units are of the same type but one above has different color.
-			if (below.getClass().equals(center.getClass()) && center.getClass().equals(above.getClass()) &&
-					below.getColor().equals(center.getColor()) && !above.getColor().equals(center.getColor()) &&
-					// Check if the unit above is a part of a formation.
-					!board.getFormationToSmallUnitsMap(activePlayer).containsKey(above)) {
-				// Match the color of the unit above to the others.
-				above.setColor(below.getColor());
-			}
-		}
+		updateMessage("Unable to apply wall buff.");
+		return false;
 	}
 
 	// FOLLOWING METHOD CAN BE IMPLEMENTED IN BOARD
@@ -1310,6 +1304,19 @@ public class EventHandlerImpl implements EventHandler {
 		return modifierMode;
 	}
 
+	// Helper method to get the stats of a modifier for the text box.
+	private String getModifierStats(Modifier modifier) {
+		String plusSignHP = modifier.getHealth() > 0 ? "+" : "";
+		String plusSignCD = modifier.getCountdown() > 0 ? "+" : "";
+		if (modifier instanceof BigBuff || modifier instanceof BigTrap) {
+			return "(" + plusSignCD + modifier.getCountdown() + "CD," + plusSignHP + modifier.getHealth() + "HP)";
+		} else if (modifier instanceof SmallBuff || modifier instanceof SmallTrap) {
+			return "(" + plusSignHP + modifier.getHealth() + "HP)";
+		} else {
+			return null;
+		}
+	}
+
 	@Override
 	public void switchModifierMode() {
 		Player activePlayer = s.getActivePlayer();
@@ -1321,6 +1328,6 @@ public class EventHandlerImpl implements EventHandler {
 		// Switch the boolean value.
 		modifierMode = !modifierMode;
 		// Update the message depending on the new value.
-		displayManager.drawSnapshot(s, modifierMode ? (s.getModifierList(activePlayer).get(0) instanceof AbstractTrap ? "Trap picked" : "Buff picked") : "Modifier mode switched off.");
+		displayManager.drawSnapshot(s, modifierMode ? (s.getModifierList(activePlayer).get(0) instanceof AbstractTrap ? "Trap" + getModifierStats(s.getModifierList(activePlayer).get(0)) + " picked" : "Buff" + getModifierStats(s.getModifierList(activePlayer).get(0)) + " picked") : "Modifier mode switched off.");
 	}
 }
